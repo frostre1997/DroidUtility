@@ -8,7 +8,7 @@ A powerful, non-root utility suite for Android designed for system optimization,
 - **Advanced Terminal:** Integrated console for ADB and SH commands with real-time output.
 - **Modular Design:** Extendable via external scripts and custom configurations.
 - **Mobile-First:** Fully developed and managed on Android devices.
-- **Xsposed Modules:** Xsposed Module Support *Coming Soon*
+- **Xsposed Modules:** Xsposed Module Support - *Coming Soon*
 
 ## Requirements
 - Android 10+
