@@ -1,0 +1,13 @@
+{
+  "tweaks": [
+    {
+      "name": "Disable Animations",
+      "command": "settings put global window_animation_scale 0 && settings put global transition_animation_scale 0"
+    },
+    {
+      "name": "Optimize Battery",
+      "command": "dumpsys battery unplug"
+    }
+  ]
+}
+
