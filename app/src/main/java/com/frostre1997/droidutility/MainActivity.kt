@@ -67,7 +67,6 @@ fun MainScreen() {
         Triple("Status", Icons.Default.Info, "System information")
     )
 
-    // Cambia il titolo della barra superiore in base alla scheda attiva, rimuovendo il doppio nome fisso
     val appBarTitle = when (selectedTab) {
         0 -> "DroidUtility • Terminal"
         1 -> "DroidUtility • Debloat Manager"
@@ -109,7 +108,6 @@ fun MainScreen() {
     }
 }
 
-// Terminal Tab
 
 @Composable
 fun TerminalTab() {
@@ -218,7 +216,6 @@ fun TerminalTab() {
     }
 }
 
-// Debloat Tab
 
 @Composable
 fun DebloatTab() {
@@ -372,7 +369,6 @@ fun ResultsView(configName: String, results: List<DebloatResult>, onBack: () -> 
     }
 }
 
-// Status Tab
 
 @Composable
 fun StatusTab() {
