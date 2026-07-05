@@ -1,3 +1,6 @@
+rootProject.name = "DroidUtility"
+include(":app")
+
 pluginManagement {
     repositories {
         google()
@@ -14,6 +17,3 @@ dependencyResolutionManagement {
         maven { url = uri("https://jitpack.io") }
     }
 }
-
-rootProject.name = "DroidUtility"
-include(":app")
