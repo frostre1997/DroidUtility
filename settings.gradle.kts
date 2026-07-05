@@ -1,5 +1,3 @@
-rootProject.name = "DroidUtility"
-
 pluginManagement {
     repositories {
         google()
@@ -13,9 +11,9 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven { url = uri("https://jitpack.io") } // Necessario per Shizuku
+        maven { url = uri("https://jitpack.io") }
     }
 }
 
+rootProject.name = "DroidUtility"
 include(":app")
-
