@@ -1,7 +1,9 @@
 package com.frostre1997.droidutility
 
 import rikka.shizuku.Shizuku
-import rikka.shizuku.shared.utils.ShellUtils
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.util.concurrent.TimeUnit
 
 object ShizukuShellManager {
 
@@ -46,12 +48,21 @@ object ShizukuShellManager {
         }
 
         return try {
-            val output = ShellUtils.fastCmd(command)
+            // Creiamo gli array forzando il tipo esatto richiesto dall'API pubblica di Shizuku.
+            // Questo impedisce a Kotlin di scegliere il metodo privato e risolve la build.
+            val cmdArgs: Array<String> = arrayOf("sh", "-c", command)
+            val envArgs: Array<String>? = null
             
-            if (output.contains("Failure") || output.contains("Exception occurred")) {
-                ShellResult(false, output.trimEnd(), null)
+            val process = Shizuku.newProcess(cmdArgs, envArgs, null)
+
+            val stdout = process.inputStream.bufferedReader().use { it.readText() }
+            val stderr = process.errorStream.bufferedReader().use { it.readText() }
+            val exitCode = process.waitFor()
+
+            if (exitCode == 0) {
+                ShellResult(true, stdout.trimEnd(), null)
             } else {
-                ShellResult(true, output.trimEnd(), null)
+                ShellResult(false, stdout.trimEnd(), stderr.trimEnd().ifEmpty { "Exit code: $exitCode" })
             }
         } catch (e: Exception) {
             ShellResult(false, "", e.message ?: "Unknown error")
@@ -63,7 +74,37 @@ object ShizukuShellManager {
     }
 
     fun executeWithTimeout(command: String, timeoutMs: Long = 10000): ShellResult {
-        return executeCommand(command)
+        if (!checkAvailability()) {
+            return ShellResult(false, "", "Shizuku is not running.")
+        }
+        if (!hasPermission()) {
+            return ShellResult(false, "", "Shizuku permission not granted.")
+        }
+
+        return try {
+            val cmdArgs: Array<String> = arrayOf("sh", "-c", command)
+            val envArgs: Array<String>? = null
+            
+            val process = Shizuku.newProcess(cmdArgs, envArgs, null)
+            
+            val exited = process.waitFor(timeoutMs, TimeUnit.MILLISECONDS)
+            if (!exited) {
+                process.destroy()
+                return ShellResult(false, "", "Command timed out after ${timeoutMs}ms")
+            }
+
+            val stdout = process.inputStream.bufferedReader().use { it.readText() }
+            val stderr = process.errorStream.bufferedReader().use { it.readText() }
+            val exitCode = process.exitValue()
+
+            if (exitCode == 0) {
+                ShellResult(true, stdout.trimEnd(), null)
+            } else {
+                ShellResult(false, stdout.trimEnd(), stderr.trimEnd().ifEmpty { "Exit code: $exitCode" })
+            }
+        } catch (e: Exception) {
+            ShellResult(false, "", e.message ?: "Unknown error")
+        }
     }
 }
 
