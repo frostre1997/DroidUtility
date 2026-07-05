@@ -6,18 +6,14 @@ import java.io.InputStreamReader
 
 object ShizukuShellManager {
 
-    // Funzione per eseguire un comando shell tramite Shizuku
     fun executeCommand(command: String): String {
         return try {
-            // Verifica se Shizuku è attivo
             if (!Shizuku.pingBinder()) {
-                return "Error: Shizuku non è attivo."
+                return "Error: Shizuku is not activated."
             }
 
-            // Crea un processo Shizuku
             val process = Shizuku.newProcess(arrayOf("sh", "-c", command), null, null)
             
-            // Legge l'output del comando
             val reader = BufferedReader(InputStreamReader(process.inputStream))
             val output = StringBuilder()
             var line: String?
