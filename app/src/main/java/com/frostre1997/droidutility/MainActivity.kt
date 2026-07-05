@@ -1,59 +1,37 @@
 package com.frostre1997.droidutility
 
+import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import rikka.shizuku.Shizuku
 
 class MainActivity : ComponentActivity() {
+    
+    // Listener per il risultato della richiesta permessi
+    private val REQUEST_CODE_SHIZUKU = 1001
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Verifica permessi all'avvio
+        checkShizukuPermission()
+        
         setContent {
-            MaterialTheme {
-                Surface(modifier = Modifier.fillMaxSize()) {
-                    CommandDashboard()
-                }
-            }
+            // Qui richiamerai la tua Dashboard (come definito prima)
+            CommandDashboard()
         }
     }
-}
 
-@Composable
-fun CommandDashboard() {
-    var command by remember { mutableStateOf("") }
-    var output by remember { mutableStateOf("Output will be displayed here...") }
-    val scope = rememberCoroutineScope()
-
-    Column(modifier = Modifier.padding(16.dp)) {
-        TextField(
-            value = command,
-            onValueChange = { command = it },
-            label = { Text("Insert command (es. pm list packages)") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        Button(onClick = {
-            scope.launch {
-                val result = withContext(Dispatchers.IO) {
-                    ShizukuShellManager.executeCommand(command)
+    private fun checkShizukuPermission() {
+        if (Shizuku.pingBinder()) {
+            if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
+                if (Shizuku.shouldShowRequestPermissionRationale()) {
+                    // Qui potresti mostrare un avviso all'utente
+                } else {
+                    Shizuku.requestPermission(REQUEST_CODE_SHIZUKU)
                 }
-                output = result
             }
-        }) {
-            Text("Run Command")
         }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        Text(text = output, modifier = Modifier.fillVertical())
     }
 }
