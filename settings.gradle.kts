@@ -15,5 +15,6 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         maven { url = uri("https://jitpack.io") }
+        maven { url = uri("https://maven.rikka.dev/repository/maven-public/") }
     }
 }
