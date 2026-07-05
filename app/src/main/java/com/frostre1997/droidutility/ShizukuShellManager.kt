@@ -48,12 +48,11 @@ object ShizukuShellManager {
         }
 
         return try {
-            // Definiamo i parametri in modo super esplicito come array di stringhe nativi di Java.
-            // Passiamo un array vuoto invece di null per l'ambiente, così Kotlin mappa il metodo pubblico corretto.
-            val cmdArgs = arrayOf("sh", "-c", command)
-            val envArgs = emptyArray<String>()
-            
-            val process = Shizuku.newProcess(cmdArgs, envArgs, null)
+            // Utilizziamo direttamente il comando di sistema passando attraverso Shizuku
+            // tramite l'esecutore nativo senza toccare 'newProcess'
+            val process = rikka.shizuku.ShizukuProvider.getBinder().let { binder ->
+                rikka.shizuku.ShizukuRemoteProcess(arrayOf("sh", "-c", command), null, null)
+            }
 
             val stdout = process.inputStream.bufferedReader().use { it.readText() }
             val stderr = process.errorStream.bufferedReader().use { it.readText() }
@@ -82,10 +81,9 @@ object ShizukuShellManager {
         }
 
         return try {
-            val cmdArgs = arrayOf("sh", "-c", command)
-            val envArgs = emptyArray<String>()
-            
-            val process = Shizuku.newProcess(cmdArgs, envArgs, null)
+            val process = rikka.shizuku.ShizukuProvider.getBinder().let { binder ->
+                rikka.shizuku.ShizukuRemoteProcess(arrayOf("sh", "-c", command), null, null)
+            }
             
             val exited = process.waitFor(timeoutMs, TimeUnit.MILLISECONDS)
             if (!exited) {
@@ -98,28 +96,5 @@ object ShizukuShellManager {
             val exitCode = process.exitValue()
 
             if (exitCode == 0) {
-                ShellResult(true, stdout.trimEnd(), null)
-            } else {
-                ShellResult(false, stdout.trimEnd(), stderr.trimEnd().ifEmpty { "Exit code: $exitCode" })
-            }
-        } catch (e: Exception) {
-            ShellResult(false, "", e.message ?: "Unknown error")
-        }
-    }
-}
-
-data class ShellResult(
-    val success: Boolean,
-    val output: String,
-    val error: String?
-) {
-    fun displayText(): String {
-        return when {
-            success && output.isNotEmpty() -> output
-            success -> "Command executed successfully."
-            !success && error != null -> "Error: $error"
-            else -> "Unknown error occurred."
-        }
-    }
-}
-
+                ShellResult(true, stdout.
+                            
