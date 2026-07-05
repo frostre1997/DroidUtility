@@ -48,12 +48,18 @@ object ShizukuShellManager {
         }
 
         return try {
-            // Creiamo gli array forzando il tipo esatto richiesto dall'API pubblica di Shizuku.
-            // Questo impedisce a Kotlin di scegliere il metodo privato e risolve la build.
-            val cmdArgs: Array<String> = arrayOf("sh", "-c", command)
-            val envArgs: Array<String>? = null
+            // Chiamiamo il metodo tramite riflessione pura di Java impostandolo come accessibile.
+            // Questo rompe qualsiasi blocco o bug del compilatore Kotlin a monte.
+            val method = Shizuku::class.java.getDeclaredMethod(
+                "newProcess", 
+                Array<String>::class.java, 
+                Array<String>::class.java, 
+                String::class.java
+            )
+            method.isAccessible = true
             
-            val process = Shizuku.newProcess(cmdArgs, envArgs, null)
+            val cmdArgs = arrayOf("sh", "-c", command)
+            val process = method.invoke(null, cmdArgs, null, null) as java.lang.Process
 
             val stdout = process.inputStream.bufferedReader().use { it.readText() }
             val stderr = process.errorStream.bufferedReader().use { it.readText() }
@@ -65,7 +71,7 @@ object ShizukuShellManager {
                 ShellResult(false, stdout.trimEnd(), stderr.trimEnd().ifEmpty { "Exit code: $exitCode" })
             }
         } catch (e: Exception) {
-            ShellResult(false, "", e.message ?: "Unknown error")
+            ShellResult(false, "", e.cause?.message ?: e.message ?: "Unknown error")
         }
     }
 
@@ -82,10 +88,16 @@ object ShizukuShellManager {
         }
 
         return try {
-            val cmdArgs: Array<String> = arrayOf("sh", "-c", command)
-            val envArgs: Array<String>? = null
+            val method = Shizuku::class.java.getDeclaredMethod(
+                "newProcess", 
+                Array<String>::class.java, 
+                Array<String>::class.java, 
+                String::class.java
+            )
+            method.isAccessible = true
             
-            val process = Shizuku.newProcess(cmdArgs, envArgs, null)
+            val cmdArgs = arrayOf("sh", "-c", command)
+            val process = method.invoke(null, cmdArgs, null, null) as java.lang.Process
             
             val exited = process.waitFor(timeoutMs, TimeUnit.MILLISECONDS)
             if (!exited) {
@@ -103,7 +115,7 @@ object ShizukuShellManager {
                 ShellResult(false, stdout.trimEnd(), stderr.trimEnd().ifEmpty { "Exit code: $exitCode" })
             }
         } catch (e: Exception) {
-            ShellResult(false, "", e.message ?: "Unknown error")
+            ShellResult(false, "", e.cause?.message ?: e.message ?: "Unknown error")
         }
     }
 }
@@ -122,3 +134,4 @@ data class ShellResult(
         }
     }
 }
+
