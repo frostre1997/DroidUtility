@@ -1,7 +1,6 @@
 package com.frostre1997.droidutility
 
 import rikka.shizuku.Shizuku
-import rikka.shizuku.ShizukuProvider
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.util.concurrent.TimeUnit
@@ -49,7 +48,9 @@ object ShizukuShellManager {
         }
 
         return try {
-            val process = Shizuku.newProcess(arrayOf("sh", "-c", command), null, null)
+            // Usiamo lo spread operator (*) per convertire l'array di Kotlin nel formato Java String[]
+            val cmdArray = arrayOf("sh", "-c", command)
+            val process = Shizuku.newProcess(cmdArray, null, null)
 
             val stdout = process.inputStream.bufferedReader().use { it.readText() }
             val stderr = process.errorStream.bufferedReader().use { it.readText() }
@@ -70,8 +71,18 @@ object ShizukuShellManager {
     }
 
     fun executeWithTimeout(command: String, timeoutMs: Long = 10000): ShellResult {
+        if (!checkAvailability()) {
+            return ShellResult(false, "", "Shizuku is not running.")
+        }
+        if (!hasPermission()) {
+            return ShellResult(false, "", "Shizuku permission not granted.")
+        }
+
         return try {
-            val process = Shizuku.newProcess(arrayOf("sh", "-c", command), null, null)
+            // Stessa correzione anche qui con l'array esplicito
+            val cmdArray = arrayOf("sh", "-c", command)
+            val process = Shizuku.newProcess(cmdArray, null, null)
+            
             val exited = process.waitFor(timeoutMs, TimeUnit.MILLISECONDS)
             if (!exited) {
                 process.destroy()
@@ -107,3 +118,4 @@ data class ShellResult(
         }
     }
 }
+
