@@ -1,6 +1,7 @@
 package com.frostre1997.droidutility
 
-import dev.rikka.shizuku.Shizuku
+import rikka.shizuku.Shizuku
+import rikka.shizuku.ShizukuProvider
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.util.concurrent.TimeUnit
