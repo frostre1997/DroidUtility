@@ -67,7 +67,6 @@ fun MainScreen() {
         Triple("Status", Icons.Default.Info, "System information")
     )
 
-    // Cambia il titolo della barra superiore in base alla scheda attiva, rimuovendo il doppio nome fisso
     val appBarTitle = when (selectedTab) {
         0 -> "DroidUtility • Terminal"
         1 -> "DroidUtility • Debloat Manager"
