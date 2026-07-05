@@ -1,4 +1,8 @@
-# DroidUtility ![descrizione](https://github.com/frostre1997/DroidUtility/blob/main/app/src/main/res/play_store_512.png)
+![description](https://github.com/frostre1997/DroidUtility/blob/main/app/src/main/res/play_store_512.png)
+
+'''don't ask me why about the image please'''
+
+# DroidUtility
 
 ## [![Android CI](https://github.com/frostre1997/DroidUtility/actions/workflows/build.yml/badge.svg)](https://github.com/frostre1997/DroidUtility/actions/workflows/build.yml)
 
