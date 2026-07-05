@@ -57,8 +57,8 @@ android {
 
 dependencies {
     // Shizuku API
-    implementation("dev.rikka.rikkax.shizuku:api:13.1.5")
-    implementation("dev.rikka.rikkax.shizuku:provider:13.1.5")
+    implementation("dev.rikka.rikkax.shizuku:api:13.1.0")
+    implementation("dev.rikka.rikkax.shizuku:provider:13.1.0")
 
     // Compose BOM
     val composeBom = platform("androidx.compose:compose-bom:2024.02.00")
