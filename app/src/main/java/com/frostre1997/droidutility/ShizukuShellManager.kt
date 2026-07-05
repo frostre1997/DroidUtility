@@ -48,20 +48,29 @@ object ShizukuShellManager {
         }
 
         return try {
-            val cmdArgs: Array<String> = arrayOf("sh", "-c", command)
-            val process = Shizuku.newProcess(cmdArgs, null, null)
+            // Usiamo la riflessione di Java per chiamare il metodo pubblico.
+            // Questo trucco impedisce a Kotlin di bloccarsi sul metodo "privato".
+            val newProcessMethod = Shizuku::class.java.getMethod(
+                "newProcess", 
+                Array<String>::class.java, 
+                Array<String>::class.java, 
+                String::class.java
+            )
+            
+            val cmdArgs = arrayOf("sh", "-c", command)
+            val process = newProcessMethod.invoke(null, cmdArgs, null, null) as java.lang.Process
 
             val stdout = process.inputStream.bufferedReader().use { it.readText() }
             val stderr = process.errorStream.bufferedReader().use { it.readText() }
             val exitCode = process.waitFor()
 
-            if (exitCode == 0 && stderr.isEmpty()) {
+            if (exitCode == 0) {
                 ShellResult(true, stdout.trimEnd(), null)
             } else {
                 ShellResult(false, stdout.trimEnd(), stderr.trimEnd().ifEmpty { "Exit code: $exitCode" })
             }
         } catch (e: Exception) {
-            ShellResult(false, "", e.message ?: "Unknown error")
+            ShellResult(false, "", e.cause?.message ?: e.message ?: "Unknown error")
         }
     }
 
@@ -78,8 +87,16 @@ object ShizukuShellManager {
         }
 
         return try {
-            val cmdArgs: Array<String> = arrayOf("sh", "-c", command)
-            val process = Shizuku.newProcess(cmdArgs, null, null)
+            // Stesso trucco con riflessione anche qui per il timeout
+            val newProcessMethod = Shizuku::class.java.getMethod(
+                "newProcess", 
+                Array<String>::class.java, 
+                Array<String>::class.java, 
+                String::class.java
+            )
+            
+            val cmdArgs = arrayOf("sh", "-c", command)
+            val process = newProcessMethod.invoke(null, cmdArgs, null, null) as java.lang.Process
             
             val exited = process.waitFor(timeoutMs, TimeUnit.MILLISECONDS)
             if (!exited) {
@@ -97,7 +114,7 @@ object ShizukuShellManager {
                 ShellResult(false, stdout.trimEnd(), stderr.trimEnd().ifEmpty { "Exit code: $exitCode" })
             }
         } catch (e: Exception) {
-            ShellResult(false, "", e.message ?: "Unknown error")
+            ShellResult(false, "", e.cause?.message ?: e.message ?: "Unknown error")
         }
     }
 }
