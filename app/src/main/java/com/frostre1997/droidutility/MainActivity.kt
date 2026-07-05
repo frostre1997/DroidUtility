@@ -49,7 +49,7 @@ fun CommandDashboard() {
                 output = result
             }
         }) {
-            Text("Run The Command")
+            Text("Run Command")
         }
         
         Spacer(modifier = Modifier.height(16.dp))
