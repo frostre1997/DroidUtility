@@ -48,9 +48,8 @@ object ShizukuShellManager {
         }
 
         return try {
-            // Usiamo il comando classico tramite Runtime.exec ma forzato con i permessi Shizuku
-            // Questo evita del tutto il bug del metodo privato 'newProcess'
-            val process = Runtime.getRuntime().exec(arrayOf("sh", "-c", command))
+            val cmdArgs: Array<String> = arrayOf("sh", "-c", command)
+            val process = Shizuku.newProcess(cmdArgs, null, null)
 
             val stdout = process.inputStream.bufferedReader().use { it.readText() }
             val stderr = process.errorStream.bufferedReader().use { it.readText() }
@@ -79,7 +78,8 @@ object ShizukuShellManager {
         }
 
         return try {
-            val process = Runtime.getRuntime().exec(arrayOf("sh", "-c", command))
+            val cmdArgs: Array<String> = arrayOf("sh", "-c", command)
+            val process = Shizuku.newProcess(cmdArgs, null, null)
             
             val exited = process.waitFor(timeoutMs, TimeUnit.MILLISECONDS)
             if (!exited) {
@@ -116,4 +116,3 @@ data class ShellResult(
         }
     }
 }
-
