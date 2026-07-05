@@ -8,20 +8,26 @@ object ShizukuShellManager {
 
     fun executeCommand(command: String): String {
         return try {
-            if (!Shizuku.pingBinder()) return "Error: Shizuku not active."
+            if (!Shizuku.pingBinder()) {
+                return "Error: Shizuku is not active."
+            }
 
             val process = Shizuku.newProcess(arrayOf("sh", "-c", command), null, null)
             
-            val output = process.inputStream.bufferedReader().use { it.readText() }
-            val error = process.errorStream.bufferedReader().use { it.readText() }
+            val inputStream = BufferedReader(InputStreamReader(process.inputStream))
+            val errorStream = BufferedReader(InputStreamReader(process.errorStream))
+            
+            val output = StringBuilder()
+            
+            inputStream.useLines { lines -> lines.forEach { output.append(it).append("\n") }  
+            errorStream.useLines { lines -> lines.forEach { output.append("Error: ").append(it).append("\n") } }
             
             process.waitFor()
             
-            if (error.isNotEmpty()) "Error: $error" else output
+            if (output.isEmpty()) "Command executed (no output)." else output.toString()
+            
         } catch (e: Exception) {
-            "Exception: ${e.message}"
+            "Eccezione: ${e.message}"
         }
     }
 }
-    
-       
