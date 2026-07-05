@@ -3,6 +3,7 @@ package com.frostre1997.droidutility
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -184,7 +185,7 @@ fun TerminalTab() {
             placeholder = { Text("e.g., pm list packages") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
-            shape = RoundedCornerShape(12.dp),  // explicit for consistency
+            shape = RoundedCornerShape(12.dp),
             enabled = !isRunning && hasPermission
         )
 
@@ -232,7 +233,7 @@ fun TerminalTab() {
                 .fillMaxWidth()
                 .weight(1f),
             color = MaterialTheme.colorScheme.surfaceVariant,
-            shape = MaterialTheme.shapes.medium  // uses theme shape
+            shape = MaterialTheme.shapes.medium
         ) {
             Box(modifier = Modifier.padding(12.dp)) {
                 SelectionContainer {
@@ -344,7 +345,7 @@ fun DebloatTab() {
             }
         }
 
-        items(configs) { (filename, config) ->
+        items(configs) { (_, config) ->
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -505,7 +506,7 @@ fun StatusTab() {
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
-            return
+            return@Column
         }
 
         val labels = listOf(
@@ -562,4 +563,25 @@ fun StatusTab() {
         ) {
             OutlinedButton(
                 onClick = {
-                   
+                    isLoading = true
+                    scope.launch {
+                        withContext(Dispatchers.IO) {
+                            val results = ShizukuShellManager.executeCommands(commandList)
+                            statusLines = results.map { result ->
+                                if (result.success && result.output.isNotBlank()) {
+                                    result.output.trim()
+                                } else {
+                                    "Unknown"
+                                }
+                            }
+                            isLoading = false
+                        }
+                    }
+                },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Refresh")
+            }
+        }
+    }
+}
