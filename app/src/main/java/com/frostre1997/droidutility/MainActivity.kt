@@ -3,11 +3,12 @@ package com.frostre1997.droidutility
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -38,20 +39,54 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun DroidUtilityTheme(content: @Composable () -> Unit) {
-    val colorScheme = darkColorScheme(
-        primary = Color(0xFF90CAF9),
-        secondary = Color(0xFF80CBC4),
-        tertiary = Color(0xFFA5D6A7),
-        background = Color(0xFF121212),
-        surface = Color(0xFF1E1E1E),
-        surfaceVariant = Color(0xFF2C2C2C),
-        onPrimary = Color(0xFF0D0D0D),
-        onSecondary = Color(0xFF0D0D0D),
-        onBackground = Color(0xFFE0E0E0),
-        onSurface = Color(0xFFE0E0E0),
-    )
-    MaterialTheme(colorScheme = colorScheme) {
+fun DroidUtilityTheme(
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    content: @Composable () -> Unit
+) {
+    val colorScheme = if (darkTheme) {
+        darkColorScheme(
+            primary = Color(0xFF90CAF9),
+            secondary = Color(0xFF80CBC4),
+            tertiary = Color(0xFFA5D6A7),
+            background = Color(0xFF121212),
+            surface = Color(0xFF1E1E1E),
+            surfaceVariant = Color(0xFF2C2C2C),
+            onPrimary = Color(0xFF0D0D0D),
+            onSecondary = Color(0xFF0D0D0D),
+            onBackground = Color(0xFFE0E0E0),
+            onSurface = Color(0xFFE0E0E0),
+            error = Color(0xFFCF6679),
+            errorContainer = Color(0xFFB00020),
+            onError = Color.Black,
+            onErrorContainer = Color.White,
+        )
+    } else {
+        lightColorScheme(
+            primary = Color(0xFF1976D2),
+            secondary = Color(0xFF00897B),
+            tertiary = Color(0xFF388E3C),
+            background = Color(0xFFF5F5F5),
+            surface = Color(0xFFFFFFFF),
+            surfaceVariant = Color(0xFFE8E8E8),
+            onPrimary = Color.White,
+            onSecondary = Color.White,
+            onBackground = Color(0xFF1A1A1A),
+            onSurface = Color(0xFF1A1A1A),
+            error = Color(0xFFB00020),
+            errorContainer = Color(0xFFFFDAD6),
+            onError = Color.White,
+            onErrorContainer = Color(0xFF410002),
+        )
+    }
+
+    MaterialTheme(
+        colorScheme = colorScheme,
+        shapes = Shapes(
+            small = RoundedCornerShape(12.dp),
+            medium = RoundedCornerShape(18.dp),
+            large = RoundedCornerShape(24.dp)
+        )
+    ) {
         content()
     }
 }
@@ -67,25 +102,11 @@ fun MainScreen() {
         Triple("Status", Icons.Default.Info, "System information")
     )
 
-    val appBarTitle = when (selectedTab) {
-        0 -> "DroidUtility • Terminal"
-        1 -> "DroidUtility • Debloat Manager"
-        2 -> "DroidUtility • System Status"
-        else -> "DroidUtility"
-    }
-
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(appBarTitle, fontWeight = FontWeight.Bold) },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            )
-        },
         bottomBar = {
             NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surface
+                containerColor = MaterialTheme.colorScheme.surface,
+                tonalElevation = 0.dp
             ) {
                 tabs.forEachIndexed { index, (title, icon, _) ->
                     NavigationBarItem(
@@ -108,6 +129,7 @@ fun MainScreen() {
     }
 }
 
+// ─── Terminal Tab ──────────────────────────────────────────────────────────────
 
 @Composable
 fun TerminalTab() {
@@ -124,10 +146,19 @@ fun TerminalTab() {
             .fillMaxSize()
             .padding(16.dp)
     ) {
+        Text(
+            text = "DroidUtility • Terminal",
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
         if (!shizukuAvailable || !hasPermission) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                )
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text(
@@ -150,9 +181,10 @@ fun TerminalTab() {
             value = command,
             onValueChange = { command = it },
             label = { Text("Shell command") },
-            placeholder = { Text("e.g., pm list packages | grep google") },
+            placeholder = { Text("e.g., pm list packages") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
+            shape = RoundedCornerShape(12.dp),  // explicit for consistency
             enabled = !isRunning && hasPermission
         )
 
@@ -200,7 +232,7 @@ fun TerminalTab() {
                 .fillMaxWidth()
                 .weight(1f),
             color = MaterialTheme.colorScheme.surfaceVariant,
-            shape = MaterialTheme.shapes.medium
+            shape = MaterialTheme.shapes.medium  // uses theme shape
         ) {
             Box(modifier = Modifier.padding(12.dp)) {
                 SelectionContainer {
@@ -216,6 +248,7 @@ fun TerminalTab() {
     }
 }
 
+// ─── Debloat Tab ──────────────────────────────────────────────────────────────
 
 @Composable
 fun DebloatTab() {
@@ -237,12 +270,24 @@ fun DebloatTab() {
 
     if (!hasPermission) {
         Card(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.errorContainer
+            )
         ) {
             Column(modifier = Modifier.padding(12.dp)) {
-                Text("Shizuku permission required", fontWeight = FontWeight.Bold)
-                Text("Grant DroidUtility access in Shizuku to use debloat features.", fontSize = 13.sp)
+                Text(
+                    "Shizuku permission required",
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onErrorContainer
+                )
+                Text(
+                    "Grant DroidUtility access in Shizuku to use debloat features.",
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onErrorContainer
+                )
             }
         }
         return
@@ -261,20 +306,39 @@ fun DebloatTab() {
     }
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         item {
-            Text("Select a configuration to apply system optimizations.", style = MaterialTheme.typography.bodyMedium)
+            Text(
+                text = "DroidUtility • Debloat Manager",
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                "Select a configuration to apply system optimizations.",
+                style = MaterialTheme.typography.bodyMedium
+            )
             Spacer(modifier = Modifier.height(12.dp))
         }
 
         if (configs.isEmpty()) {
             item {
-                Card(modifier = Modifier.fillMaxWidth()) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text("No configs found", fontWeight = FontWeight.Bold)
-                        Text("Place JSON config files in /storage/emulated/0/DroidUtility/configs/", fontSize = 13.sp)
+                        Text(
+                            "Place JSON config files in /storage/emulated/0/DroidUtility/configs/",
+                            fontSize = 13.sp
+                        )
                     }
                 }
             }
@@ -294,7 +358,9 @@ fun DebloatTab() {
                             isRunning = false
                         }
                     },
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(
@@ -331,9 +397,16 @@ fun ResultsView(configName: String, results: List<DebloatResult>, onBack: () -> 
             }
         }
 
-        Text("Results: $configName", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        Text(
+            "Results: $configName",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
         Spacer(modifier = Modifier.height(4.dp))
-        Text("$successCount succeeded, $failCount failed", style = MaterialTheme.typography.bodyMedium)
+        Text(
+            "$successCount succeeded, $failCount failed",
+            style = MaterialTheme.typography.bodyMedium
+        )
         Spacer(modifier = Modifier.height(12.dp))
 
         LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -355,12 +428,22 @@ fun ResultsView(configName: String, results: List<DebloatResult>, onBack: () -> 
                             if (result.success) Icons.Default.CheckCircle
                             else Icons.Default.Error,
                             contentDescription = null,
-                            tint = if (result.success) Color(0xFF4CAF50) else Color(0xFFEF5350)
+                            tint = if (result.success)
+                                MaterialTheme.colorScheme.primary
+                            else
+                                MaterialTheme.colorScheme.error
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
-                            Text(result.packageName, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                            Text("${result.action}: ${result.message}", fontSize = 12.sp)
+                            Text(
+                                result.packageName,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
+                            Text(
+                                "${result.action}: ${result.message}",
+                                fontSize = 12.sp
+                            )
                         }
                     }
                 }
@@ -369,6 +452,7 @@ fun ResultsView(configName: String, results: List<DebloatResult>, onBack: () -> 
     }
 }
 
+// ─── Status Tab ──────────────────────────────────────────────────────────────
 
 @Composable
 fun StatusTab() {
@@ -383,7 +467,7 @@ fun StatusTab() {
         "getprop ro.product.cpu.abi",
         "getprop ro.build.version.sdk",
         "dumpsys battery | grep level",
-        "dumpsys battery | grep health",
+        "cat /sys/class/power_supply/battery/health",
         "cat /proc/meminfo | grep MemTotal",
         "cat /proc/meminfo | grep MemAvailable",
         "df -h /data | tail -1",
@@ -394,7 +478,11 @@ fun StatusTab() {
         withContext(Dispatchers.IO) {
             val results = ShizukuShellManager.executeCommands(commandList)
             statusLines = results.map { result ->
-                if (result.success) result.output.ifEmpty { "N/A" } else "Not supported"
+                if (result.success && result.output.isNotBlank()) {
+                    result.output.trim()
+                } else {
+                    "Unknown"
+                }
             }
             isLoading = false
         }
@@ -406,6 +494,13 @@ fun StatusTab() {
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
+        Text(
+            text = "DroidUtility • System Status",
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
         if (isLoading) {
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
@@ -422,27 +517,39 @@ fun StatusTab() {
 
         labels.zip(statusLines).forEach { (label, value) ->
             Card(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
-                    Text(label, fontSize = 11.sp, color = MaterialTheme.colorScheme.primary)
-                    
+                    Text(
+                        label,
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+
                     val cleanValue = value
-                        .replace("health:", "")
-                        .replace("level:", "")
+                        .replace("level:", "", ignoreCase = true)
+                        .replace("health:", "", ignoreCase = true)
                         .trim()
 
-                    val displayValue = when (cleanValue) {
-                        "2" -> "Good (Buona)"
-                        "3" -> "Overheat"
-                        "4" -> "Dead"
-                        "5" -> "Over Voltage"
-                        "7" -> "Cold"
+                    val displayValue = when {
+                        cleanValue.contains("good", ignoreCase = true) || cleanValue == "2" -> "Good"
+                        cleanValue.contains("cold", ignoreCase = true) || cleanValue == "7" -> "Cold"
+                        cleanValue.contains("overheat", ignoreCase = true) || cleanValue == "3" -> "Overheat"
+                        cleanValue.contains("dead", ignoreCase = true) || cleanValue == "4" -> "Dead"
                         else -> cleanValue
                     }
 
-                    Text(displayValue, fontSize = 14.sp, fontWeight = FontWeight.Medium, fontFamily = FontFamily.Monospace)
+                    Text(
+                        displayValue,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        fontFamily = FontFamily.Monospace
+                    )
                 }
             }
         }
@@ -455,21 +562,4 @@ fun StatusTab() {
         ) {
             OutlinedButton(
                 onClick = {
-                    isLoading = true
-                    scope.launch {
-                        withContext(Dispatchers.IO) {
-                            val results = ShizukuShellManager.executeCommands(commandList)
-                            statusLines = results.map { result ->
-                                if (result.success) result.output.ifEmpty { "N/A" } else "Not supported"
-                            }
-                            isLoading = false
-                        }
-                    }
-                },
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("Refresh")
-            }
-        }
-    }
-}
+                   
