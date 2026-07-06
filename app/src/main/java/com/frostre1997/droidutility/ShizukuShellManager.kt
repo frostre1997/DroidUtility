@@ -2,43 +2,32 @@ package com.frostre1997.droidutility
 
 import android.app.Activity
 import android.util.Log
-import rikka.shizuku.Shizuku
 
 object ShizukuShellManager {
     private const val TAG = "ShizukuShellManager"
 
-    fun checkAvailability(): Boolean {
-        return try {
-            Shizuku.getVersion() != -1
-        } catch (e: Exception) {
-            Log.e(TAG, "Shizuku not available", e)
-            false
-        }
-    }
+    // Always available (no Shizuku needed)
+    fun checkAvailability(): Boolean = true
 
-    fun hasPermission(): Boolean {
-        return try {
-            Shizuku.checkSelfPermission() == android.content.pm.PackageManager.PERMISSION_GRANTED
-        } catch (e: Exception) {
-            false
-        }
-    }
+    // Always have permission (no Shizuku needed)
+    fun hasPermission(): Boolean = true
 
+    // No-op (no Shizuku needed)
     fun requestPermission(activity: Activity) {
-        if (checkAvailability() && !hasPermission()) {
-            Shizuku.requestPermission(0)
-        }
+        Log.i(TAG, "Running without Shizuku")
     }
 
     suspend fun executeCommand(command: String): ShellResult {
         return try {
-            // Use our own ShizukuShell wrapper
-            val result = ShizukuShell.exec("sh", "-c", command)
+            val process = Runtime.getRuntime().exec(arrayOf("sh", "-c", command))
+            val exitCode = process.waitFor()
+            val stdout = process.inputStream.bufferedReader().readText()
+            val stderr = process.errorStream.bufferedReader().readText()
             ShellResult(
-                success = result.code == 0,
-                output = result.out ?: "",
-                error = result.err ?: "",
-                exitCode = result.code
+                success = exitCode == 0,
+                output = stdout,
+                error = stderr,
+                exitCode = exitCode
             )
         } catch (e: Exception) {
             ShellResult(
