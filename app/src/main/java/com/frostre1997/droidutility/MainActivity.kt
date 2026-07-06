@@ -175,8 +175,7 @@ fun TerminalTab() {
                         color = MaterialTheme.colorScheme.onErrorContainer,
                         fontSize = 13.sp
                     )
-                    
-                    // 👇 NEW: Grant button (only if Shizuku is running but no permission)
+
                     if (shizukuAvailable && !hasPermission) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Button(
@@ -218,7 +217,7 @@ fun TerminalTab() {
                         val result = withContext(Dispatchers.IO) {
                             ShizukuShellManager.executeCommand(command)
                         }
-                        output = result.displayText()
+                        output = result.displayText()  // extension works
                         isRunning = false
                     }
                 },
@@ -308,9 +307,6 @@ fun DebloatTab() {
                     fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onErrorContainer
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-                // Optional: Add a "Grant" button here too
-                // (you can copy the same button from TerminalTab)
             }
         }
     } else if (results != null && selectedConfig != null) {
@@ -470,18 +466,3 @@ fun ResultsView(configName: String, results: List<DebloatResult>, onBack: () -> 
         }
     }
 }
-
-// These data classes are assumed to exist in your project.
-// They are used by DebloatEngine.
-data class DebloatConfig(
-    val name: String,
-    val description: String,
-    val packages: List<String>
-)
-
-data class DebloatResult(
-    val packageName: String,
-    val action: String,
-    val success: Boolean,
-    val message: String
-)
