@@ -1,4 +1,4 @@
-# DroidUtility Documentation
+# DroidUtility - Documentation
 
 ## Architecture
 DroidUtility uses a modular architecture:
