@@ -1,137 +1,103 @@
 package com.frostre1997.droidutility
 
+import android.app.Activity
+import android.util.Log
 import rikka.shizuku.Shizuku
 import java.io.BufferedReader
 import java.io.InputStreamReader
-import java.util.concurrent.TimeUnit
 
 object ShizukuShellManager {
+    private const val TAG = "ShizukuShellManager"
 
-    private var isShizukuAvailable = false
-    private var permissionGranted = false
-
+    /**
+     * Check if Shizuku is running and connected.
+     */
     fun checkAvailability(): Boolean {
-        isShizukuAvailable = try {
-            Shizuku.pingBinder()
+        return try {
+            Shizuku.ping()
         } catch (e: Exception) {
+            Log.e(TAG, "Shizuku not available", e)
             false
         }
-        return isShizukuAvailable
     }
 
+    /**
+     * Check if we already have Shizuku permission.
+     */
     fun hasPermission(): Boolean {
-        permissionGranted = try {
-            if (!checkAvailability()) return false
+        return try {
             Shizuku.checkSelfPermission() == android.content.pm.PackageManager.PERMISSION_GRANTED
         } catch (e: Exception) {
             false
         }
-        return permissionGranted
     }
 
-    fun requestPermission() {
-        if (!checkAvailability()) return
-        try {
-            if (Shizuku.checkSelfPermission() != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                Shizuku.requestPermission(0)
-            }
-        } catch (_: Exception) { }
+    /**
+     * Request Shizuku permission from the user.
+     * Call this from an Activity context.
+     */
+    fun requestPermission(activity: Activity) {
+        if (checkAvailability() && !hasPermission()) {
+            // 0 is an arbitrary request code; you can use a constant
+            Shizuku.requestPermission(0)
+        }
     }
 
-    fun executeCommand(command: String): ShellResult {
-        if (!checkAvailability()) {
-            return ShellResult(false, "", "Shizuku is not running. Start Shizuku and grant permission.")
-        }
-
-        if (!hasPermission()) {
-            return ShellResult(false, "", "Shizuku permission not granted.")
-        }
-
+    /**
+     * Execute a single shell command via Shizuku.
+     * Returns a ShellResult containing stdout, stderr, and exit code.
+     */
+    suspend fun executeCommand(command: String): ShellResult {
         return try {
-            // Chiamiamo il metodo tramite riflessione pura di Java impostandolo come accessibile.
-            // Questo rompe qualsiasi blocco o bug del compilatore Kotlin a monte.
-            val method = Shizuku::class.java.getDeclaredMethod(
-                "newProcess", 
-                Array<String>::class.java, 
-                Array<String>::class.java, 
-                String::class.java
-            )
-            method.isAccessible = true
-            
-            val cmdArgs = arrayOf("sh", "-c", command)
-            val process = method.invoke(null, cmdArgs, null, null) as java.lang.Process
-
-            val stdout = process.inputStream.bufferedReader().use { it.readText() }
-            val stderr = process.errorStream.bufferedReader().use { it.readText() }
+            val process = Shizuku.newProcess(arrayOf("sh", "-c", command))
             val exitCode = process.waitFor()
-
-            if (exitCode == 0) {
-                ShellResult(true, stdout.trimEnd(), null)
-            } else {
-                ShellResult(false, stdout.trimEnd(), stderr.trimEnd().ifEmpty { "Exit code: $exitCode" })
-            }
+            val stdout = process.inputStream.bufferedReader().readText()
+            val stderr = process.errorStream.bufferedReader().readText()
+            ShellResult(
+                success = exitCode == 0,
+                output = stdout,
+                error = stderr,
+                exitCode = exitCode
+            )
         } catch (e: Exception) {
-            ShellResult(false, "", e.cause?.message ?: e.message ?: "Unknown error")
+            ShellResult(
+                success = false,
+                output = "",
+                error = e.localizedMessage ?: "Unknown error",
+                exitCode = -1
+            )
         }
     }
 
-    fun executeCommands(commands: List<String>): List<ShellResult> {
+    /**
+     * Execute multiple commands sequentially.
+     */
+    suspend fun executeCommands(commands: List<String>): List<ShellResult> {
         return commands.map { executeCommand(it) }
     }
 
-    fun executeWithTimeout(command: String, timeoutMs: Long = 10000): ShellResult {
-        if (!checkAvailability()) {
-            return ShellResult(false, "", "Shizuku is not running.")
-        }
-        if (!hasPermission()) {
-            return ShellResult(false, "", "Shizuku permission not granted.")
-        }
-
-        return try {
-            val method = Shizuku::class.java.getDeclaredMethod(
-                "newProcess", 
-                Array<String>::class.java, 
-                Array<String>::class.java, 
-                String::class.java
-            )
-            method.isAccessible = true
-            
-            val cmdArgs = arrayOf("sh", "-c", command)
-            val process = method.invoke(null, cmdArgs, null, null) as java.lang.Process
-            
-            val exited = process.waitFor(timeoutMs, TimeUnit.MILLISECONDS)
-            if (!exited) {
-                process.destroy()
-                return ShellResult(false, "", "Command timed out after ${timeoutMs}ms")
+    /**
+     * Helper to format a ShellResult for display.
+     */
+    fun ShellResult.displayText(): String {
+        return buildString {
+            append("Exit code: $exitCode\n\n")
+            if (output.isNotBlank()) {
+                append("--- STDOUT ---\n$output\n")
             }
-
-            val stdout = process.inputStream.bufferedReader().use { it.readText() }
-            val stderr = process.errorStream.bufferedReader().use { it.readText() }
-            val exitCode = process.exitValue()
-
-            if (exitCode == 0) {
-                ShellResult(true, stdout.trimEnd(), null)
-            } else {
-                ShellResult(false, stdout.trimEnd(), stderr.trimEnd().ifEmpty { "Exit code: $exitCode" })
+            if (error.isNotBlank()) {
+                append("--- STDERR ---\n$error\n")
             }
-        } catch (e: Exception) {
-            ShellResult(false, "", e.cause?.message ?: e.message ?: "Unknown error")
+            if (output.isBlank() && error.isBlank()) {
+                append("(no output)")
+            }
         }
     }
-}
 
-data class ShellResult(
-    val success: Boolean,
-    val output: String,
-    val error: String?
-) {
-    fun displayText(): String {
-        return when {
-            success && output.isNotEmpty() -> output
-            success -> "Command executed successfully."
-            !success && error != null -> "Error: $error"
-            else -> "Unknown error occurred."
-        }
-    }
+    data class ShellResult(
+        val success: Boolean,
+        val output: String,
+        val error: String,
+        val exitCode: Int
+    )
 }
-
