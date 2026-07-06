@@ -35,10 +35,11 @@ object ShizukuShellManager {
         }
     }
 
-    // Execute a shell command – pass command as array of strings
+    // Execute a shell command – using the correct public API
     suspend fun executeCommand(command: String): ShellResult {
         return try {
-            val process = Shizuku.newProcess(arrayOf("sh", "-c", command))
+            // Use the varargs version – Shizuku.newProcess(String...)
+            val process = Shizuku.newProcess("sh", "-c", command)
             val exitCode = process.waitFor()
             val stdout = process.inputStream.bufferedReader().readText()
             val stderr = process.errorStream.bufferedReader().readText()
