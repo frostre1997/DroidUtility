@@ -3,7 +3,6 @@ package com.frostre1997.droidutility
 import android.app.Activity
 import android.util.Log
 import rikka.shizuku.Shizuku
-import rikka.shizuku.ShizukuShell
 
 object ShizukuShellManager {
     private const val TAG = "ShizukuShellManager"
@@ -33,13 +32,16 @@ object ShizukuShellManager {
 
     suspend fun executeCommand(command: String): ShellResult {
         return try {
-            // ✅ Use ShizukuShell.exec – now provided by the 'shared' artifact
-            val result = ShizukuShell.exec(arrayOf("sh", "-c", command))
+            // ✅ Correct public API: pass an Array<String>
+            val process = Shizuku.newProcess(arrayOf("sh", "-c", command))
+            val exitCode = process.waitFor()
+            val stdout = process.inputStream.bufferedReader().readText()
+            val stderr = process.errorStream.bufferedReader().readText()
             ShellResult(
-                success = result.code == 0,
-                output = result.out ?: "",
-                error = result.err ?: "",
-                exitCode = result.code
+                success = exitCode == 0,
+                output = stdout,
+                error = stderr,
+                exitCode = exitCode
             )
         } catch (e: Exception) {
             ShellResult(
