@@ -2,6 +2,7 @@ package com.frostre1997.droidutility
 
 import android.app.Activity
 import android.util.Log
+import rikka.shizuku.ShizukuShell
 import rikka.shizuku.Shizuku
 import java.io.BufferedReader
 import java.io.InputStreamReader
