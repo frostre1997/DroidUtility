@@ -38,7 +38,6 @@ object ShizukuShellManager {
      */
     fun requestPermission(activity: Activity) {
         if (checkAvailability() && !hasPermission()) {
-            // 0 is an arbitrary request code
             Shizuku.requestPermission(0)
         }
     }
@@ -49,7 +48,7 @@ object ShizukuShellManager {
      */
     suspend fun executeCommand(command: String): ShellResult {
         return try {
-            // Correct way: Shizuku.newProcess(String... cmd)
+            // Correct way: pass an array of strings (varargs)
             val process = Shizuku.newProcess("sh", "-c", command)
             val exitCode = process.waitFor()
             val stdout = process.inputStream.bufferedReader().readText()
@@ -78,27 +77,31 @@ object ShizukuShellManager {
     }
 
     /**
-     * Extension function to format a ShellResult for display.
+     * Data class for shell result.
      */
-    fun ShellResult.displayText(): String {
-        return buildString {
-            append("Exit code: $exitCode\n\n")
-            if (output.isNotBlank()) {
-                append("--- STDOUT ---\n$output\n")
-            }
-            if (error.isNotBlank()) {
-                append("--- STDERR ---\n$error\n")
-            }
-            if (output.isBlank() && error.isBlank()) {
-                append("(no output)")
-            }
-        }
-    }
-
     data class ShellResult(
         val success: Boolean,
         val output: String,
         val error: String,
         val exitCode: Int
     )
+}
+
+/**
+ * Extension function to format a ShellResult for display.
+ * Defined at top level so it's available everywhere.
+ */
+fun ShizukuShellManager.ShellResult.displayText(): String {
+    return buildString {
+        append("Exit code: $exitCode\n\n")
+        if (output.isNotBlank()) {
+            append("--- STDOUT ---\n$output\n")
+        }
+        if (error.isNotBlank()) {
+            append("--- STDERR ---\n$error\n")
+        }
+        if (output.isBlank() && error.isBlank()) {
+            append("(no output)")
+        }
+    }
 }
