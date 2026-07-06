@@ -32,6 +32,21 @@ object ShizukuShellManager {
         }
     }
 
+    @Suppress("PrivateApi")
+    private val newProcessMethod by lazy {
+        try {
+            Shizuku::class.java.getDeclaredMethod(
+                "newProcess",
+                Array<String>::class.java,
+                Array<String>::class.java,
+                String::class.java
+            ).apply { isAccessible = true }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to get Shizuku.newProcess method", e)
+            null
+        }
+    }
+
     init {
         Shizuku.addBinderReceivedListenerSticky(binderReceivedListener)
         Shizuku.addBinderDeadListener(binderDeadListener)
@@ -97,7 +112,21 @@ object ShizukuShellManager {
                     )
                 }
 
-                val process = Shizuku.newProcess(arrayOf("sh", "-c", command), null, null)
+                val method = newProcessMethod
+                    ?: return@withContext ShellResult(
+                        success = false,
+                        output = "",
+                        error = "Shizuku.newProcess() method not available",
+                        exitCode = -1
+                    )
+
+                val process = method.invoke(
+                    null,
+                    arrayOf("sh", "-c", command),
+                    null,
+                    null
+                ) as Process
+
                 val exitCode = process.waitFor()
                 val stdout = process.inputStream.bufferedReader().readText()
                 val stderr = process.errorStream.bufferedReader().readText()
