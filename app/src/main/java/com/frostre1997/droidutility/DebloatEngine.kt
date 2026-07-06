@@ -6,7 +6,6 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.File
 
-// Data classes moved here (removed from MainActivity)
 data class DebloatConfig(
     val name: String,
     val description: String,
@@ -23,9 +22,6 @@ data class DebloatResult(
 object DebloatEngine {
     private const val TAG = "DebloatEngine"
 
-    /**
-     * Load all JSON config files from a directory.
-     */
     suspend fun loadConfigsFromDir(dir: File): List<Pair<String, DebloatConfig>> {
         return withContext(Dispatchers.IO) {
             if (!dir.exists() || !dir.isDirectory) return@withContext emptyList()
@@ -48,20 +44,14 @@ object DebloatEngine {
         }
     }
 
-    /**
-     * Apply a debloat configuration: uninstall or disable packages.
-     * This function is suspend – call from a coroutine.
-     */
     suspend fun applyConfig(config: DebloatConfig): List<DebloatResult> {
         val results = mutableListOf<DebloatResult>()
         for (pkg in config.packages) {
-            // Try to uninstall (for user apps)
             val uninstallResult = ShizukuShellManager.executeCommand("pm uninstall $pkg")
             if (uninstallResult.success) {
                 results.add(DebloatResult(pkg, "uninstall", true, "Uninstalled successfully"))
                 continue
             }
-            // If uninstall fails, try to disable (for system apps)
             val disableResult = ShizukuShellManager.executeCommand("pm disable $pkg")
             if (disableResult.success) {
                 results.add(DebloatResult(pkg, "disable", true, "Disabled successfully"))
