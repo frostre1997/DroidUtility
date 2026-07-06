@@ -291,7 +291,7 @@ fun DebloatTab() {
                 )
             }
         }
-        return
+        return@Composable
     }
 
     if (results != null && selectedConfig != null) {
@@ -303,7 +303,7 @@ fun DebloatTab() {
                 selectedConfig = null
             }
         )
-        return
+        return@Composable
     }
 
     LazyColumn(
@@ -476,22 +476,19 @@ fun StatusTab() {
         "uptime"
     )
 
-    // Central function to load data – returns error string or null
-    suspend fun loadData(): String? {
-        return try {
-            // All Shizuku calls inside a single try-catch for ANY Throwable
-            val shizukuAvailable = ShizukuShellManager.checkAvailability()
-            val hasPermission = ShizukuShellManager.hasPermission()
+    // Load data on first composition
+    LaunchedEffect(Unit) {
+        isLoading = true
+        val shizukuAvailable = ShizukuShellManager.checkAvailability()
+        val hasPermission = ShizukuShellManager.hasPermission()
 
-            if (!shizukuAvailable || !hasPermission) {
-                return if (!shizukuAvailable) {
-                    "Shizuku is not running. Start Shizuku first."
-                } else {
-                    "Shizuku permission not granted. Grant it in Shizuku app."
-                }
+        if (!shizukuAvailable || !hasPermission) {
+            errorMessage = if (!shizukuAvailable) {
+                "Shizuku is not running. Start Shizuku first."
+            } else {
+                "Shizuku permission not granted. Grant it in Shizuku app."
             }
-
-            // Execute commands – also catch any error inside
+        } else {
             try {
                 val results = ShizukuShellManager.executeCommands(commandList)
                 statusLines = results.map { result ->
@@ -501,20 +498,10 @@ fun StatusTab() {
                         "Unknown"
                     }
                 }
-                null // no error
             } catch (e: Exception) {
-                "Command execution error: ${e.localizedMessage ?: e.toString()}"
+                errorMessage = "Error: ${e.localizedMessage ?: e.toString()}"
             }
-        } catch (t: Throwable) {
-            // Catches EVERYTHING: Exception, Error, NoClassDefFoundError, etc.
-            "Fatal error: ${t.localizedMessage ?: t.javaClass.simpleName}"
         }
-    }
-
-    // Load data on first composition
-    LaunchedEffect(Unit) {
-        isLoading = true
-        errorMessage = loadData()
         isLoading = false
     }
 
@@ -558,7 +545,29 @@ fun StatusTab() {
                     isLoading = true
                     errorMessage = null
                     scope.launch {
-                        errorMessage = loadData()
+                        val shizukuAvailable = ShizukuShellManager.checkAvailability()
+                        val hasPermission = ShizukuShellManager.hasPermission()
+
+                        if (!shizukuAvailable || !hasPermission) {
+                            errorMessage = if (!shizukuAvailable) {
+                                "Shizuku is not running. Start Shizuku first."
+                            } else {
+                                "Shizuku permission not granted. Grant it in Shizuku app."
+                            }
+                        } else {
+                            try {
+                                val results = ShizukuShellManager.executeCommands(commandList)
+                                statusLines = results.map { result ->
+                                    if (result.success && result.output.isNotBlank()) {
+                                        result.output.trim()
+                                    } else {
+                                        "Unknown"
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                errorMessage = "Error: ${e.localizedMessage ?: e.toString()}"
+                            }
+                        }
                         isLoading = false
                     }
                 },
@@ -616,7 +625,29 @@ fun StatusTab() {
                     isLoading = true
                     errorMessage = null
                     scope.launch {
-                        errorMessage = loadData()
+                        val shizukuAvailable = ShizukuShellManager.checkAvailability()
+                        val hasPermission = ShizukuShellManager.hasPermission()
+
+                        if (!shizukuAvailable || !hasPermission) {
+                            errorMessage = if (!shizukuAvailable) {
+                                "Shizuku is not running. Start Shizuku first."
+                            } else {
+                                "Shizuku permission not granted. Grant it in Shizuku app."
+                            }
+                        } else {
+                            try {
+                                val results = ShizukuShellManager.executeCommands(commandList)
+                                statusLines = results.map { result ->
+                                    if (result.success && result.output.isNotBlank()) {
+                                        result.output.trim()
+                                    } else {
+                                        "Unknown"
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                errorMessage = "Error: ${e.localizedMessage ?: e.toString()}"
+                            }
+                        }
                         isLoading = false
                     }
                 },
