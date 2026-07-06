@@ -2,13 +2,10 @@ package com.frostre1997.droidutility
 
 import android.app.Activity
 import android.content.pm.PackageManager
-import android.os.IBinder
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import rikka.shizuku.Shizuku
-import rikka.shizuku.ShizukuBinderWrapper
-import rikka.shizuku.SystemServiceHelper
 
 object ShizukuShellManager {
     private const val TAG = "ShizukuShellManager"
@@ -62,6 +59,7 @@ object ShizukuShellManager {
         }
     }
 
+    @Suppress("UNUSED_PARAMETER")
     fun requestPermission(activity: Activity) {
         if (!checkAvailability()) {
             Log.w(TAG, "Shizuku not available")
