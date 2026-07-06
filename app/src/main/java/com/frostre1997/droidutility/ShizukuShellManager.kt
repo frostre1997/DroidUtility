@@ -9,21 +9,17 @@ import java.io.InputStreamReader
 object ShizukuShellManager {
     private const val TAG = "ShizukuShellManager"
 
-    /**
-     * Check if Shizuku is running and connected.
-     */
+    // Check if Shizuku is running – uses getVersion() which returns -1 if not connected
     fun checkAvailability(): Boolean {
         return try {
-            Shizuku.ping()
+            Shizuku.getVersion() != -1
         } catch (e: Exception) {
             Log.e(TAG, "Shizuku not available", e)
             false
         }
     }
 
-    /**
-     * Check if we already have Shizuku permission.
-     */
+    // Check permission
     fun hasPermission(): Boolean {
         return try {
             Shizuku.checkSelfPermission() == android.content.pm.PackageManager.PERMISSION_GRANTED
@@ -32,24 +28,17 @@ object ShizukuShellManager {
         }
     }
 
-    /**
-     * Request Shizuku permission from the user.
-     * Call this from an Activity context.
-     */
+    // Request permission
     fun requestPermission(activity: Activity) {
         if (checkAvailability() && !hasPermission()) {
             Shizuku.requestPermission(0)
         }
     }
 
-    /**
-     * Execute a single shell command via Shizuku.
-     * Returns a ShellResult containing stdout, stderr, and exit code.
-     */
+    // Execute a shell command – pass command as array of strings
     suspend fun executeCommand(command: String): ShellResult {
         return try {
-            // Correct way: pass an array of strings (varargs)
-            val process = Shizuku.newProcess("sh", "-c", command)
+            val process = Shizuku.newProcess(arrayOf("sh", "-c", command))
             val exitCode = process.waitFor()
             val stdout = process.inputStream.bufferedReader().readText()
             val stderr = process.errorStream.bufferedReader().readText()
@@ -69,16 +58,11 @@ object ShizukuShellManager {
         }
     }
 
-    /**
-     * Execute multiple commands sequentially.
-     */
+    // Execute multiple commands
     suspend fun executeCommands(commands: List<String>): List<ShellResult> {
         return commands.map { executeCommand(it) }
     }
 
-    /**
-     * Data class for shell result.
-     */
     data class ShellResult(
         val success: Boolean,
         val output: String,
@@ -87,10 +71,7 @@ object ShizukuShellManager {
     )
 }
 
-/**
- * Extension function to format a ShellResult for display.
- * Defined at top level so it's available everywhere.
- */
+// Extension function to format output – placed at top level
 fun ShizukuShellManager.ShellResult.displayText(): String {
     return buildString {
         append("Exit code: $exitCode\n\n")
