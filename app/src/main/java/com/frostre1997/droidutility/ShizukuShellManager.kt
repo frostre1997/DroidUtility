@@ -32,16 +32,13 @@ object ShizukuShellManager {
 
     suspend fun executeCommand(command: String): ShellResult {
         return try {
-            // ✅ Correct public API: pass an Array<String>
-            val process = Shizuku.newProcess(arrayOf("sh", "-c", command))
-            val exitCode = process.waitFor()
-            val stdout = process.inputStream.bufferedReader().readText()
-            val stderr = process.errorStream.bufferedReader().readText()
+            // Use our own ShizukuShell wrapper
+            val result = ShizukuShell.exec("sh", "-c", command)
             ShellResult(
-                success = exitCode == 0,
-                output = stdout,
-                error = stderr,
-                exitCode = exitCode
+                success = result.code == 0,
+                output = result.out ?: "",
+                error = result.err ?: "",
+                exitCode = result.code
             )
         } catch (e: Exception) {
             ShellResult(
