@@ -37,7 +37,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            // Read saved theme
             var themeMode by remember { mutableStateOf(ThemePreferences.getThemeMode(this)) }
 
             DroidUtilityTheme(themeMode = themeMode) {
@@ -68,7 +67,6 @@ fun DroidUtilityTheme(
     }
 
     val colorScheme = if (isDark) {
-        // AMOLED: use pure black background for true black
         val background = if (themeMode == ThemeMode.AMOLED) Color.Black else Color(0xFF121212)
         darkColorScheme(
             primary = Color(0xFF90CAF9),
@@ -815,19 +813,3 @@ fun SettingsTab(
         }
     }
 }
-
-// ─── Data classes (already in DebloatEngine.kt – but needed for MainActivity) ──
-// If these are already in DebloatEngine.kt, you can remove these lines.
-// I'm including them as fallback.
-data class DebloatConfig(
-    val name: String,
-    val description: String,
-    val packages: List<String>
-)
-
-data class DebloatResult(
-    val packageName: String,
-    val action: String,
-    val success: Boolean,
-    val message: String
-)
