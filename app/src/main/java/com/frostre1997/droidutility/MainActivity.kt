@@ -946,7 +946,9 @@ fun SettingsTab(themeMode: MutableState<ThemeMode>) {
                             if (!available) {
                                 Toast.makeText(context, "Please start Shizuku app", Toast.LENGTH_LONG).show()
                             } else {
-                                ShizukuShellManager.requestPermission()
+                                if (Context is Activity) {
+                                    ShizukuShellManager.requestPermission()
+                                }
                                 Toast.makeText(context, "Check Shizuku app for permission request", Toast.LENGTH_LONG).show()
                             }
                         },
