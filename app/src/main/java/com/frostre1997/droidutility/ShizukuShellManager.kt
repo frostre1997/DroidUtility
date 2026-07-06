@@ -38,7 +38,7 @@ object ShizukuShellManager {
      */
     fun requestPermission(activity: Activity) {
         if (checkAvailability() && !hasPermission()) {
-            // 0 is an arbitrary request code; you can use a constant
+            // 0 is an arbitrary request code
             Shizuku.requestPermission(0)
         }
     }
@@ -49,7 +49,8 @@ object ShizukuShellManager {
      */
     suspend fun executeCommand(command: String): ShellResult {
         return try {
-            val process = Shizuku.newProcess(arrayOf("sh", "-c", command))
+            // Correct way: Shizuku.newProcess(String... cmd)
+            val process = Shizuku.newProcess("sh", "-c", command)
             val exitCode = process.waitFor()
             val stdout = process.inputStream.bufferedReader().readText()
             val stderr = process.errorStream.bufferedReader().readText()
@@ -77,7 +78,7 @@ object ShizukuShellManager {
     }
 
     /**
-     * Helper to format a ShellResult for display.
+     * Extension function to format a ShellResult for display.
      */
     fun ShellResult.displayText(): String {
         return buildString {
