@@ -11,7 +11,6 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        // No custom repositories – everything from Maven Central
     }
 }
 
