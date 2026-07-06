@@ -476,24 +476,23 @@ fun StatusTab() {
         "uptime"
     )
 
-    LaunchedEffect(Unit) {
-        try {
-            // Check Shizuku availability INSIDE try/catch
+    // Central function to load data – returns error string or null
+    suspend fun loadData(): String? {
+        return try {
+            // All Shizuku calls inside a single try-catch for ANY Throwable
             val shizukuAvailable = ShizukuShellManager.checkAvailability()
             val hasPermission = ShizukuShellManager.hasPermission()
-            
+
             if (!shizukuAvailable || !hasPermission) {
-                errorMessage = if (!shizukuAvailable) {
+                return if (!shizukuAvailable) {
                     "Shizuku is not running. Start Shizuku first."
                 } else {
                     "Shizuku permission not granted. Grant it in Shizuku app."
                 }
-                isLoading = false
-                return@LaunchedEffect
             }
 
-            // If we get here, Shizuku is ready – execute commands
-            withContext(Dispatchers.IO) {
+            // Execute commands – also catch any error inside
+            try {
                 val results = ShizukuShellManager.executeCommands(commandList)
                 statusLines = results.map { result ->
                     if (result.success && result.output.isNotBlank()) {
@@ -502,17 +501,24 @@ fun StatusTab() {
                         "Unknown"
                     }
                 }
+                null // no error
+            } catch (e: Exception) {
+                "Command execution error: ${e.localizedMessage ?: e.toString()}"
             }
-            errorMessage = null
-        } catch (e: Exception) {
-            // Catch ANY exception – prevent crash at all costs
-            errorMessage = "Error: ${e.localizedMessage ?: e.javaClass.simpleName}"
-            statusLines = emptyList()
-        } finally {
-            isLoading = false
+        } catch (t: Throwable) {
+            // Catches EVERYTHING: Exception, Error, NoClassDefFoundError, etc.
+            "Fatal error: ${t.localizedMessage ?: t.javaClass.simpleName}"
         }
     }
 
+    // Load data on first composition
+    LaunchedEffect(Unit) {
+        isLoading = true
+        errorMessage = loadData()
+        isLoading = false
+    }
+
+    // UI
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -547,42 +553,13 @@ fun StatusTab() {
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
-            // Show a retry button
             Button(
                 onClick = {
                     isLoading = true
                     errorMessage = null
                     scope.launch {
-                        // Re-run the whole logic
-                        try {
-                            val shizukuAvailable = ShizukuShellManager.checkAvailability()
-                            val hasPermission = ShizukuShellManager.hasPermission()
-                            if (!shizukuAvailable || !hasPermission) {
-                                errorMessage = if (!shizukuAvailable) {
-                                    "Shizuku is not running. Start Shizuku first."
-                                } else {
-                                    "Shizuku permission not granted. Grant it in Shizuku app."
-                                }
-                                isLoading = false
-                                return@launch
-                            }
-                            withContext(Dispatchers.IO) {
-                                val results = ShizukuShellManager.executeCommands(commandList)
-                                statusLines = results.map { result ->
-                                    if (result.success && result.output.isNotBlank()) {
-                                        result.output.trim()
-                                    } else {
-                                        "Unknown"
-                                    }
-                                }
-                            }
-                            errorMessage = null
-                        } catch (e: Exception) {
-                            errorMessage = "Error: ${e.localizedMessage ?: e.javaClass.simpleName}"
-                            statusLines = emptyList()
-                        } finally {
-                            isLoading = false
-                        }
+                        errorMessage = loadData()
+                        isLoading = false
                     }
                 },
                 modifier = Modifier.fillMaxWidth()
@@ -592,7 +569,7 @@ fun StatusTab() {
             return@Column
         }
 
-        // Show data if no error
+        // No error – show data
         if (statusLines.isNotEmpty()) {
             val labels = listOf(
                 "Android Version", "Manufacturer", "Device Model",
@@ -639,39 +616,11 @@ fun StatusTab() {
                     isLoading = true
                     errorMessage = null
                     scope.launch {
-                        try {
-                            val shizukuAvailable = ShizukuShellManager.checkAvailability()
-                            val hasPermission = ShizukuShellManager.hasPermission()
-                            if (!shizukuAvailable || !hasPermission) {
-                                errorMessage = if (!shizukuAvailable) {
-                                    "Shizuku is not running. Start Shizuku first."
-                                } else {
-                                    "Shizuku permission not granted. Grant it in Shizuku app."
-                                }
-                                isLoading = false
-                                return@launch
-                            }
-                            withContext(Dispatchers.IO) {
-                                val results = ShizukuShellManager.executeCommands(commandList)
-                                statusLines = results.map { result ->
-                                    if (result.success && result.output.isNotBlank()) {
-                                        result.output.trim()
-                                    } else {
-                                        "Unknown"
-                                    }
-                                }
-                            }
-                            errorMessage = null
-                        } catch (e: Exception) {
-                            errorMessage = "Error: ${e.localizedMessage ?: e.javaClass.simpleName}"
-                            statusLines = emptyList()
-                        } finally {
-                            isLoading = false
-                        }
+                        errorMessage = loadData()
+                        isLoading = false
                     }
                 },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = true
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Refresh")
             }
