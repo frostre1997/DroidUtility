@@ -291,10 +291,7 @@ fun DebloatTab() {
                 )
             }
         }
-        return@Composable
-    }
-
-    if (results != null && selectedConfig != null) {
+    } else if (results != null && selectedConfig != null) {
         ResultsView(
             configName = selectedConfig!!.name,
             results = results!!,
@@ -303,77 +300,76 @@ fun DebloatTab() {
                 selectedConfig = null
             }
         )
-        return@Composable
-    }
-
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        item {
-            Text(
-                text = "DroidUtility • Debloat Manager",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                "Select a configuration to apply system optimizations.",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-        }
-
-        if (configs.isEmpty()) {
+    } else {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             item {
+                Text(
+                    text = "DroidUtility • Debloat Manager",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    "Select a configuration to apply system optimizations.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+
+            if (configs.isEmpty()) {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text("No configs found", fontWeight = FontWeight.Bold)
+                            Text(
+                                "Place JSON config files in /storage/emulated/0/DroidUtility/configs/",
+                                fontSize = 13.sp
+                            )
+                        }
+                    }
+                }
+            }
+
+            items(configs) { (_, config) ->
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            selectedConfig = config
+                            scope.launch {
+                                isRunning = true
+                                results = withContext(Dispatchers.IO) {
+                                    DebloatEngine.applyConfig(config)
+                                }
+                                isRunning = false
+                            }
+                        },
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant
                     )
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text("No configs found", fontWeight = FontWeight.Bold)
-                        Text(
-                            "Place JSON config files in /storage/emulated/0/DroidUtility/configs/",
-                            fontSize = 13.sp
-                        )
-                    }
-                }
-            }
-        }
-
-        items(configs) { (_, config) ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable {
-                        selectedConfig = config
-                        scope.launch {
-                            isRunning = true
-                            results = withContext(Dispatchers.IO) {
-                                DebloatEngine.applyConfig(config)
-                            }
-                            isRunning = false
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(config.name, fontWeight = FontWeight.Bold)
+                            Text("${config.packages.size} packages", fontSize = 12.sp)
                         }
-                    },
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(config.name, fontWeight = FontWeight.Bold)
-                        Text("${config.packages.size} packages", fontSize = 12.sp)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(config.description, fontSize = 13.sp)
                     }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(config.description, fontSize = 13.sp)
                 }
             }
         }
