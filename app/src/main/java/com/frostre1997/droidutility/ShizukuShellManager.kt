@@ -4,13 +4,10 @@ import android.app.Activity
 import android.util.Log
 import rikka.shizuku.Shizuku
 import rikka.shizuku.ShizukuShell
-import java.io.BufferedReader
-import java.io.InputStreamReader
 
 object ShizukuShellManager {
     private const val TAG = "ShizukuShellManager"
 
-    // Check if Shizuku is running – uses getVersion()
     fun checkAvailability(): Boolean {
         return try {
             Shizuku.getVersion() != -1
@@ -20,7 +17,6 @@ object ShizukuShellManager {
         }
     }
 
-    // Check permission
     fun hasPermission(): Boolean {
         return try {
             Shizuku.checkSelfPermission() == android.content.pm.PackageManager.PERMISSION_GRANTED
@@ -29,17 +25,14 @@ object ShizukuShellManager {
         }
     }
 
-    // Request permission
     fun requestPermission(activity: Activity) {
         if (checkAvailability() && !hasPermission()) {
             Shizuku.requestPermission(0)
         }
     }
 
-    // Execute a shell command using ShizukuShell (no more newProcess issues)
     suspend fun executeCommand(command: String): ShellResult {
         return try {
-            // Use ShizukuShell.exec – returns a Shell.Result object
             val result = ShizukuShell.exec(arrayOf("sh", "-c", command))
             ShellResult(
                 success = result.code == 0,
@@ -57,7 +50,6 @@ object ShizukuShellManager {
         }
     }
 
-    // Execute multiple commands
     suspend fun executeCommands(commands: List<String>): List<ShellResult> {
         return commands.map { executeCommand(it) }
     }
@@ -70,7 +62,6 @@ object ShizukuShellManager {
     )
 }
 
-// Extension function to format output
 fun ShizukuShellManager.ShellResult.displayText(): String {
     return buildString {
         append("Exit code: $exitCode\n\n")
