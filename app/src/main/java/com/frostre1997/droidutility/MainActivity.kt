@@ -1,107 +1,468 @@
 package com.frostre1997.droidutility
 
 import android.app.Activity
-import android.util.Log
-import rikka.shizuku.Shizuku
-import java.io.BufferedReader
-import java.io.InputStreamReader
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
 
-object ShizukuShellManager {
-    private const val TAG = "ShizukuShellManager"
-
-    /**
-     * Check if Shizuku is running and connected.
-     */
-    fun checkAvailability(): Boolean {
-        return try {
-            Shizuku.ping()
-        } catch (e: Exception) {
-            Log.e(TAG, "Shizuku not available", e)
-            false
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            DroidUtilityTheme {
+                MainScreen()
+            }
         }
     }
-
-    /**
-     * Check if we already have Shizuku permission.
-     */
-    fun hasPermission(): Boolean {
-        return try {
-            Shizuku.checkSelfPermission() == android.content.pm.PackageManager.PERMISSION_GRANTED
-        } catch (e: Exception) {
-            false
-        }
-    }
-
-    /**
-     * Request Shizuku permission from the user.
-     * Call this from an Activity context.
-     */
-    fun requestPermission(activity: Activity) {
-        if (checkAvailability() && !hasPermission()) {
-            Shizuku.requestPermission(0)
-        }
-    }
-
-    /**
-     * Execute a single shell command via Shizuku.
-     * Returns a ShellResult containing stdout, stderr, and exit code.
-     */
-    suspend fun executeCommand(command: String): ShellResult {
-        return try {
-            // Correct way: pass an array of strings (varargs)
-            val process = Shizuku.newProcess("sh", "-c", command)
-            val exitCode = process.waitFor()
-            val stdout = process.inputStream.bufferedReader().readText()
-            val stderr = process.errorStream.bufferedReader().readText()
-            ShellResult(
-                success = exitCode == 0,
-                output = stdout,
-                error = stderr,
-                exitCode = exitCode
-            )
-        } catch (e: Exception) {
-            ShellResult(
-                success = false,
-                output = "",
-                error = e.localizedMessage ?: "Unknown error",
-                exitCode = -1
-            )
-        }
-    }
-
-    /**
-     * Execute multiple commands sequentially.
-     */
-    suspend fun executeCommands(commands: List<String>): List<ShellResult> {
-        return commands.map { executeCommand(it) }
-    }
-
-    /**
-     * Data class for shell result.
-     */
-    data class ShellResult(
-        val success: Boolean,
-        val output: String,
-        val error: String,
-        val exitCode: Int
-    )
 }
 
-/**
- * Extension function to format a ShellResult for display.
- * Defined at top level so it's available everywhere.
- */
-fun ShizukuShellManager.ShellResult.displayText(): String {
-    return buildString {
-        append("Exit code: $exitCode\n\n")
-        if (output.isNotBlank()) {
-            append("--- STDOUT ---\n$output\n")
+@Composable
+fun DroidUtilityTheme(
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    content: @Composable () -> Unit
+) {
+    val colorScheme = if (darkTheme) {
+        darkColorScheme(
+            primary = Color(0xFF90CAF9),
+            secondary = Color(0xFF80CBC4),
+            tertiary = Color(0xFFA5D6A7),
+            background = Color(0xFF121212),
+            surface = Color(0xFF1E1E1E),
+            surfaceVariant = Color(0xFF2C2C2C),
+            onPrimary = Color(0xFF0D0D0D),
+            onSecondary = Color(0xFF0D0D0D),
+            onBackground = Color(0xFFE0E0E0),
+            onSurface = Color(0xFFE0E0E0),
+            error = Color(0xFFCF6679),
+            errorContainer = Color(0xFFB00020),
+            onError = Color.Black,
+            onErrorContainer = Color.White,
+        )
+    } else {
+        lightColorScheme(
+            primary = Color(0xFF1976D2),
+            secondary = Color(0xFF00897B),
+            tertiary = Color(0xFF388E3C),
+            background = Color(0xFFF5F5F5),
+            surface = Color(0xFFFFFFFF),
+            surfaceVariant = Color(0xFFE8E8E8),
+            onPrimary = Color.White,
+            onSecondary = Color.White,
+            onBackground = Color(0xFF1A1A1A),
+            onSurface = Color(0xFF1A1A1A),
+            error = Color(0xFFB00020),
+            errorContainer = Color(0xFFFFDAD6),
+            onError = Color.White,
+            onErrorContainer = Color(0xFF410002),
+        )
+    }
+
+    MaterialTheme(
+        colorScheme = colorScheme,
+        shapes = Shapes(
+            small = RoundedCornerShape(12.dp),
+            medium = RoundedCornerShape(18.dp),
+            large = RoundedCornerShape(24.dp)
+        )
+    ) {
+        content()
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MainScreen() {
+    var selectedTab by remember { mutableIntStateOf(0) }
+
+    val tabs = listOf(
+        Triple("Terminal", Icons.Default.Terminal, "Execute shell commands"),
+        Triple("Debloat", Icons.Default.DeleteSweep, "Remove bloatware")
+    )
+
+    Scaffold(
+        bottomBar = {
+            NavigationBar(
+                containerColor = MaterialTheme.colorScheme.surface,
+                tonalElevation = 0.dp
+            ) {
+                tabs.forEachIndexed { index, (title, icon, _) ->
+                    NavigationBarItem(
+                        icon = { Icon(icon, contentDescription = title) },
+                        label = { Text(title) },
+                        selected = selectedTab == index,
+                        onClick = { selectedTab = index }
+                    )
+                }
+            }
         }
-        if (error.isNotBlank()) {
-            append("--- STDERR ---\n$error\n")
+    ) { padding ->
+        Column(modifier = Modifier.padding(padding)) {
+            when (selectedTab) {
+                0 -> TerminalTab()
+                1 -> DebloatTab()
+            }
         }
-        if (output.isBlank() && error.isBlank()) {
-            append("(no output)")
+    }
+}
+
+// ─── Terminal Tab ──────────────────────────────────────────────────────────────
+
+@Composable
+fun TerminalTab() {
+    var command by remember { mutableStateOf("") }
+    var output by remember { mutableStateOf("Waiting for command...") }
+    var isRunning by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    val shizukuAvailable = remember { ShizukuShellManager.checkAvailability() }
+    val hasPermission = remember { ShizukuShellManager.hasPermission() }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Text(
+            text = "DroidUtility • Terminal",
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
+        if (!shizukuAvailable || !hasPermission) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                )
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(
+                        if (!shizukuAvailable) "Shizuku is not running" else "Shizuku permission required",
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        if (!shizukuAvailable) "Start Shizuku and try again."
+                        else "Grant DroidUtility access in Shizuku.",
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        fontSize = 13.sp
+                    )
+
+                    if (shizukuAvailable && !hasPermission) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = {
+                                if (context is Activity) {
+                                    ShizukuShellManager.requestPermission(context)
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
+                        ) {
+                            Text("Grant Shizuku Permission")
+                        }
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        OutlinedTextField(
+            value = command,
+            onValueChange = { command = it },
+            label = { Text("Shell command") },
+            placeholder = { Text("e.g., pm list packages") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            shape = RoundedCornerShape(12.dp),
+            enabled = !isRunning && hasPermission
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(
+                onClick = {
+                    scope.launch {
+                        isRunning = true
+                        val result = withContext(Dispatchers.IO) {
+                            ShizukuShellManager.executeCommand(command)
+                        }
+                        output = result.displayText()  // extension works
+                        isRunning = false
+                    }
+                },
+                enabled = command.isNotBlank() && !isRunning && hasPermission
+            ) {
+                if (isRunning) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+                Text("Execute")
+            }
+
+            OutlinedButton(
+                onClick = {
+                    command = ""
+                    output = "Cleared."
+                }
+            ) {
+                Text("Clear")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            shape = MaterialTheme.shapes.medium
+        ) {
+            Box(modifier = Modifier.padding(12.dp)) {
+                SelectionContainer {
+                    Text(
+                        text = output,
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+        }
+    }
+}
+
+// ─── Debloat Tab ──────────────────────────────────────────────────────────────
+
+@Composable
+fun DebloatTab() {
+    var configs by remember { mutableStateOf<List<Pair<String, DebloatConfig>>>(emptyList()) }
+    var selectedConfig by remember { mutableStateOf<DebloatConfig?>(null) }
+    var results by remember { mutableStateOf<List<DebloatResult>?>(null) }
+    var isRunning by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    val hasPermission = remember { ShizukuShellManager.hasPermission() }
+
+    LaunchedEffect(Unit) {
+        withContext(Dispatchers.IO) {
+            val configsDir = File("/storage/emulated/0/DroidUtility/configs")
+            if (!configsDir.exists()) configsDir.mkdirs()
+            configs = DebloatEngine.loadConfigsFromDir(configsDir)
+        }
+    }
+
+    if (!hasPermission) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.errorContainer
+            )
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                Text(
+                    "Shizuku permission required",
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onErrorContainer
+                )
+                Text(
+                    "Grant DroidUtility access in Shizuku to use debloat features.",
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onErrorContainer
+                )
+            }
+        }
+    } else if (results != null && selectedConfig != null) {
+        ResultsView(
+            configName = selectedConfig!!.name,
+            results = results!!,
+            onBack = {
+                results = null
+                selectedConfig = null
+            }
+        )
+    } else {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            item {
+                Text(
+                    text = "DroidUtility • Debloat Manager",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    "Select a configuration to apply system optimizations.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+
+            if (configs.isEmpty()) {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text("No configs found", fontWeight = FontWeight.Bold)
+                            Text(
+                                "Place JSON config files in /storage/emulated/0/DroidUtility/configs/",
+                                fontSize = 13.sp
+                            )
+                        }
+                    }
+                }
+            }
+
+            items(configs) { (_, config) ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            selectedConfig = config
+                            scope.launch {
+                                isRunning = true
+                                results = withContext(Dispatchers.IO) {
+                                    DebloatEngine.applyConfig(config)
+                                }
+                                isRunning = false
+                            }
+                        },
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(config.name, fontWeight = FontWeight.Bold)
+                            Text("${config.packages.size} packages", fontSize = 12.sp)
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(config.description, fontSize = 13.sp)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ResultsView(configName: String, results: List<DebloatResult>, onBack: () -> Unit) {
+    val successCount = results.count { it.success }
+    val failCount = results.count { !it.success }
+
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TextButton(onClick = onBack) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Back")
+            }
+        }
+
+        Text(
+            "Results: $configName",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            "$successCount succeeded, $failCount failed",
+            style = MaterialTheme.typography.bodyMedium
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            items(results) { result ->
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (result.success)
+                            MaterialTheme.colorScheme.tertiaryContainer
+                        else
+                            MaterialTheme.colorScheme.errorContainer
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            if (result.success) Icons.Default.CheckCircle
+                            else Icons.Default.Error,
+                            contentDescription = null,
+                            tint = if (result.success)
+                                MaterialTheme.colorScheme.primary
+                            else
+                                MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                result.packageName,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
+                            Text(
+                                "${result.action}: ${result.message}",
+                                fontSize = 12.sp
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }
