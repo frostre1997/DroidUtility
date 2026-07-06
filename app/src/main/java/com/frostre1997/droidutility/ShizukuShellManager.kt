@@ -34,8 +34,8 @@ object ShizukuShellManager {
 
     suspend fun executeCommand(command: String): ShellResult {
         return try {
-            // Use newProcess with arrayOf - this is the correct public API
-            val process = Shizuku.newProcess(arrayOf("sh", "-c", command))
+            // ✅ Correct public API: arrayOf(vararg)
+            val process = Shizuku.newProcess("sh", "-c", command)
             val exitCode = process.waitFor()
             val stdout = process.inputStream.bufferedReader().readText()
             val stderr = process.errorStream.bufferedReader().readText()
