@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -97,10 +98,10 @@ fun DroidUtilityTheme(
 fun MainScreen() {
     var selectedTab by remember { mutableIntStateOf(0) }
 
+    // Only two tabs now (Status removed)
     val tabs = listOf(
         Triple("Terminal", Icons.Default.Terminal, "Execute shell commands"),
-        Triple("Debloat", Icons.Default.DeleteSweep, "Remove bloatware"),
-        Triple("Status", Icons.Default.Info, "System information")
+        Triple("Debloat", Icons.Default.DeleteSweep, "Remove bloatware")
     )
 
     Scaffold(
@@ -124,13 +125,12 @@ fun MainScreen() {
             when (selectedTab) {
                 0 -> TerminalTab()
                 1 -> DebloatTab()
-                2 -> StatusTab()
             }
         }
     }
 }
 
-// ─── Terminal Tab ──────────────────────────────────────────────────────────────
+// ─── Terminal Tab (unchanged, already safe) ────────────────────────────────
 
 @Composable
 fun TerminalTab() {
@@ -249,7 +249,7 @@ fun TerminalTab() {
     }
 }
 
-// ─── Debloat Tab ──────────────────────────────────────────────────────────────
+// ─── Debloat Tab (unchanged, safe) ──────────────────────────────────────────
 
 @Composable
 fun DebloatTab() {
@@ -369,6 +369,79 @@ fun DebloatTab() {
                         }
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(config.description, fontSize = 13.sp)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ResultsView(configName: String, results: List<DebloatResult>, onBack: () -> Unit) {
+    val successCount = results.count { it.success }
+    val failCount = results.count { !it.success }
+
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TextButton(onClick = onBack) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Back")
+            }
+        }
+
+        Text(
+            "Results: $configName",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            "$successCount succeeded, $failCount failed",
+            style = MaterialTheme.typography.bodyMedium
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            items(results) { result ->
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (result.success)
+                            MaterialTheme.colorScheme.tertiaryContainer
+                        else
+                            MaterialTheme.colorScheme.errorContainer
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            if (result.success) Icons.Default.CheckCircle
+                            else Icons.Default.Error,
+                            contentDescription = null,
+                            tint = if (result.success)
+                                MaterialTheme.colorScheme.primary
+                            else
+                                MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                result.packageName,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
+                            Text(
+                                "${result.action}: ${result.message}",
+                                fontSize = 12.sp
+                            )
+                        }
                     }
                 }
             }
