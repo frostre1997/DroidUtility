@@ -1,21 +1,16 @@
 package com.frostre1997.droidutility
 
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.decodeFromString
+import android.util.Log
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
 import java.io.File
 
-@Serializable
+// Data classes moved here (removed from MainActivity)
 data class DebloatConfig(
     val name: String,
     val description: String,
-    val packages: List<DebloatPackage>
-)
-
-@Serializable
-data class DebloatPackage(
-    val pkg: String,
-    val action: String // "disable" or "uninstall"
+    val packages: List<String>
 )
 
 data class DebloatResult(
@@ -26,80 +21,55 @@ data class DebloatResult(
 )
 
 object DebloatEngine {
+    private const val TAG = "DebloatEngine"
 
-    private val json = Json { ignoreUnknownKeys = true }
-
-    fun loadConfig(configFile: File): DebloatConfig? {
-        return try {
-            json.decodeFromString<DebloatConfig>(configFile.readText())
-        } catch (e: Exception) {
-            null
+    /**
+     * Load all JSON config files from a directory.
+     */
+    suspend fun loadConfigsFromDir(dir: File): List<Pair<String, DebloatConfig>> {
+        return withContext(Dispatchers.IO) {
+            if (!dir.exists() || !dir.isDirectory) return@withContext emptyList()
+            dir.listFiles { file ->
+                file.isFile && file.extension.equals("json", ignoreCase = true)
+            }?.mapNotNull { file ->
+                try {
+                    val json = JSONObject(file.readText())
+                    val name = json.optString("name", file.nameWithoutExtension)
+                    val description = json.optString("description", "")
+                    val packages = json.optJSONArray("packages")?.let { arr ->
+                        (0 until arr.length()).map { arr.getString(it) }
+                    } ?: emptyList()
+                    file.name to DebloatConfig(name, description, packages)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to parse ${file.name}", e)
+                    null
+                }
+            }?.toList() ?: emptyList()
         }
     }
 
-    fun loadConfigsFromDir(configsDir: File): List<Pair<String, DebloatConfig>> {
-        if (!configsDir.exists() || !configsDir.isDirectory) return emptyList()
-
-        return configsDir.listFiles()
-            ?.filter { it.extension.lowercase() == "json" }
-            ?.mapNotNull { file ->
-                loadConfig(file)?.let { file.nameWithoutExtension to it }
+    /**
+     * Apply a debloat configuration: uninstall or disable packages.
+     * This function is suspend – call from a coroutine.
+     */
+    suspend fun applyConfig(config: DebloatConfig): List<DebloatResult> {
+        val results = mutableListOf<DebloatResult>()
+        for (pkg in config.packages) {
+            // Try to uninstall (for user apps)
+            val uninstallResult = ShizukuShellManager.executeCommand("pm uninstall $pkg")
+            if (uninstallResult.success) {
+                results.add(DebloatResult(pkg, "uninstall", true, "Uninstalled successfully"))
+                continue
             }
-            ?: emptyList()
-    }
-
-    fun applyConfig(config: DebloatConfig, shellManager: ShizukuShellManager = ShizukuShellManager): List<DebloatResult> {
-        if (!shellManager.checkAvailability()) {
-            return listOf(DebloatResult("", "", false, "Shizuku is not available."))
-        }
-
-        if (!shellManager.hasPermission()) {
-            return listOf(DebloatResult("", "", false, "Shizuku permission not granted."))
-        }
-
-        return config.packages.map { pkg ->
-            val command = when (pkg.action.lowercase()) {
-                "disable" -> "pm disable-user --user 0 ${pkg.pkg}"
-                "uninstall" -> "pm uninstall --user 0 ${pkg.pkg}"
-                else -> "pm disable-user --user 0 ${pkg.pkg}"
+            // If uninstall fails, try to disable (for system apps)
+            val disableResult = ShizukuShellManager.executeCommand("pm disable $pkg")
+            if (disableResult.success) {
+                results.add(DebloatResult(pkg, "disable", true, "Disabled successfully"))
+            } else {
+                val errorMsg = disableResult.error.ifBlank { "Unknown error" }
+                results.add(DebloatResult(pkg, "disable", false, "Failed: $errorMsg"))
             }
-            val result = shellManager.executeCommand(command)
-            DebloatResult(
-                packageName = pkg.pkg,
-                action = pkg.action,
-                success = result.success,
-                message = result.displayText()
-            )
         }
-    }
-
-    fun getInstalledPackages(shellManager: ShizukuShellManager = ShizukuShellManager): List<String> {
-        val result = shellManager.executeCommand("pm list packages")
-        if (!result.success) return emptyList()
-
-        return result.output
-            .lines()
-            .filter { it.startsWith("package:") }
-            .map { it.removePrefix("package:").trim() }
-    }
-
-    fun getDisabledPackages(shellManager: ShizukuShellManager = ShizukuShellManager): List<String> {
-        val result = shellManager.executeCommand("pm list packages -d")
-        if (!result.success) return emptyList()
-
-        return result.output
-            .lines()
-            .filter { it.startsWith("package:") }
-            .map { it.removePrefix("package:").trim() }
-    }
-
-    fun restorePackage(packageName: String, shellManager: ShizukuShellManager = ShizukuShellManager): DebloatResult {
-        val result = shellManager.executeCommand("pm enable $packageName")
-        return DebloatResult(
-            packageName = packageName,
-            action = "enable",
-            success = result.success,
-            message = result.displayText()
-        )
+        return results
     }
 }
