@@ -1,88 +1,192 @@
 package com.frostre1997.droidutility
 
-import android.app.Activity
-import android.util.Log
+import android.content.ComponentName
+import android.content.ServiceConnection
+import android.os.IBinder
+import android.os.Process
 import rikka.shizuku.Shizuku
-import java.io.BufferedReader
-import java.io.InputStreamReader
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 object ShizukuShellManager {
-    private const val TAG = "ShizukuShellManager"
 
-    // Check if Shizuku is running – uses getVersion() which returns -1 if not connected
-    fun checkAvailability(): Boolean {
-        return try {
-            Shizuku.getVersion() != -1
-        } catch (e: Exception) {
-            Log.e(TAG, "Shizuku not available", e)
-            false
+    private var isShizukuAvailable = false
+    private var permissionGranted = false
+    private var commandService: ICommandService? = null
+    private val serviceLatch = CountDownLatch(1)
+
+    private val serviceConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName, binder: IBinder) {
+            commandService = ICommandService.Stub.asInterface(binder)
+            serviceLatch.countDown()
+        }
+
+        override fun onServiceDisconnected(name: ComponentName) {
+            commandService = null
         }
     }
 
-    // Check permission
+    private val serviceArgs by lazy {
+        Shizuku.UserServiceArgs(
+            ComponentName("com.frostre1997.droidutility", CommandService::class.java.name)
+        )
+            .daemon(false)
+            .processNameSuffix("command-service")
+            .debuggable(BuildConfig.DEBUG)
+            .version(BuildConfig.VERSION_CODE)
+    }
+
+    fun checkAvailability(): Boolean {
+        isShizukuAvailable = try {
+            Shizuku.pingBinder()
+        } catch (e: Exception) {
+            false
+        }
+        return isShizukuAvailable
+    }
+
     fun hasPermission(): Boolean {
-        return try {
+        permissionGranted = try {
+            if (!checkAvailability()) return false
             Shizuku.checkSelfPermission() == android.content.pm.PackageManager.PERMISSION_GRANTED
         } catch (e: Exception) {
             false
         }
+        return permissionGranted
     }
 
-    // Request permission
-    fun requestPermission(activity: Activity) {
-        if (checkAvailability() && !hasPermission()) {
-            Shizuku.requestPermission(0)
-        }
+    fun requestPermission() {
+        if (!checkAvailability()) return
+        try {
+            if (Shizuku.checkSelfPermission() != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                Shizuku.addRequestPermissionResultListener { requestCode, grantResult ->
+                    if (grantResult == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                        permissionGranted = true
+                    }
+                }
+                Shizuku.requestPermission(0)
+            }
+        } catch (_: Exception) { }
     }
 
-    // Execute a shell command – pass command as array of strings
-    suspend fun executeCommand(command: String): ShellResult {
+    private fun bindUserService(): Boolean {
+        if (!checkAvailability() || !hasPermission()) return false
+        
         return try {
-            val process = Shizuku.newProcess(arrayOf("sh", "-c", command))
-            val exitCode = process.waitFor()
-            val stdout = process.inputStream.bufferedReader().readText()
-            val stderr = process.errorStream.bufferedReader().readText()
-            ShellResult(
-                success = exitCode == 0,
-                output = stdout,
-                error = stderr,
-                exitCode = exitCode
-            )
+            if (Shizuku.getVersion() >= 10) {
+                Shizuku.bindUserService(serviceArgs, serviceConnection)
+                serviceLatch.await(5, TimeUnit.SECONDS)
+                commandService != null
+            } else {
+                false
+            }
         } catch (e: Exception) {
-            ShellResult(
-                success = false,
-                output = "",
-                error = e.localizedMessage ?: "Unknown error",
-                exitCode = -1
-            )
+            false
         }
     }
 
-    // Execute multiple commands
-    suspend fun executeCommands(commands: List<String>): List<ShellResult> {
+    private fun unbindUserService() {
+        try {
+            if (Shizuku.getVersion() >= 10 && commandService != null) {
+                Shizuku.unbindUserService(serviceArgs, serviceConnection, true)
+                commandService = null
+            }
+        } catch (_: Exception) { }
+    }
+
+    fun executeCommand(command: String): ShellResult {
+        if (!checkAvailability()) {
+            return ShellResult(false, "", "Shizuku is not running. Start Shizuku and grant permission.")
+        }
+
+        if (!hasPermission()) {
+            return ShellResult(false, "", "Shizuku permission not granted.")
+        }
+
+        return try {
+            if (commandService == null && !bindUserService()) {
+                return ShellResult(false, "", "Failed to bind to command service")
+            }
+
+            val result = commandService?.exec(command) ?: return ShellResult(false, "", "Service not connected")
+            
+            val exitCodeMatch = "\\[exit_code=(-?\\d+)\\]".toRegex().find(result)
+            val exitCode = exitCodeMatch?.groupValues?.get(1)?.toIntOrNull() ?: -1
+            
+            val stderrMatch = "\\[stderr\\](.*)\\[exit_code".toRegex(RegexOption.DOT_MATCHES_ALL).find(result)
+            val stderrText = stderrMatch?.groupValues?.get(1)?.trimEnd() ?: ""
+            
+            val stdoutText = result
+                .substringBefore("\n[stderr]")
+                .substringBefore("\n[exit_code]")
+                .trimEnd()
+
+            if (exitCode == 0) {
+                ShellResult(true, stdoutText, stderrText.ifEmpty { null })
+            } else {
+                ShellResult(false, stdoutText, stderrText.ifEmpty { "Exit code: $exitCode" })
+            }
+        } catch (e: Exception) {
+            ShellResult(false, "", e.cause?.message ?: e.message ?: "Unknown error")
+        }
+    }
+
+    fun executeCommands(commands: List<String>): List<ShellResult> {
         return commands.map { executeCommand(it) }
     }
 
-    data class ShellResult(
-        val success: Boolean,
-        val output: String,
-        val error: String,
-        val exitCode: Int
-    )
+    fun executeWithTimeout(command: String, timeoutMs: Long = 10000): ShellResult {
+        if (!checkAvailability()) {
+            return ShellResult(false, "", "Shizuku is not running.")
+        }
+        if (!hasPermission()) {
+            return ShellResult(false, "", "Shizuku permission not granted.")
+        }
+
+        return try {
+            if (commandService == null && !bindUserService()) {
+                return ShellResult(false, "", "Failed to bind to command service")
+            }
+
+            val result = commandService?.exec(command) ?: return ShellResult(false, "", "Service not connected")
+            
+            val exitCodeMatch = "\\[exit_code=(-?\\d+)\\]".toRegex().find(result)
+            val exitCode = exitCodeMatch?.groupValues?.get(1)?.toIntOrNull() ?: -1
+            
+            val stderrMatch = "\\[stderr\\](.*)\\[exit_code".toRegex(RegexOption.DOT_MATCHES_ALL).find(result)
+            val stderrText = stderrMatch?.groupValues?.get(1)?.trimEnd() ?: ""
+            
+            val stdoutText = result
+                .substringBefore("\n[stderr]")
+                .substringBefore("\n[exit_code]")
+                .trimEnd()
+
+            if (exitCode == 0) {
+                ShellResult(true, stdoutText, stderrText.ifEmpty { null })
+            } else {
+                ShellResult(false, stdoutText, stderrText.ifEmpty { "Exit code: $exitCode" })
+            }
+        } catch (e: Exception) {
+            ShellResult(false, "", e.cause?.message ?: e.message ?: "Unknown error")
+        }
+    }
+
+    fun cleanup() {
+        unbindUserService()
+    }
 }
 
-// Extension function to format output – placed at top level
-fun ShizukuShellManager.ShellResult.displayText(): String {
-    return buildString {
-        append("Exit code: $exitCode\n\n")
-        if (output.isNotBlank()) {
-            append("--- STDOUT ---\n$output\n")
-        }
-        if (error.isNotBlank()) {
-            append("--- STDERR ---\n$error\n")
-        }
-        if (output.isBlank() && error.isBlank()) {
-            append("(no output)")
+data class ShellResult(
+    val success: Boolean,
+    val output: String,
+    val error: String?
+) {
+    fun displayText(): String {
+        return when {
+            success && output.isNotEmpty() -> output
+            success -> "Command executed successfully."
+            !success && error != null -> "Error: $error"
+            else -> "Unknown error occurred."
         }
     }
 }
