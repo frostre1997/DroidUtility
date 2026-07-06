@@ -34,8 +34,8 @@ android {
 }
 
 dependencies {
-    implementation("dev.rikka.shizuku:api:13.1.5")
-    implementation("dev.rikka.shizuku:provider:13.1.5")
+    // Shizuku – single artifact from JitPack
+    implementation("com.github.RikkaApps:Shizuku-API:13.1.5")
 
     // Compose BOM
     val composeBom = platform("androidx.compose:compose-bom:2024.02.00")
