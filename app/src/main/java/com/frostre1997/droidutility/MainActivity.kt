@@ -459,6 +459,7 @@ fun ResultsView(configName: String, results: List<DebloatResult>, onBack: () -> 
 fun StatusTab() {
     var statusLines by remember { mutableStateOf<List<String>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
     val commandList = listOf(
@@ -476,15 +477,38 @@ fun StatusTab() {
     )
 
     LaunchedEffect(Unit) {
-        withContext(Dispatchers.IO) {
-            val results = ShizukuShellManager.executeCommands(commandList)
-            statusLines = results.map { result ->
-                if (result.success && result.output.isNotBlank()) {
-                    result.output.trim()
+        try {
+            // Check Shizuku availability INSIDE try/catch
+            val shizukuAvailable = ShizukuShellManager.checkAvailability()
+            val hasPermission = ShizukuShellManager.hasPermission()
+            
+            if (!shizukuAvailable || !hasPermission) {
+                errorMessage = if (!shizukuAvailable) {
+                    "Shizuku is not running. Start Shizuku first."
                 } else {
-                    "Unknown"
+                    "Shizuku permission not granted. Grant it in Shizuku app."
+                }
+                isLoading = false
+                return@LaunchedEffect
+            }
+
+            // If we get here, Shizuku is ready – execute commands
+            withContext(Dispatchers.IO) {
+                val results = ShizukuShellManager.executeCommands(commandList)
+                statusLines = results.map { result ->
+                    if (result.success && result.output.isNotBlank()) {
+                        result.output.trim()
+                    } else {
+                        "Unknown"
+                    }
                 }
             }
+            errorMessage = null
+        } catch (e: Exception) {
+            // Catch ANY exception – prevent crash at all costs
+            errorMessage = "Error: ${e.localizedMessage ?: e.javaClass.simpleName}"
+            statusLines = emptyList()
+        } finally {
             isLoading = false
         }
     }
@@ -509,76 +533,145 @@ fun StatusTab() {
             return@Column
         }
 
-        val labels = listOf(
-            "Android Version", "Manufacturer", "Device Model",
-            "CPU Architecture", "SDK Level", "Battery Level",
-            "Battery Health", "Total RAM", "Available RAM",
-            "Storage (data)", "Uptime"
-        )
-
-        labels.zip(statusLines).forEach { (label, value) ->
+        if (errorMessage != null) {
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
+                modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    containerColor = MaterialTheme.colorScheme.errorContainer
                 )
             ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text(
-                        label,
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-
-                    val cleanValue = value
-                        .replace("level:", "", ignoreCase = true)
-                        .replace("health:", "", ignoreCase = true)
-                        .trim()
-
-                    val displayValue = when {
-                        cleanValue.contains("good", ignoreCase = true) || cleanValue == "2" -> "Good"
-                        cleanValue.contains("cold", ignoreCase = true) || cleanValue == "7" -> "Cold"
-                        cleanValue.contains("overheat", ignoreCase = true) || cleanValue == "3" -> "Overheat"
-                        cleanValue.contains("dead", ignoreCase = true) || cleanValue == "4" -> "Dead"
-                        else -> cleanValue
-                    }
-
-                    Text(
-                        displayValue,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        fontFamily = FontFamily.Monospace
-                    )
-                }
+                Text(
+                    text = errorMessage!!,
+                    modifier = Modifier.padding(12.dp),
+                    color = MaterialTheme.colorScheme.onErrorContainer
+                )
             }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            OutlinedButton(
+            Spacer(modifier = Modifier.height(8.dp))
+            // Show a retry button
+            Button(
                 onClick = {
                     isLoading = true
+                    errorMessage = null
                     scope.launch {
-                        withContext(Dispatchers.IO) {
-                            val results = ShizukuShellManager.executeCommands(commandList)
-                            statusLines = results.map { result ->
-                                if (result.success && result.output.isNotBlank()) {
-                                    result.output.trim()
+                        // Re-run the whole logic
+                        try {
+                            val shizukuAvailable = ShizukuShellManager.checkAvailability()
+                            val hasPermission = ShizukuShellManager.hasPermission()
+                            if (!shizukuAvailable || !hasPermission) {
+                                errorMessage = if (!shizukuAvailable) {
+                                    "Shizuku is not running. Start Shizuku first."
                                 } else {
-                                    "Unknown"
+                                    "Shizuku permission not granted. Grant it in Shizuku app."
+                                }
+                                isLoading = false
+                                return@launch
+                            }
+                            withContext(Dispatchers.IO) {
+                                val results = ShizukuShellManager.executeCommands(commandList)
+                                statusLines = results.map { result ->
+                                    if (result.success && result.output.isNotBlank()) {
+                                        result.output.trim()
+                                    } else {
+                                        "Unknown"
+                                    }
                                 }
                             }
+                            errorMessage = null
+                        } catch (e: Exception) {
+                            errorMessage = "Error: ${e.localizedMessage ?: e.javaClass.simpleName}"
+                            statusLines = emptyList()
+                        } finally {
                             isLoading = false
                         }
                     }
                 },
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Retry")
+            }
+            return@Column
+        }
+
+        // Show data if no error
+        if (statusLines.isNotEmpty()) {
+            val labels = listOf(
+                "Android Version", "Manufacturer", "Device Model",
+                "CPU Architecture", "SDK Level", "Battery Level",
+                "Battery Health", "Total RAM", "Available RAM",
+                "Storage (data)", "Uptime"
+            )
+
+            labels.zip(statusLines).forEach { (label, value) ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text(label, fontSize = 11.sp, color = MaterialTheme.colorScheme.primary)
+                        val cleanValue = value
+                            .replace("level:", "", ignoreCase = true)
+                            .replace("health:", "", ignoreCase = true)
+                            .trim()
+                        val displayValue = when {
+                            cleanValue.contains("good", ignoreCase = true) || cleanValue == "2" -> "✅ Good"
+                            cleanValue.contains("cold", ignoreCase = true) || cleanValue == "7" -> "❄️ Cold"
+                            cleanValue.contains("overheat", ignoreCase = true) || cleanValue == "3" -> "🔥 Overheat"
+                            cleanValue.contains("dead", ignoreCase = true) || cleanValue == "4" -> "💀 Dead"
+                            else -> cleanValue
+                        }
+                        Text(
+                            displayValue,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            fontFamily = FontFamily.Monospace
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+            OutlinedButton(
+                onClick = {
+                    isLoading = true
+                    errorMessage = null
+                    scope.launch {
+                        try {
+                            val shizukuAvailable = ShizukuShellManager.checkAvailability()
+                            val hasPermission = ShizukuShellManager.hasPermission()
+                            if (!shizukuAvailable || !hasPermission) {
+                                errorMessage = if (!shizukuAvailable) {
+                                    "Shizuku is not running. Start Shizuku first."
+                                } else {
+                                    "Shizuku permission not granted. Grant it in Shizuku app."
+                                }
+                                isLoading = false
+                                return@launch
+                            }
+                            withContext(Dispatchers.IO) {
+                                val results = ShizukuShellManager.executeCommands(commandList)
+                                statusLines = results.map { result ->
+                                    if (result.success && result.output.isNotBlank()) {
+                                        result.output.trim()
+                                    } else {
+                                        "Unknown"
+                                    }
+                                }
+                            }
+                            errorMessage = null
+                        } catch (e: Exception) {
+                            errorMessage = "Error: ${e.localizedMessage ?: e.javaClass.simpleName}"
+                            statusLines = emptyList()
+                        } finally {
+                            isLoading = false
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = true
             ) {
                 Text("Refresh")
             }
