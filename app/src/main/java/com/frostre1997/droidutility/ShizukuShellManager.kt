@@ -2,10 +2,7 @@ package com.frostre1997.droidutility
 
 import android.app.Activity
 import android.util.Log
-import rikka.shizuku.ShizukuShell
 import rikka.shizuku.Shizuku
-import java.io.BufferedReader
-import java.io.InputStreamReader
 
 object ShizukuShellManager {
     private const val TAG = "ShizukuShellManager"
@@ -35,8 +32,7 @@ object ShizukuShellManager {
 
     suspend fun executeCommand(command: String): ShellResult {
         return try {
-            // ✅ Correct public API: arrayOf(vararg)
-            val process = Shizuku.newProcess("sh", "-c", command)
+            val process = Shizuku.newProcess(arrayOf("sh", "-c", command))
             val exitCode = process.waitFor()
             val stdout = process.inputStream.bufferedReader().readText()
             val stderr = process.errorStream.bufferedReader().readText()
