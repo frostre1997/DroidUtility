@@ -3,13 +3,14 @@ package com.frostre1997.droidutility
 import android.app.Activity
 import android.util.Log
 import rikka.shizuku.Shizuku
+import rikka.shizuku.ShizukuShell
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
 object ShizukuShellManager {
     private const val TAG = "ShizukuShellManager"
 
-    // Check if Shizuku is running – uses getVersion() which returns -1 if not connected
+    // Check if Shizuku is running – uses getVersion()
     fun checkAvailability(): Boolean {
         return try {
             Shizuku.getVersion() != -1
@@ -35,19 +36,16 @@ object ShizukuShellManager {
         }
     }
 
-    // Execute a shell command – using the correct public API
+    // Execute a shell command using ShizukuShell (no more newProcess issues)
     suspend fun executeCommand(command: String): ShellResult {
         return try {
-            // Use the varargs version – Shizuku.newProcess(String...)
-            val process = Shizuku.newProcess("sh", "-c", command)
-            val exitCode = process.waitFor()
-            val stdout = process.inputStream.bufferedReader().readText()
-            val stderr = process.errorStream.bufferedReader().readText()
+            // Use ShizukuShell.exec – returns a Shell.Result object
+            val result = ShizukuShell.exec(arrayOf("sh", "-c", command))
             ShellResult(
-                success = exitCode == 0,
-                output = stdout,
-                error = stderr,
-                exitCode = exitCode
+                success = result.code == 0,
+                output = result.out ?: "",
+                error = result.err ?: "",
+                exitCode = result.code
             )
         } catch (e: Exception) {
             ShellResult(
@@ -72,7 +70,7 @@ object ShizukuShellManager {
     )
 }
 
-// Extension function to format output – placed at top level
+// Extension function to format output
 fun ShizukuShellManager.ShellResult.displayText(): String {
     return buildString {
         append("Exit code: $exitCode\n\n")
