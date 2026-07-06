@@ -1,5 +1,6 @@
 package com.frostre1997.droidutility
 
+import android.app.Activity
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -20,6 +21,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -98,7 +100,6 @@ fun DroidUtilityTheme(
 fun MainScreen() {
     var selectedTab by remember { mutableIntStateOf(0) }
 
-    // Only two tabs now (Status removed)
     val tabs = listOf(
         Triple("Terminal", Icons.Default.Terminal, "Execute shell commands"),
         Triple("Debloat", Icons.Default.DeleteSweep, "Remove bloatware")
@@ -130,7 +131,7 @@ fun MainScreen() {
     }
 }
 
-// ─── Terminal Tab (unchanged, already safe) ────────────────────────────────
+// ─── Terminal Tab ──────────────────────────────────────────────────────────────
 
 @Composable
 fun TerminalTab() {
@@ -138,6 +139,7 @@ fun TerminalTab() {
     var output by remember { mutableStateOf("Waiting for command...") }
     var isRunning by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     val shizukuAvailable = remember { ShizukuShellManager.checkAvailability() }
     val hasPermission = remember { ShizukuShellManager.hasPermission() }
@@ -173,6 +175,23 @@ fun TerminalTab() {
                         color = MaterialTheme.colorScheme.onErrorContainer,
                         fontSize = 13.sp
                     )
+                    
+                    // 👇 NEW: Grant button (only if Shizuku is running but no permission)
+                    if (shizukuAvailable && !hasPermission) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = {
+                                if (context is Activity) {
+                                    ShizukuShellManager.requestPermission(context)
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
+                        ) {
+                            Text("Grant Shizuku Permission")
+                        }
+                    }
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))
@@ -249,7 +268,7 @@ fun TerminalTab() {
     }
 }
 
-// ─── Debloat Tab (unchanged, safe) ──────────────────────────────────────────
+// ─── Debloat Tab ──────────────────────────────────────────────────────────────
 
 @Composable
 fun DebloatTab() {
@@ -289,6 +308,9 @@ fun DebloatTab() {
                     fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onErrorContainer
                 )
+                Spacer(modifier = Modifier.height(8.dp))
+                // Optional: Add a "Grant" button here too
+                // (you can copy the same button from TerminalTab)
             }
         }
     } else if (results != null && selectedConfig != null) {
@@ -448,3 +470,18 @@ fun ResultsView(configName: String, results: List<DebloatResult>, onBack: () -> 
         }
     }
 }
+
+// These data classes are assumed to exist in your project.
+// They are used by DebloatEngine.
+data class DebloatConfig(
+    val name: String,
+    val description: String,
+    val packages: List<String>
+)
+
+data class DebloatResult(
+    val packageName: String,
+    val action: String,
+    val success: Boolean,
+    val message: String
+)
