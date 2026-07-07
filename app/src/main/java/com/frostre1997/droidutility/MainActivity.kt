@@ -1,5 +1,6 @@
 package com.frostre1997.droidutility
 
+import com.frostre1997.droidutility.BuildConfig
 import android.app.Activity
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
