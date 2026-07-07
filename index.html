@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DroidUtility – Android Utility Suite</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet" />
+  <style>
+    /* ─── Reset & Base ─── */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0d0d0d;
+      color: #e8e8e8;
+      line-height: 1.6;
+      scroll-behavior: smooth;
+    }
+
+    a {
+      color: #90caf9;
+      text-decoration: none;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    /* ─── Header ─── */
+    header {
+      padding: 20px 0;
+      border-bottom: 1px solid #2a2a2a;
+      background: #121212;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    header .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo img {
+      height: 40px;
+      width: 40px;
+      border-radius: 12px;
+    }
+
+    .logo span {
+      font-weight: 700;
+      font-size: 1.4rem;
+      color: #fff;
+    }
+
+    .nav a {
+      margin-left: 24px;
+      font-weight: 500;
+      font-size: 0.95rem;
+      color: #aaa;
+      transition: color 0.2s;
+    }
+
+    .nav a:hover {
+      color: #90caf9;
+    }
+
+    /* ─── Hero ─── */
+    .hero {
+      padding: 80px 0 60px;
+      text-align: center;
+    }
+
+    .hero .badge {
+      display: inline-block;
+      background: #1e3a5f;
+      color: #90caf9;
+      padding: 4px 16px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 {
+      font-size: 3.2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      margin-bottom: 16px;
+    }
+
+    .hero h1 span {
+      background: linear-gradient(135deg, #90caf9, #80cbc4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      font-size: 1.2rem;
+      color: #aaa;
+      max-width: 600px;
+      margin: 0 auto 32px;
+    }
+
+    .hero .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 32px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 1rem;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: #90caf9;
+      color: #0d0d0d;
+    }
+
+    .btn-primary:hover {
+      background: #b3d9ff;
+      transform: translateY(-2px);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: #e8e8e8;
+      border: 1.5px solid #444;
+    }
+
+    .btn-outline:hover {
+      border-color: #90caf9;
+      color: #90caf9;
+      transform: translateY(-2px);
+    }
+
+    /* ─── Features ─── */
+    .features {
+      padding: 80px 0;
+      background: #121212;
+    }
+
+    .section-title {
+      text-align: center;
+      font-size: 2.2rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .section-sub {
+      text-align: center;
+      color: #aaa;
+      font-size: 1.1rem;
+      margin-bottom: 48px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 32px;
+    }
+
+    .card {
+      background: #1e1e1e;
+      padding: 28px 24px;
+      border-radius: 20px;
+      border: 1px solid #2a2a2a;
+      transition: border-color 0.3s;
+    }
+
+    .card:hover {
+      border-color: #90caf9;
+    }
+
+    .card .icon {
+      font-size: 2.4rem;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .card h3 {
+      font-size: 1.2rem;
+      margin-bottom: 6px;
+    }
+
+    .card p {
+      color: #aaa;
+      font-size: 0.95rem;
+    }
+
+    /* ─── Screenshots ─── */
+    .screenshots {
+      padding: 80px 0;
+    }
+
+    .screenshots .grid {
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 24px;
+    }
+
+    .screenshot-card {
+      background: #1e1e1e;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid #2a2a2a;
+      transition: transform 0.3s;
+    }
+
+    .screenshot-card:hover {
+      transform: scale(1.02);
+    }
+
+    .screenshot-card img {
+      width: 100%;
+      display: block;
+      aspect-ratio: 9 / 19;
+      object-fit: cover;
+      background: #2a2a2a;
+    }
+
+    .screenshot-card .label {
+      padding: 12px;
+      text-align: center;
+      font-size: 0.85rem;
+      color: #aaa;
+    }
+
+    /* ─── Download ─── */
+    .download {
+      padding: 80px 0;
+      background: #121212;
+      text-align: center;
+    }
+
+    .download .btn {
+      font-size: 1.2rem;
+      padding: 16px 48px;
+    }
+
+    .download .version {
+      margin-top: 16px;
+      color: #666;
+      font-size: 0.85rem;
+    }
+
+    /* ─── Footer ─── */
+    footer {
+      padding: 32px 0;
+      border-top: 1px solid #2a2a2a;
+      text-align: center;
+      color: #666;
+      font-size: 0.85rem;
+    }
+
+    footer a {
+      color: #90caf9;
+    }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 768px) {
+      .hero h1 {
+        font-size: 2.2rem;
+      }
+      .hero p {
+        font-size: 1rem;
+      }
+      .nav a {
+        margin-left: 16px;
+        font-size: 0.85rem;
+      }
+      .screenshots .grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .hero {
+        padding: 40px 0;
+      }
+      .hero h1 {
+        font-size: 1.8rem;
+      }
+      .buttons .btn {
+        width: 100%;
+        justify-content: center;
+      }
+      .screenshots .grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      .logo span {
+        font-size: 1.1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="container">
+      <div class="logo">
+        <!-- Replace with your actual app icon if you have it -->
+        <img src="https://github.com/frostre1997/DroidUtility/blob/main/app/src/main/res/play_store_512.png?raw=true" alt="DroidUtility" />
+        <span>DroidUtility</span>
+      </div>
+      <nav class="nav">
+        <a href="#features">Features</a>
+        <a href="#screenshots">Screenshots</a>
+        <a href="#download">Download</a>
+        <a href="https://github.com/frostre1997/DroidUtility" target="_blank">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container">
+      <div class="badge">⚡ No root required • Powered by Shizuku</div>
+      <h1>DroidUtility <span>v1.0.0</span></h1>
+      <p>
+        Debloat your Android, run powerful shell commands, and optimise system performance – all without root.
+      </p>
+      <div class="buttons">
+        <a href="#download" class="btn btn-primary">⬇ Download APK</a>
+        <a href="https://github.com/frostre1997/DroidUtility" target="_blank" class="btn btn-outline">View on GitHub</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features" id="features">
+    <div class="container">
+      <h2 class="section-title">Built for <span style="color:#90caf9;">power users</span></h2>
+      <p class="section-sub">Everything you need to take control of your device.</p>
+      <div class="grid">
+        <div class="card">
+          <span class="icon">🖥️</span>
+          <h3>Terminal</h3>
+          <p>Execute any shell command via Shizuku. See real-time output with exit codes.</p>
+        </div>
+        <div class="card">
+          <span class="icon">🧹</span>
+          <h3>Debloat Manager</h3>
+          <p>View all installed apps, search, filter by system/user, and uninstall or disable with one tap.</p>
+        </div>
+        <div class="card">
+          <span class="icon">🎨</span>
+          <h3>Theme Engine</h3>
+          <p>Light, Dark, AMOLED true-black, and System themes – persists across restarts.</p>
+        </div>
+        <div class="card">
+          <span class="icon">🔐</span>
+          <h3>Shizuku Powered</h3>
+          <p>Elevated privileges without root. Built-in permission request flow.</p>
+        </div>
+        <div class="card">
+          <span class="icon">📱</span>
+          <h3>Material 3 UI</h3>
+          <p>Modern, clean, and fully responsive design with rounded corners.</p>
+        </div>
+        <div class="card">
+          <span class="icon">⚡</span>
+          <h3>Lightweight & Fast</h3>
+          <p>Minimal APK size, no bloat – runs smoothly on all devices.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Screenshots -->
+  <section class="screenshots" id="screenshots">
+    <div class="container">
+      <h2 class="section-title">Screenshots</h2>
+      <p class="section-sub">See DroidUtility in action.</p>
+      <div class="grid">
+        <div class="screenshot-card">
+          <img src="https://via.placeholder.com/400x800/1e1e1e/90caf9?text=Terminal" alt="Terminal tab" />
+          <div class="label">Terminal</div>
+        </div>
+        <div class="screenshot-card">
+          <img src="https://via.placeholder.com/400x800/1e1e1e/90caf9?text=Debloat" alt="Debloat tab" />
+          <div class="label">Debloat Manager</div>
+        </div>
+        <div class="screenshot-card">
+          <img src="https://via.placeholder.com/400x800/1e1e1e/90caf9?text=Settings" alt="Settings tab" />
+          <div class="label">Settings</div>
+        </div>
+      </div>
+      <p style="text-align:center; margin-top:24px; color:#666; font-size:0.9rem;">
+        (Actual screenshots available in the <a href="https://github.com/frostre1997/DroidUtility" target="_blank">GitHub repository</a>)
+      </p>
+    </div>
+  </section>
+
+  <!-- Download -->
+  <section class="download" id="download">
+    <div class="container">
+      <h2 class="section-title">Ready to try it?</h2>
+      <p class="section-sub">Get the latest release – free and open source.</p>
+      <a href="https://github.com/frostre1997/DroidUtility/releases/latest" target="_blank" class="btn btn-primary">
+        ⬇ Download APK
+      </a>
+      <div class="version">Latest version: v1.0.0 • Requires Android 7.0+</div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p>
+        © 2026 <a href="https://github.com/frostre1997" target="_blank">frostre1997</a> &bull; 
+        Built with ❤️ for the Android community &bull; 
+        <a href="https://github.com/frostre1997/DroidUtility" target="_blank">GitHub</a> &bull;
+        <a href="https://github.com/frostre1997/DroidUtility/blob/main/LICENSE" target="_blank">MIT License</a>
+      </p>
+    </div>
+  </footer>
+
+</body>
+  </html>
