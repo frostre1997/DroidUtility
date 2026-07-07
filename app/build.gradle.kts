@@ -28,9 +28,9 @@ android {
         versionName = appVersionName
     }
 
-  buildFeatures {
-    compose = true
-    buildConfig = true
+    buildFeatures {
+        compose = true
+        buildConfig = true
     }
 
     composeOptions {
