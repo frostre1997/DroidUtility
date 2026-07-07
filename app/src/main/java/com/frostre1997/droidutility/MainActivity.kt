@@ -616,7 +616,7 @@ fun SettingsTab(
                         Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFF4CAF50), modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            "You're on the latest version (v${BuildConfig.VERSION_NAME})",
+                            "You're on the latest version (v$currentVersion)",
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                             fontSize = 13.sp
                         )
