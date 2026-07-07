@@ -2,7 +2,7 @@
 
 # DroidUtility
 
-## [![Android CI](https://github.com/frostre1997/DroidUtility/actions/workflows/build.yml/badge.svg)](https://github.com/frostre1997/DroidUtility/actions/workflows/build.yml)
+## [![Android CI](https://github.com/frostre1997/DroidUtility/actions/workflows/build.yml/badge.svg)](https://github.com/frostre1997/DroidUtility/actions/workflows/build.yml) [![Auto Release](https://github.com/frostre1997/DroidUtility/actions/workflows/release.yml/badge.svg)](https://github.com/frostre1997/DroidUtility/actions/workflows/release.yml) [![pages-build-deployment](https://github.com/frostre1997/DroidUtility/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/frostre1997/DroidUtility/actions/workflows/pages/pages-build-deployment)
 
 
 A powerful, non-root utility suite for Android designed for system optimization, debloating, and advanced command execution. Built for mobile-only development.
