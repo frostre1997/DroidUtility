@@ -2,7 +2,7 @@
 
 # DroidUtility
 
-## [![Android CI](https://github.com/frostre1997/DroidUtility/actions/workflows/build.yml/badge.svg)](https://github.com/frostre1997/DroidUtility/actions/workflows/build.yml) [![Netlify Status](https://api.netlify.com/api/v1/badges/59aaf376-49e4-47c6-a549-832a8af6c5a7/deploy-status)](https://app.netlify.com/projects/droidutility/deploys)
+## [![Android CI](https://github.com/frostre1997/DroidUtility/actions/workflows/build.yml/badge.svg)](https://github.com/frostre1997/DroidUtility/actions/workflows/build.yml)
 
 
 A powerful, non-root utility suite for Android designed for system optimization, debloating, and advanced command execution. Built for mobile-only development.
@@ -67,4 +67,4 @@ cd DroidUtility
 ./gradlew assembleDebug
 ```
 ## Visit my website 🤍
-https://droidutility.netlify.app/
+https://droidutility.pages.dev/
