@@ -95,56 +95,20 @@ object ShizukuShellManager {
         return withContext(Dispatchers.IO) {
             try {
                 if (!checkAvailability()) {
-                    return@withContext ShellResult(
-                        success = false,
-                        output = "",
-                        error = "Shizuku is not available. Please start Shizuku.",
-                        exitCode = -1
-                    )
+                    return@withContext ShellResult(false, "", "Shizuku is not available", -1)
                 }
-
                 if (!hasPermission()) {
-                    return@withContext ShellResult(
-                        success = false,
-                        output = "",
-                        error = "Shizuku permission not granted.",
-                        exitCode = -1
-                    )
+                    return@withContext ShellResult(false, "", "Shizuku permission not granted", -1)
                 }
-
-                val method = newProcessMethod
-                    ?: return@withContext ShellResult(
-                        success = false,
-                        output = "",
-                        error = "Shizuku.newProcess() method not available",
-                        exitCode = -1
-                    )
-
-                val process = method.invoke(
-                    null,
-                    arrayOf("sh", "-c", command),
-                    null,
-                    null
-                ) as Process
-
+                val method = newProcessMethod ?: return@withContext ShellResult(false, "", "newProcess not available", -1)
+                val process = method.invoke(null, arrayOf("sh", "-c", command), null, null) as Process
                 val exitCode = process.waitFor()
                 val stdout = process.inputStream.bufferedReader().readText()
                 val stderr = process.errorStream.bufferedReader().readText()
-
-                ShellResult(
-                    success = exitCode == 0,
-                    output = stdout,
-                    error = stderr,
-                    exitCode = exitCode
-                )
+                ShellResult(exitCode == 0, stdout, stderr, exitCode)
             } catch (e: Exception) {
                 Log.e(TAG, "Command execution failed", e)
-                ShellResult(
-                    success = false,
-                    output = "",
-                    error = e.localizedMessage ?: "Unknown error",
-                    exitCode = -1
-                )
+                ShellResult(false, "", e.message ?: "Unknown error", -1)
             }
         }
     }
@@ -164,14 +128,8 @@ object ShizukuShellManager {
 fun ShizukuShellManager.ShellResult.displayText(): String {
     return buildString {
         append("Exit code: $exitCode\n\n")
-        if (output.isNotBlank()) {
-            append("--- STDOUT ---\n$output\n")
-        }
-        if (error.isNotBlank()) {
-            append("--- STDERR ---\n$error\n")
-        }
-        if (output.isBlank() && error.isBlank()) {
-            append("(no output)")
-        }
+        if (output.isNotBlank()) append("--- STDOUT ---\n$output\n")
+        if (error.isNotBlank()) append("--- STDERR ---\n$error\n")
+        if (output.isBlank() && error.isBlank()) append("(no output)")
     }
 }
