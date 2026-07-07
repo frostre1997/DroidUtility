@@ -1,67 +1,66 @@
 ![description](https://github.com/frostre1997/DroidUtility/blob/main/app/src/main/res/play_store_512.png)
 
-
-> don't ask me why about the icon image please
-
 # DroidUtility
 
 ## [![Android CI](https://github.com/frostre1997/DroidUtility/actions/workflows/build.yml/badge.svg)](https://github.com/frostre1997/DroidUtility/actions/workflows/build.yml)
 
 A powerful, non-root utility suite for Android designed for system optimization, debloating, and advanced command execution. Built for mobile-only development.
 
+---
+
 ## Features
 
-- **Shell Terminal:** Execute privileged shell commands via Shizuku with real-time output.
-- **Debloat Engine:** Remove or disable unwanted system apps using JSON-based configurations. Includes presets for Samsung, Google, and Xiaomi bloatware.
-- **System Status:** View device info including Android version, battery health, RAM, storage, and uptime.
-- **Modular Design:** Extendable via external scripts and custom configurations.
-- **Mobile-First:** Fully developed and managed on Android devices.
+- **Shell Terminal:** Execute privileged shell commands via Shizuku with real-time output and history.
+- **Debloat Manager:** View all installed apps, search, filter by System/User, and uninstall or disable apps with one tap. No JSON configs required – the app lists your installed packages directly.
+- **System Status:** (Coming soon – currently removed for stability)
+- **Theme Support:** Light, Dark, AMOLED (true black), and System themes with persistent storage.
+- **Shizuku Integration:** Uses Shizuku for elevated privileges without root. Permission request is built into the app.
+- **Material 3 UI:** Modern, rounded, responsive design with dark/light mode support.
+
+---
 
 ## Requirements
 
-- Android 10+ (API 29)
+- Android 7.0+ (API 24) – tested up to Android 14
 - [Shizuku](https://shizuku.rikka.app/) installed and running
-- [Termux](https://termux.dev/) for extended scripting capabilities (optional)
+- No root required
+
+---
 
 ## How to Use
 
-1. Install Shizuku and start it via Wireless ADB or root.
-2. Install DroidUtility and grant it Shizuku permission.
-3. Use the **Terminal** tab to run shell commands.
-4. Use the **Debloat** tab to apply system optimization configs.
-5. Use the **Status** tab to view device information.
+1. **Install Shizuku** and start it via Wireless ADB or root.
+2. **Install DroidUtility** and open it.
+3. Go to the **Terminal** or **Debloat** tab.
+4. If Shizuku is running but permission isn't granted, tap the **"Grant Shizuku Permission"** button.
+5. Allow the permission in the Shizuku dialog.
+6. Use the app:
 
-### Custom Debloat Configs
+### Terminal Tab
+- Enter any shell command (e.g., `pm list packages`, `getprop`, `dumpsys battery`).
+- Tap **Execute** to run it.
+- Output appears in the terminal window with exit code.
 
-Place JSON files in `/storage/emulated/0/DroidUtility/configs/`:
+### Debloat Tab
+- Shows all installed apps with their names and package IDs.
+- Use the **search bar** to filter apps.
+- Use the **filter chips** (All / System / User) to narrow down.
+- Tap **Uninstall** to remove a user app.
+- Tap **Disable** to disable a system app (requires Shizuku).
 
-```json
-{
-  "name": "My Config",
-  "description": "Custom debloat preset",
-  "packages": [
-    {"pkg": "com.example.app", "action": "disable"},
-    {"pkg": "com.example.bloat", "action": "uninstall"}
-  ]
-}
-```
+### Settings Tab
+- Switch between **Light**, **Dark**, **AMOLED** (true black), and **System** themes.
+- Check Shizuku status (running / permission granted).
+- Re‑grant permission if needed.
 
-### Scripts
+---
 
-Scripts in `scripts/` can be run via the terminal tab or Termux:
-
-- `scan-packages.sh` — List all packages by category
-- `debloat.sh` — Quick single-package disable
-- `battery-optimize.sh` — Apply battery-saving system tweaks
-
-## Building
+## Building from Source
 
 ```bash
+# Clone the repository
+git clone https://github.com/frostre1997/DroidUtility.git
+cd DroidUtility
+
+# Build the debug APK
 ./gradlew assembleDebug
-```
-
-Requires Android SDK 34, JDK 17, and Kotlin 1.9.21.
-
-## License
-
-MIT License — See [LICENSE](LICENSE) for details.
