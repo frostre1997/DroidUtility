@@ -319,7 +319,6 @@ fun DebloatTab() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    // State
     var allPackages by remember { mutableStateOf<List<AppInfo>>(emptyList()) }
     var filteredPackages by remember { mutableStateOf<List<AppInfo>>(emptyList()) }
     var searchQuery by remember { mutableStateOf("") }
@@ -328,30 +327,7 @@ fun DebloatTab() {
 
     val hasPermission = remember { ShizukuShellManager.hasPermission() }
 
-    // Load packages when the tab is first shown or when refreshing
-    fun loadPackages() {
-        scope.launch {
-            isLoading = true
-            val packageManager = context.packageManager
-            val installedApps = packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
-            val appInfos = installedApps.map { app ->
-                val isSystem = (app.flags and ApplicationInfo.FLAG_SYSTEM) != 0
-                val isUpdatedSystem = (app.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
-                val isUser = !isSystem && !isUpdatedSystem
-                AppInfo(
-                    packageName = app.packageName,
-                    appName = packageManager.getApplicationLabel(app).toString(),
-                    isSystem = isSystem || isUpdatedSystem,
-                    isUser = isUser
-                )
-            }.sortedBy { it.appName }
-
-            allPackages = appInfos
-            applyFilters()
-            isLoading = false
-        }
-    }
-
+    // Define applyFilters first (so loadPackages can call it)
     fun applyFilters() {
         val query = searchQuery.lowercase().trim()
         filteredPackages = allPackages.filter { app ->
@@ -367,12 +343,34 @@ fun DebloatTab() {
         }
     }
 
+    fun loadPackages() {
+        scope.launch {
+            isLoading = true
+            val packageManager = context.packageManager
+            val installedApps = packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
+            val appInfos = installedApps.map { app ->
+                val isSystem = (app.flags and ApplicationInfo.FLAG_SYSTEM) != 0
+                val isUpdatedSystem = (app.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
+                AppInfo(
+                    packageName = app.packageName,
+                    appName = packageManager.getApplicationLabel(app).toString(),
+                    isSystem = isSystem || isUpdatedSystem,
+                    isUser = !isSystem && !isUpdatedSystem
+                )
+            }.sortedBy { it.appName }
+
+            allPackages = appInfos
+            applyFilters()
+            isLoading = false
+        }
+    }
+
     // Load on first composition
     LaunchedEffect(Unit) {
         loadPackages()
     }
 
-    // Refresh when permission changes (if granted)
+    // Refresh if permission changes
     LaunchedEffect(hasPermission) {
         if (hasPermission) {
             loadPackages()
@@ -385,7 +383,6 @@ fun DebloatTab() {
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        // Header
         Text(
             text = "DroidUtility • Debloat Manager",
             fontSize = 22.sp,
@@ -399,7 +396,6 @@ fun DebloatTab() {
             modifier = Modifier.padding(bottom = 12.dp)
         )
 
-        // Search bar
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it; applyFilters() },
@@ -416,7 +412,6 @@ fun DebloatTab() {
         )
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Filter chips
         val filters = listOf("All", "System", "User")
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -440,7 +435,6 @@ fun DebloatTab() {
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Package list
         if (isLoading) {
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
@@ -460,7 +454,7 @@ fun DebloatTab() {
                             scope.launch {
                                 val result = DebloatEngine.uninstallPackage(app.packageName)
                                 Toast.makeText(context, result.message, Toast.LENGTH_LONG).show()
-                                loadPackages() // refresh after action
+                                loadPackages()
                             }
                         },
                         onDisable = {
