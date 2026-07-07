@@ -528,11 +528,17 @@ fun SettingsTab(
     val shizukuAvailable = remember { ShizukuShellManager.checkAvailability() }
     val hasPermission = remember { ShizukuShellManager.hasPermission() }
 
-    // Check for updates on first load
     LaunchedEffect(Unit) {
         isChecking = true
         updateAvailable = UpdateManager.checkForUpdate(context)
         isChecking = false
+    }
+
+    // Get current version from PackageManager
+    val currentVersion = try {
+        context.packageManager.getPackageInfo(context.packageName, 0).versionName
+    } catch (e: Exception) {
+        "1.0.0"
     }
 
     Column(
@@ -613,7 +619,12 @@ fun SettingsTab(
                     }
                 } else {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFF4CAF50), modifier = Modifier.size(18.dp))
+                        Icon(
+                            Icons.Default.CheckCircle,
+                            contentDescription = null,
+                            tint = Color(0xFF4CAF50),
+                            modifier = Modifier.size(18.dp)
+                        )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             "You're on the latest version (v$currentVersion)",
