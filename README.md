@@ -67,4 +67,4 @@ cd DroidUtility
 ./gradlew assembleDebug
 ```
 ## Visit my website 🤍
-https://droidutility.pages.dev/
+https://frostre1997.github.io/DroidUtility/
