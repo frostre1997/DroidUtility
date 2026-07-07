@@ -59,7 +59,6 @@ fun DroidUtilityTheme(
     content: @Composable () -> Unit
 ) {
     val systemDark = isSystemInDarkTheme()
-
     val isDark = when (themeMode) {
         ThemeMode.LIGHT -> false
         ThemeMode.DARK -> true
@@ -124,7 +123,6 @@ fun MainScreen(
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
 
-    // Only 3 tabs – Status removed
     val tabs = listOf(
         Triple("Terminal", Icons.Default.Terminal, "Execute shell commands"),
         Triple("Debloat", Icons.Default.DeleteSweep, "Remove bloatware"),
@@ -306,7 +304,6 @@ fun TerminalTab() {
 
 // ─── Debloat Tab ──────────────────────────────────────────────────────────────
 
-// Data class for app info (placed here for simplicity)
 data class AppInfo(
     val packageName: String,
     val appName: String,
@@ -327,7 +324,6 @@ fun DebloatTab() {
 
     val hasPermission = remember { ShizukuShellManager.hasPermission() }
 
-    // Define applyFilters first (so loadPackages can call it)
     fun applyFilters() {
         val query = searchQuery.lowercase().trim()
         filteredPackages = allPackages.filter { app ->
@@ -365,19 +361,9 @@ fun DebloatTab() {
         }
     }
 
-    // Load on first composition
-    LaunchedEffect(Unit) {
-        loadPackages()
-    }
+    LaunchedEffect(Unit) { loadPackages() }
+    LaunchedEffect(hasPermission) { if (hasPermission) loadPackages() }
 
-    // Refresh if permission changes
-    LaunchedEffect(hasPermission) {
-        if (hasPermission) {
-            loadPackages()
-        }
-    }
-
-    // UI
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -440,12 +426,11 @@ fun DebloatTab() {
                 CircularProgressIndicator()
             }
         } else {
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 items(filteredPackages) { app ->
                     PackageItem(
                         app = app,
+                        context = context,
                         onUninstall = {
                             if (!hasPermission) {
                                 Toast.makeText(context, "Shizuku permission required", Toast.LENGTH_SHORT).show()
@@ -478,6 +463,7 @@ fun DebloatTab() {
 @Composable
 fun PackageItem(
     app: AppInfo,
+    context: android.content.Context,
     onUninstall: () -> Unit,
     onDisable: () -> Unit
 ) {
@@ -498,34 +484,35 @@ fun PackageItem(
                 Text(app.appName, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 Text(app.packageName, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                 if (app.isSystem) {
-                    Text("System app", fontSize = 10.sp, color = MaterialTheme.colorScheme.primary)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("System app", fontSize = 10.sp, color = MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            Icons.Default.Warning,
+                            contentDescription = "Warning",
+                            tint = Color.Yellow,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(
                     onClick = onUninstall,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error
-                    ),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                     modifier = Modifier.height(32.dp)
-                ) {
-                    Text("Uninstall", fontSize = 11.sp)
-                }
+                ) { Text("Uninstall", fontSize = 11.sp) }
                 Button(
                     onClick = onDisable,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.secondary
-                    ),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
                     modifier = Modifier.height(32.dp)
-                ) {
-                    Text("Disable", fontSize = 11.sp)
-                }
+                ) { Text("Disable", fontSize = 11.sp) }
             }
         }
     }
 }
 
-// ─── Settings Tab ─────────────────────────────────────────────────────────────
+// ─── Settings Tab (with Update check) ─────────────────────────────────────────
 
 @Composable
 fun SettingsTab(
@@ -533,9 +520,19 @@ fun SettingsTab(
     onThemeChange: (ThemeMode) -> Unit
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var updateAvailable by remember { mutableStateOf<String?>(null) }
+    var isChecking by remember { mutableStateOf(false) }
 
     val shizukuAvailable = remember { ShizukuShellManager.checkAvailability() }
     val hasPermission = remember { ShizukuShellManager.hasPermission() }
+
+    // Check for updates on first load
+    LaunchedEffect(Unit) {
+        isChecking = true
+        updateAvailable = UpdateManager.checkForUpdate(context)
+        isChecking = false
+    }
 
     Column(
         modifier = Modifier
@@ -552,34 +549,20 @@ fun SettingsTab(
 
         // ─── Appearance ──────────────────────────────────────────────
         Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 6.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            )
+            modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    "Appearance",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.primary
-                )
+                Text("Appearance", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    "Theme Mode",
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                Text("Theme Mode", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
                 Spacer(modifier = Modifier.height(4.dp))
-
                 val themeOptions = listOf(ThemeMode.LIGHT, ThemeMode.DARK, ThemeMode.AMOLED, ThemeMode.SYSTEM)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    themeOptions.forEachIndexed { index, mode ->
+                    themeOptions.forEach { mode ->
                         FilterChip(
                             selected = currentTheme == mode,
                             onClick = { onThemeChange(mode) },
@@ -597,24 +580,58 @@ fun SettingsTab(
             }
         }
 
-        // ─── Shizuku Status ───────────────────────────────────────────
+        // ─── Updates ─────────────────────────────────────────────────
         Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 6.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            )
+            modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    "Shizuku Status",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.primary
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Updates", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
+                    if (isChecking) {
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                    }
+                }
                 Spacer(modifier = Modifier.height(8.dp))
+                if (updateAvailable != null) {
+                    Text("✅ New version available!", color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold)
+                    Text("Tap below to download and install", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = { UpdateManager.downloadAndInstall(context, updateAvailable!!) },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.Download, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Download & Install")
+                    }
+                } else {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFF4CAF50), modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "You're on the latest version (v${BuildConfig.VERSION_NAME})",
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                            fontSize = 13.sp
+                        )
+                    }
+                }
+            }
+        }
 
+        // ─── Shizuku Status ───────────────────────────────────────────
+        Card(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("Shizuku Status", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
+                Spacer(modifier = Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         if (shizukuAvailable) Icons.Default.CheckCircle else Icons.Default.Error,
@@ -627,9 +644,7 @@ fun SettingsTab(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                 }
-
                 Spacer(modifier = Modifier.height(4.dp))
-
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         if (hasPermission) Icons.Default.CheckCircle else Icons.Default.Error,
@@ -642,7 +657,6 @@ fun SettingsTab(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                 }
-
                 if (!shizukuAvailable || !hasPermission) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(
@@ -654,9 +668,7 @@ fun SettingsTab(
                         },
                         modifier = Modifier.fillMaxWidth(),
                         enabled = shizukuAvailable && !hasPermission,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary
-                        )
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                     ) {
                         Text("Grant Shizuku Permission")
                     }
@@ -666,37 +678,15 @@ fun SettingsTab(
 
         // ─── About ────────────────────────────────────────────────────
         Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 6.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            )
+            modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    "About",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.primary
-                )
+                Text("About", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    "DroidUtility v1.0.0",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    "A powerful Android utility tool for debloating and terminal access.",
-                    fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                )
-                Text(
-                    "No root required - uses Shizuku for elevated privileges.",
-                    fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                )
+                Text("DroidUtility v1.0.0", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                Text("A powerful Android utility tool for debloating and terminal access.", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
+                Text("No root required - uses Shizuku for elevated privileges.", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
             }
         }
     }
