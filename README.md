@@ -65,3 +65,6 @@ cd DroidUtility
 
 # Build the debug APK
 ./gradlew assembleDebug
+```
+## Visit my website
+https://droidutility.netlify.app/
