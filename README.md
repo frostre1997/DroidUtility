@@ -12,7 +12,7 @@ A powerful, non-root utility suite for Android designed for system optimization,
 ## Features
 
 - **Shell Terminal:** Execute privileged shell commands via Shizuku with real-time output and history.
-- **Debloat Manager:** View all installed apps, search, filter by System/User, and uninstall or disable apps with one tap. No JSON configs required – the app lists your installed packages directly.
+- **Debloat Manager:** View all installed apps, search, filter by System/User, and uninstall or disable apps with one tap. ~No JSON configs required – the app lists your installed packages directly.~
 - **System Status:** (Coming soon – currently removed for stability)
 - **Theme Support:** Light, Dark, AMOLED (true black), and System themes with persistent storage.
 - **Shizuku Integration:** Uses Shizuku for elevated privileges without root. Permission request is built into the app.
