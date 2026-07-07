@@ -3,18 +3,23 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
-import java.io.ByteArrayOutputStream
-
-// Read major/minor from gradle.properties (optional)
-val versionMajor: Int = project.properties["VERSION_MAJOR"]?.toString()?.toIntOrNull() ?: 1
-val versionMinor: Int = project.properties["VERSION_MINOR"]?.toString()?.toIntOrNull() ?: 0
-
-// Auto‑increment patch using Git commit count
-val versionPatch: Int = providers.exec {
-    commandLine("git", "rev-list", "--count", "HEAD")
-}.standardOutput.asText.get().trim().toInt()
+// ─── Version numbers (you change these manually for each release) ───
+val versionMajor = 1
+val versionMinor = 0
+val versionPatch = 0   // bump this for patch releases
 
 val appVersionName = "$versionMajor.$versionMinor.$versionPatch"
+
+// ─── Auto‑calculate version code from git tags ────────────────────────
+val tagInfo = providers.exec {
+    commandLine("git", "describe", "--tags", "--long")
+}.standardOutput.asText.get().trim()
+
+// Example: "v1.0.0-0-g123abc" (exactly on tag) or "v1.0.0-3-g123abc"
+val parts = tagInfo.split('-')
+val commitsSinceTag = parts[1].toInt()
+// Version code = 1 if exactly on the tag, else commitsSinceTag + 1
+val versionCodeInt = if (commitsSinceTag == 0) 1 else commitsSinceTag + 1
 
 android {
     namespace = "com.frostre1997.droidutility"
@@ -24,13 +29,13 @@ android {
         applicationId = "com.frostre1997.droidutility"
         minSdk = 24
         targetSdk = 34
-        versionCode = versionPatch
+        versionCode = versionCodeInt
         versionName = appVersionName
     }
 
     buildFeatures {
         compose = true
-        buildConfig = true
+        buildConfig = true   // if you still want BuildConfig
     }
 
     composeOptions {
@@ -86,9 +91,16 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
 }
 
-// Task for GitHub Actions to fetch version name
+// Task for GitHub Actions to fetch the version name (used for release tag)
 tasks.register("printVersionName") {
     doLast {
         println(android.defaultConfig.versionName)
+    }
+}
+
+// (Optional) Task to print version code if needed
+tasks.register("printVersionCode") {
+    doLast {
+        println(android.defaultConfig.versionCode)
     }
 }
