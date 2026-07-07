@@ -1,9 +1,9 @@
 package com.frostre1997.droidutility
 
+import android.content.pm.PackageManager
 import com.frostre1997.droidutility.BuildConfig
 import android.app.Activity
 import android.content.pm.ApplicationInfo
-import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
