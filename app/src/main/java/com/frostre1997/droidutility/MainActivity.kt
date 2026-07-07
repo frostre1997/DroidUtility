@@ -1,6 +1,8 @@
 package com.frostre1997.droidutility
 
 import android.app.Activity
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -30,7 +32,6 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -123,10 +124,10 @@ fun MainScreen(
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
 
+    // Only 3 tabs – Status removed
     val tabs = listOf(
         Triple("Terminal", Icons.Default.Terminal, "Execute shell commands"),
         Triple("Debloat", Icons.Default.DeleteSweep, "Remove bloatware"),
-        Triple("Status", Icons.Default.Info, "System information"),
         Triple("Settings", Icons.Default.Settings, "App settings")
     )
 
@@ -151,8 +152,7 @@ fun MainScreen(
             when (selectedTab) {
                 0 -> TerminalTab()
                 1 -> DebloatTab()
-                2 -> StatusTab()
-                3 -> SettingsTab(themeMode, onThemeChanged)
+                2 -> SettingsTab(themeMode, onThemeChanged)
             }
         }
     }
@@ -306,332 +306,226 @@ fun TerminalTab() {
 
 // ─── Debloat Tab ──────────────────────────────────────────────────────────────
 
+// Data class for app info (placed here for simplicity)
+data class AppInfo(
+    val packageName: String,
+    val appName: String,
+    val isSystem: Boolean,
+    val isUser: Boolean
+)
+
 @Composable
 fun DebloatTab() {
-    var configs by remember { mutableStateOf<List<Pair<String, DebloatConfig>>>(emptyList()) }
-    var selectedConfig by remember { mutableStateOf<DebloatConfig?>(null) }
-    var results by remember { mutableStateOf<List<DebloatResult>?>(null) }
-    var isRunning by remember { mutableStateOf(false) }
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
+
+    // State
+    var allPackages by remember { mutableStateOf<List<AppInfo>>(emptyList()) }
+    var filteredPackages by remember { mutableStateOf<List<AppInfo>>(emptyList()) }
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedFilter by remember { mutableStateOf("All") }
+    var isLoading by remember { mutableStateOf(true) }
 
     val hasPermission = remember { ShizukuShellManager.hasPermission() }
 
-    LaunchedEffect(Unit) {
-        withContext(Dispatchers.IO) {
-            val configsDir = File("/storage/emulated/0/DroidUtility/configs")
-            if (!configsDir.exists()) configsDir.mkdirs()
-            configs = DebloatEngine.loadConfigsFromDir(configsDir)
-        }
-    }
-
-    if (!hasPermission) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.errorContainer
-            )
-        ) {
-            Column(modifier = Modifier.padding(12.dp)) {
-                Text(
-                    "Shizuku permission required",
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onErrorContainer
+    // Load packages when the tab is first shown or when refreshing
+    fun loadPackages() {
+        scope.launch {
+            isLoading = true
+            val packageManager = context.packageManager
+            val installedApps = packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
+            val appInfos = installedApps.map { app ->
+                val isSystem = (app.flags and ApplicationInfo.FLAG_SYSTEM) != 0
+                val isUpdatedSystem = (app.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
+                val isUser = !isSystem && !isUpdatedSystem
+                AppInfo(
+                    packageName = app.packageName,
+                    appName = packageManager.getApplicationLabel(app).toString(),
+                    isSystem = isSystem || isUpdatedSystem,
+                    isUser = isUser
                 )
-                Text(
-                    "Grant DroidUtility access in Shizuku to use debloat features.",
-                    fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.onErrorContainer
-                )
-            }
-        }
-    } else if (results != null && selectedConfig != null) {
-        ResultsView(
-            configName = selectedConfig!!.name,
-            results = results!!,
-            onBack = {
-                results = null
-                selectedConfig = null
-            }
-        )
-    } else {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            item {
-                Text(
-                    text = "DroidUtility • Debloat Manager",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    "Select a configuration to apply system optimizations.",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-            }
+            }.sortedBy { it.appName }
 
-            if (configs.isEmpty()) {
-                item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text("No configs found", fontWeight = FontWeight.Bold)
-                            Text(
-                                "Place JSON config files in /storage/emulated/0/DroidUtility/configs/",
-                                fontSize = 13.sp
-                            )
-                        }
-                    }
-                }
-            }
-
-            items(configs) { (_, config) ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            selectedConfig = config
-                            scope.launch {
-                                isRunning = true
-                                results = withContext(Dispatchers.IO) {
-                                    DebloatEngine.applyConfig(config)
-                                }
-                                isRunning = false
-                            }
-                        },
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(config.name, fontWeight = FontWeight.Bold)
-                            Text("${config.packages.size} packages", fontSize = 12.sp)
-                        }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(config.description, fontSize = 13.sp)
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun ResultsView(configName: String, results: List<DebloatResult>, onBack: () -> Unit) {
-    val successCount = results.count { it.success }
-    val failCount = results.count { !it.success }
-
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            TextButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Back")
-            }
-        }
-
-        Text(
-            "Results: $configName",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            "$successCount succeeded, $failCount failed",
-            style = MaterialTheme.typography.bodyMedium
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            items(results) { result ->
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (result.success)
-                            MaterialTheme.colorScheme.tertiaryContainer
-                        else
-                            MaterialTheme.colorScheme.errorContainer
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier.padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            if (result.success) Icons.Default.CheckCircle
-                            else Icons.Default.Error,
-                            contentDescription = null,
-                            tint = if (result.success)
-                                MaterialTheme.colorScheme.primary
-                            else
-                                MaterialTheme.colorScheme.error
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                result.packageName,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp
-                            )
-                            Text(
-                                "${result.action}: ${result.message}",
-                                fontSize = 12.sp
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-// ─── Status Tab ──────────────────────────────────────────────────────────────
-
-@Composable
-fun StatusTab() {
-    var statusLines by remember { mutableStateOf<List<String>>(emptyList()) }
-    var isLoading by remember { mutableStateOf(true) }
-    val scope = rememberCoroutineScope()
-
-    val commandList = listOf(
-        "getprop ro.build.version.release",
-        "getprop ro.product.manufacturer",
-        "getprop ro.product.model",
-        "getprop ro.product.cpu.abi",
-        "getprop ro.build.version.sdk",
-        "dumpsys battery | grep level",
-        "cat /sys/class/power_supply/battery/health",
-        "cat /proc/meminfo | grep MemTotal",
-        "cat /proc/meminfo | grep MemAvailable",
-        "df -h /data | tail -1",
-        "uptime"
-    )
-
-    LaunchedEffect(Unit) {
-        withContext(Dispatchers.IO) {
-            val results = ShizukuShellManager.executeCommands(commandList)
-            statusLines = results.map { result ->
-                if (result.success && result.output.isNotBlank()) {
-                    result.output.trim()
-                } else {
-                    "Unknown"
-                }
-            }
+            allPackages = appInfos
+            applyFilters()
             isLoading = false
         }
     }
 
+    fun applyFilters() {
+        val query = searchQuery.lowercase().trim()
+        filteredPackages = allPackages.filter { app ->
+            val matchesSearch = app.appName.lowercase().contains(query) ||
+                    app.packageName.lowercase().contains(query)
+            val matchesFilter = when (selectedFilter) {
+                "All" -> true
+                "System" -> app.isSystem
+                "User" -> app.isUser
+                else -> true
+            }
+            matchesSearch && matchesFilter
+        }
+    }
+
+    // Load on first composition
+    LaunchedEffect(Unit) {
+        loadPackages()
+    }
+
+    // Refresh when permission changes (if granted)
+    LaunchedEffect(hasPermission) {
+        if (hasPermission) {
+            loadPackages()
+        }
+    }
+
+    // UI
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
+        // Header
         Text(
-            text = "DroidUtility • System Status",
+            text = "DroidUtility • Debloat Manager",
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 16.dp)
+            modifier = Modifier.padding(bottom = 4.dp)
+        )
+        Text(
+            text = "${allPackages.size} apps • ${allPackages.count { it.isUser }} user apps",
+            fontSize = 14.sp,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            modifier = Modifier.padding(bottom = 12.dp)
         )
 
-        if (isLoading) {
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-            return@Column
-        }
-
-        val labels = listOf(
-            "Android Version", "Manufacturer", "Device Model",
-            "CPU Architecture", "SDK Level", "Battery Level",
-            "Battery Health", "Total RAM", "Available RAM",
-            "Storage (data)", "Uptime"
+        // Search bar
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it; applyFilters() },
+            placeholder = { Text("Search packages...") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            shape = RoundedCornerShape(12.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+            )
         )
+        Spacer(modifier = Modifier.height(8.dp))
 
-        labels.zip(statusLines).forEach { (label, value) ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text(
-                        label,
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-
-                    val cleanValue = value
-                        .replace("level:", "", ignoreCase = true)
-                        .replace("health:", "", ignoreCase = true)
-                        .trim()
-
-                    val displayValue = when {
-                        cleanValue.contains("good", ignoreCase = true) || cleanValue == "2" -> "✅ Good"
-                        cleanValue.contains("cold", ignoreCase = true) || cleanValue == "7" -> "❄️ Cold"
-                        cleanValue.contains("overheat", ignoreCase = true) || cleanValue == "3" -> "🔥 Overheat"
-                        cleanValue.contains("dead", ignoreCase = true) || cleanValue == "4" -> "💀 Dead"
-                        else -> cleanValue
-                    }
-
-                    Text(
-                        displayValue,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        fontFamily = FontFamily.Monospace
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
+        // Filter chips
+        val filters = listOf("All", "System", "User")
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            OutlinedButton(
-                onClick = {
-                    isLoading = true
-                    scope.launch {
-                        withContext(Dispatchers.IO) {
-                            val results = ShizukuShellManager.executeCommands(commandList)
-                            statusLines = results.map { result ->
-                                if (result.success && result.output.isNotBlank()) {
-                                    result.output.trim()
-                                } else {
-                                    "Unknown"
-                                }
-                            }
-                            isLoading = false
-                        }
-                    }
-                },
-                modifier = Modifier.weight(1f)
+            filters.forEach { filter ->
+                FilterChip(
+                    selected = selectedFilter == filter,
+                    onClick = { selectedFilter = filter; applyFilters() },
+                    label = { Text(filter, fontSize = 12.sp) },
+                    modifier = Modifier.weight(1f),
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        labelColor = MaterialTheme.colorScheme.onSurface,
+                    )
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Package list
+        if (isLoading) {
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Text("Refresh")
+                items(filteredPackages) { app ->
+                    PackageItem(
+                        app = app,
+                        onUninstall = {
+                            if (!hasPermission) {
+                                Toast.makeText(context, "Shizuku permission required", Toast.LENGTH_SHORT).show()
+                                return@PackageItem
+                            }
+                            scope.launch {
+                                val result = DebloatEngine.uninstallPackage(app.packageName)
+                                Toast.makeText(context, result.message, Toast.LENGTH_LONG).show()
+                                loadPackages() // refresh after action
+                            }
+                        },
+                        onDisable = {
+                            if (!hasPermission) {
+                                Toast.makeText(context, "Shizuku permission required", Toast.LENGTH_SHORT).show()
+                                return@PackageItem
+                            }
+                            scope.launch {
+                                val result = DebloatEngine.disablePackage(app.packageName)
+                                Toast.makeText(context, result.message, Toast.LENGTH_LONG).show()
+                                loadPackages()
+                            }
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun PackageItem(
+    app: AppInfo,
+    onUninstall: () -> Unit,
+    onDisable: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(app.appName, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text(app.packageName, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                if (app.isSystem) {
+                    Text("System app", fontSize = 10.sp, color = MaterialTheme.colorScheme.primary)
+                }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(
+                    onClick = onUninstall,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    ),
+                    modifier = Modifier.height(32.dp)
+                ) {
+                    Text("Uninstall", fontSize = 11.sp)
+                }
+                Button(
+                    onClick = onDisable,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.secondary
+                    ),
+                    modifier = Modifier.height(32.dp)
+                ) {
+                    Text("Disable", fontSize = 11.sp)
+                }
             }
         }
     }
