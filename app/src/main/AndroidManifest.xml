@@ -23,7 +23,7 @@
             </intent-filter>
         </activity>
 
-        <!-- Shizuku Provider – REQUIRED for Shizuku to recognize your app -->
+        <!-- Shizuku Provider (REQUIRED) -->
         <provider
             android:name="rikka.shizuku.ShizukuProvider"
             android:authorities="${applicationId}.shizuku"
