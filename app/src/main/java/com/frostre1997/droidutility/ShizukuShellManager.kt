@@ -117,6 +117,32 @@ object ShizukuShellManager {
         return commands.map { executeCommand(it) }
     }
 
+    // ─── New functions for persistent shell ──────────────────────────────
+
+    @Suppress("PrivateApi")
+    fun startPersistentShell(): Process? {
+        return try {
+            if (!checkAvailability() || !hasPermission()) return null
+            val method = newProcessMethod ?: return null
+            val process = method.invoke(null, arrayOf("sh"), null, null) as Process
+            process
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to start persistent shell", e)
+            null
+        }
+    }
+
+    fun writeCommand(process: Process, command: String) {
+        try {
+            process.outputStream.write("$command\n".toByteArray())
+            process.outputStream.flush()
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to write command", e)
+        }
+    }
+
+    // ─── Data class ──────────────────────────────────────────────────────
+
     data class ShellResult(
         val success: Boolean,
         val output: String,
@@ -125,33 +151,12 @@ object ShizukuShellManager {
     )
 }
 
+// Extension function stays outside
 fun ShizukuShellManager.ShellResult.displayText(): String {
     return buildString {
         append("Exit code: $exitCode\n\n")
         if (output.isNotBlank()) append("--- STDOUT ---\n$output\n")
         if (error.isNotBlank()) append("--- STDERR ---\n$error\n")
         if (output.isBlank() && error.isBlank()) append("(no output)")
-    }
-}
-
-@Suppress("PrivateApi")
-fun startPersistentShell(): Process? {
-    return try {
-        if (!checkAvailability() || !hasPermission()) return null
-        val method = newProcessMethod ?: return null
-        val process = method.invoke(null, arrayOf("sh"), null, null) as Process
-        process
-    } catch (e: Exception) {
-        Log.e(TAG, "Failed to start persistent shell", e)
-        null
-    }
-}
-
-fun writeCommand(process: Process, command: String) {
-    try {
-        process.outputStream.write("$command\n".toByteArray())
-        process.outputStream.flush()
-    } catch (e: Exception) {
-        Log.e(TAG, "Failed to write command", e)
     }
 }
