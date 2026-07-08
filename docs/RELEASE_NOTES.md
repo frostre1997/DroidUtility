@@ -22,6 +22,7 @@ This is the first stable release of DroidUtility – a powerful, non-root Androi
 
 · Shizuku status indicator and permission request flow
 
+---
 
 ### 🧹 Debloat Manager
 
@@ -39,6 +40,7 @@ This is the first stable release of DroidUtility – a powerful, non-root Androi
 
 · Real‑time refresh after each action
 
+---
 
 ### 🎨 Theme Engine
 
@@ -48,6 +50,7 @@ This is the first stable release of DroidUtility – a powerful, non-root Androi
 
 · Material 3 design with rounded corners
 
+---
 
 ### ⚙️ Settings Tab
 
@@ -61,6 +64,7 @@ This is the first stable release of DroidUtility – a powerful, non-root Androi
 
 · App version display and about section
 
+---
 
 ### 🖥️ Console Tab (Full Terminal Emulator)
 
@@ -76,7 +80,6 @@ This is the first stable release of DroidUtility – a powerful, non-root Androi
 
 · Full Shizuku integration for elevated privileges
 
-
 ---
 
 ### 🔧 Technical Highlights
@@ -90,7 +93,6 @@ This is the first stable release of DroidUtility – a powerful, non-root Androi
 · GitHub Actions CI/CD – automatic builds and releases on push to main
 
 · Autoupdate detection – checks GitHub API for latest release
-
 
 ---
 
@@ -108,7 +110,6 @@ This is the first stable release of DroidUtility – a powerful, non-root Androi
 
 · Gson 2.10.1 (for JSON parsing)
 
-
 ---
 
 ### 📱 Requirements
@@ -119,9 +120,9 @@ This is the first stable release of DroidUtility – a powerful, non-root Androi
 
 · No root required
 
-\---
+---
 
-### 🐛 Known Issues
+## 🐛 Known Issues
 
 · Status tab has been temporarily removed (for crash) – will be re-added in a future update with a more reliable implementation (using Build class instead of shell commands).
 
