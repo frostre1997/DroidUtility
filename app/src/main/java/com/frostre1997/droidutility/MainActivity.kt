@@ -219,31 +219,53 @@ fun MainScreen(
     var selectedTab by remember { mutableIntStateOf(0) }
 
     val tabs = listOf(
-        Triple("Terminal", Icons.Default.Terminal, "Execute shell commands"),
+        Triple("Home", Icons.Default.Home, "Home"),
+        Triple("Terminal", Icons.Default.Terminal, "Execute commands"),
         Triple("Debloat", Icons.Default.DeleteSweep, "Remove bloatware"),
-        Triple("Console", Icons.Default.Code, "Full terminal emulator"),
+        Triple("Console", Icons.Default.Code, "Full terminal"),
         Triple("Settings", Icons.Default.Settings, "App settings")
     )
 
     Scaffold(
-        bottomBar = {
-            NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surface,
-                tonalElevation = 8.dp,
-                contentColor = MaterialTheme.colorScheme.onSurface
+        topBar = {
+            Surface(
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 0.dp,
+                shadowElevation = 4.dp
             ) {
-                tabs.forEachIndexed { index, (title, icon, _) ->
-                    NavigationBarItem(
-                        icon = { Icon(icon, contentDescription = title) },
-                        label = { Text(title) },
-                        selected = selectedTab == index,
-                        onClick = { selectedTab = index },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.primary,
-                            selectedTextColor = MaterialTheme.colorScheme.primary,
-                            indicatorColor = MaterialTheme.colorScheme.primaryContainer
-                        )
+                Column {
+                    // App title
+                    Text(
+                        text = "DroidUtility",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 4.dp)
                     )
+                    // Scrollable row of tabs
+                    ScrollableTabRow(
+                        selectedTabIndex = selectedTab,
+                        containerColor = Color.Transparent,
+                        edgePadding = 8.dp,
+                        indicator = { tabPositions ->
+                            TabRowDefaults.Indicator(
+                                modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
+                                height = 3.dp,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    ) {
+                        tabs.forEachIndexed { index, (title, icon, _) ->
+                            Tab(
+                                selected = selectedTab == index,
+                                onClick = { selectedTab = index },
+                                text = { Text(title, fontSize = 13.sp) },
+                                icon = { Icon(icon, contentDescription = title, modifier = Modifier.size(20.dp)) },
+                                selectedContentColor = MaterialTheme.colorScheme.primary,
+                                unselectedContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -257,10 +279,11 @@ fun MainScreen(
                 }
             ) { target ->
                 when (target) {
-                    0 -> TerminalTab()
-                    1 -> DebloatTab()
-                    2 -> ConsoleTab()
-                    3 -> SettingsTab(themeMode, onThemeChanged)
+                    0 -> HomeTab()
+                    1 -> TerminalTab()
+                    2 -> DebloatTab()
+                    3 -> ConsoleTab()
+                    4 -> SettingsTab(themeMode, onThemeChanged)
                 }
             }
         }
@@ -277,8 +300,9 @@ fun TerminalTab() {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    val shizukuAvailable = remember { ShizukuShellManager.checkAvailability() }
-    val hasPermission = remember { ShizukuShellManager.hasPermission() }
+    val shizukuState by ShizukuShellManager.shizukuState.collectAsState()
+    val hasPermission = shizukuState == ShizukuShellManager.ShizukuState.AVAILABLE_GRANTED
+    val shizukuAvailable = shizukuState == ShizukuShellManager.ShizukuState.AVAILABLE_GRANTED || shizukuState == ShizukuShellManager.ShizukuState.AVAILABLE_NO_PERMISSION
 
     Column(
         modifier = Modifier
@@ -428,7 +452,8 @@ fun DebloatTab() {
     var selectedFilter by remember { mutableStateOf("All") }
     var isLoading by remember { mutableStateOf(true) }
 
-    val hasPermission = remember { ShizukuShellManager.hasPermission() }
+    val shizukuState by ShizukuShellManager.shizukuState.collectAsState()
+    val hasPermission = shizukuState == ShizukuShellManager.ShizukuState.AVAILABLE_GRANTED
 
     fun applyFilters() {
         val query = searchQuery.lowercase().trim()
@@ -502,8 +527,8 @@ fun DebloatTab() {
 
         val filters = listOf("All", "System", "User")
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             filters.forEach { filter ->
                 FilterChip(
@@ -586,7 +611,6 @@ fun PackageItem(
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // App icon with rounded background
             Box(
                 modifier = Modifier
                     .size(44.dp)
@@ -670,16 +694,6 @@ fun PackageItem(
     }
 }
 
-// ─── Status Tab (placeholder) ────────────────────────────────────────────
-
-@Composable
-fun StatusTab() {
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        GradientHeader("Status")
-        Text("Coming soon...", color = MaterialTheme.colorScheme.onSurface)
-    }
-}
-
 // ─── Settings Tab ─────────────────────────────────────────────────────────
 
 @Composable
@@ -692,8 +706,9 @@ fun SettingsTab(
     var updateAvailable by remember { mutableStateOf<String?>(null) }
     var isChecking by remember { mutableStateOf(false) }
 
-    val shizukuAvailable = remember { ShizukuShellManager.checkAvailability() }
-    val hasPermission = remember { ShizukuShellManager.hasPermission() }
+    val shizukuState by ShizukuShellManager.shizukuState.collectAsState()
+    val shizukuAvailable = shizukuState == ShizukuShellManager.ShizukuState.AVAILABLE_GRANTED || shizukuState == ShizukuShellManager.ShizukuState.AVAILABLE_NO_PERMISSION
+    val hasPermission = shizukuState == ShizukuShellManager.ShizukuState.AVAILABLE_GRANTED
 
     LaunchedEffect(Unit) {
         isChecking = true
@@ -811,7 +826,7 @@ fun SettingsTab(
 
         // About
         SettingsCard(icon = Icons.Default.Info, title = "About") {
-            Text("DroidUtility v1.0.0", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+            Text("DroidUtility v$currentVersion", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
             Text("A powerful Android utility tool for debloating and terminal access.", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
             Text("No root required - uses Shizuku for elevated privileges.", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
         }
