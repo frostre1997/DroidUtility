@@ -133,3 +133,25 @@ fun ShizukuShellManager.ShellResult.displayText(): String {
         if (output.isBlank() && error.isBlank()) append("(no output)")
     }
 }
+
+@Suppress("PrivateApi")
+fun startPersistentShell(): Process? {
+    return try {
+        if (!checkAvailability() || !hasPermission()) return null
+        val method = newProcessMethod ?: return null
+        val process = method.invoke(null, arrayOf("sh"), null, null) as Process
+        process
+    } catch (e: Exception) {
+        Log.e(TAG, "Failed to start persistent shell", e)
+        null
+    }
+}
+
+fun writeCommand(process: Process, command: String) {
+    try {
+        process.outputStream.write("$command\n".toByteArray())
+        process.outputStream.flush()
+    } catch (e: Exception) {
+        Log.e(TAG, "Failed to write command", e)
+    }
+}
