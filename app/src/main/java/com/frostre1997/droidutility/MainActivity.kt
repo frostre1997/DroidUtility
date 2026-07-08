@@ -7,11 +7,7 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
-import android.os.BatteryManager
-import android.os.Build
 import android.os.Bundle
-import android.os.Environment
-import android.os.StatFs
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -49,32 +45,28 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        try {
-            setContent {
-                var themeMode by remember { mutableStateOf(ThemePreferences.getThemeMode(this)) }
-                DroidUtilityTheme(themeMode = themeMode) {
-                    MainScreen(
-                        themeMode = themeMode,
-                        onThemeChanged = { newMode ->
-                            themeMode = newMode
-                            ThemePreferences.setThemeMode(this, newMode)
-                        }
-                    )
-                }
-            }
-        } catch (e: Exception) {
-            // If everything fails, show a simple text
-            setContent {
-                Text("Error: ${e.message}")
+
+        setContent {
+            var themeMode by remember { mutableStateOf(ThemePreferences.getThemeMode(this)) }
+
+            DroidUtilityTheme(themeMode = themeMode) {
+                MainScreen(
+                    themeMode = themeMode,
+                    onThemeChanged = { newMode ->
+                        themeMode = newMode
+                        ThemePreferences.setThemeMode(this, newMode)
+                    }
+                )
             }
         }
     }
 }
+
+// ─── Theme ─────────────────────────────────────────────────────────────────
 
 @Composable
 fun DroidUtilityTheme(
@@ -82,12 +74,14 @@ fun DroidUtilityTheme(
     content: @Composable () -> Unit
 ) {
     val systemDark = isSystemInDarkTheme()
+
     val isDark = when (themeMode) {
         ThemeMode.LIGHT -> false
         ThemeMode.DARK -> true
         ThemeMode.AMOLED -> true
         ThemeMode.SYSTEM -> systemDark
     }
+
     val colorScheme = if (isDark) {
         darkColorScheme(
             primary = Color(0xFF90CAF9),
@@ -123,6 +117,7 @@ fun DroidUtilityTheme(
             onErrorContainer = Color(0xFF410002),
         )
     }
+
     MaterialTheme(
         colorScheme = colorScheme,
         shapes = Shapes(
@@ -135,7 +130,7 @@ fun DroidUtilityTheme(
     }
 }
 
-// ─── Reusable UI helpers ──────────────────────────────────────────────────
+// ─── Reusable UI Components ──────────────────────────────────────────────
 
 @Composable
 fun GradientHeader(text: String, modifier: Modifier = Modifier) {
@@ -162,13 +157,18 @@ fun SettingsCard(
     content: @Composable ColumnScope.() -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 8.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(bottom = 8.dp)
+            ) {
                 Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(title, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
@@ -207,6 +207,7 @@ fun MainScreen(
     onThemeChanged: (ThemeMode) -> Unit
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
+
     val tabs = listOf(
         Triple("Home", Icons.Default.Home, "Home"),
         Triple("Terminal", Icons.Default.Terminal, "Execute commands"),
@@ -223,7 +224,9 @@ fun MainScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -273,244 +276,7 @@ fun MainScreen(
     }
 }
 
-// ─── Home Tab ──────────────────────────────────────────────────────────────
-
-@Composable
-fun HomeTab() {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-
-    // Simple Shizuku state – no StateFlow
-    var shizukuAvailable by remember { mutableStateOf(false) }
-    var shizukuPermission by remember { mutableStateOf(false) }
-    var isRefreshing by remember { mutableStateOf(false) }
-
-    fun refreshState() {
-        scope.launch {
-            isRefreshing = true
-            shizukuAvailable = ShizukuShellManager.checkAvailability()
-            shizukuPermission = ShizukuShellManager.hasPermission()
-            isRefreshing = false
-        }
-    }
-
-    // Load on first composition
-    LaunchedEffect(Unit) {
-        refreshState()
-    }
-
-    // App info
-    val appVersion = try {
-        context.packageManager.getPackageInfo(context.packageName, 0).versionName
-    } catch (e: Exception) { "1.0.0" }
-    val packageName = context.packageName
-
-    // Device info (safe)
-    val androidVersion = Build.VERSION.RELEASE
-    val sdkVersion = Build.VERSION.SDK_INT
-    val manufacturer = Build.MANUFACTURER
-    val model = Build.MODEL
-    val cpuArch = Build.SUPPORTED_ABIS.firstOrNull() ?: "unknown"
-    val batteryLevel = try {
-        val bm = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
-        bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
-    } catch (e: Exception) { 0 }
-    val batteryHealth = try {
-        val bm = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
-        val health = bm.getIntProperty(4) // BATTERY_PROPERTY_HEALTH = 4
-        when (health) {
-            BatteryManager.BATTERY_HEALTH_GOOD -> "Good"
-            BatteryManager.BATTERY_HEALTH_OVERHEAT -> "Overheat"
-            BatteryManager.BATTERY_HEALTH_DEAD -> "Dead"
-            BatteryManager.BATTERY_HEALTH_OVER_VOLTAGE -> "Over Voltage"
-            BatteryManager.BATTERY_HEALTH_UNSPECIFIED_FAILURE -> "Failure"
-            else -> "Unknown"
-        }
-    } catch (e: Exception) { "Unknown" }
-
-    val storageInfo = try {
-        val stat = StatFs(Environment.getDataDirectory().path)
-        val totalGB = stat.totalBytes / (1024.0 * 1024.0 * 1024.0)
-        val availGB = stat.availableBytes / (1024.0 * 1024.0 * 1024.0)
-        String.format("%.1f GB / %.1f GB", availGB, totalGB)
-    } catch (e: Exception) { "Unknown" }
-
-    val ramInfo = try {
-        val mem = File("/proc/meminfo").readText()
-        val total = Regex("MemTotal:\\s+(\\d+)\\s+kB").find(mem)?.groupValues?.get(1)?.toIntOrNull()?.div(1024) ?: 0
-        val avail = Regex("MemAvailable:\\s+(\\d+)\\s+kB").find(mem)?.groupValues?.get(1)?.toIntOrNull()?.div(1024) ?: 0
-        "${total} MB" to "${avail} MB"
-    } catch (e: Exception) { "Unknown" to "Unknown" }
-
-    val uptime = try {
-        val sec = android.os.SystemClock.elapsedRealtime() / 1000
-        val d = sec / 86400
-        val h = (sec % 86400) / 3600
-        val m = (sec % 3600) / 60
-        when {
-            d > 0 -> "${d}d ${h}h ${m}m"
-            h > 0 -> "${h}h ${m}m"
-            else -> "${m}m"
-        }
-    } catch (e: Exception) { "Unknown" }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState())
-    ) {
-        // Header
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text("DroidUtility", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                Text("v$appVersion • $packageName", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
-            }
-            Row {
-                IconButton(onClick = { refreshState() }) {
-                    if (isRefreshing) CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                    else Icon(Icons.Default.Refresh, contentDescription = "Refresh")
-                }
-                IconButton(onClick = { refreshState() }) {
-                    Icon(Icons.Default.Sync, contentDescription = "Sync Shizuku")
-                }
-            }
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Shizuku Status Card
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = if (shizukuAvailable && shizukuPermission)
-                    MaterialTheme.colorScheme.tertiaryContainer
-                else if (shizukuAvailable && !shizukuPermission)
-                    MaterialTheme.colorScheme.secondaryContainer
-                else
-                    MaterialTheme.colorScheme.errorContainer
-            )
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            if (shizukuAvailable && shizukuPermission) Icons.Default.CheckCircle
-                            else if (shizukuAvailable && !shizukuPermission) Icons.Default.Warning
-                            else Icons.Default.Error,
-                            contentDescription = null,
-                            tint = if (shizukuAvailable && shizukuPermission) Color(0xFF4CAF50)
-                            else if (shizukuAvailable && !shizukuPermission) Color(0xFFFFA726)
-                            else Color(0xFFEF5350),
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            if (shizukuAvailable && shizukuPermission) "Shizuku Ready ✅"
-                            else if (shizukuAvailable && !shizukuPermission) "Permission Required"
-                            else "Shizuku Not Running",
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                    if (shizukuAvailable && !shizukuPermission) {
-                        Button(
-                            onClick = {
-                                if (context is Activity) {
-                                    ShizukuShellManager.requestPermission(context)
-                                    Toast.makeText(context, "Check Shizuku app", Toast.LENGTH_SHORT).show()
-                                }
-                            },
-                            modifier = Modifier.height(32.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                        ) {
-                            Text("Grant", fontSize = 11.sp)
-                        }
-                    }
-                }
-                Spacer(modifier = Modifier.height(4.dp))
-                val shizukuVersion = try { rikka.shizuku.Shizuku.getVersion() } catch (e: Exception) { -1 }
-                if (shizukuVersion != -1) {
-                    Text("Shizuku v$shizukuVersion", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
-                }
-                if (!shizukuAvailable) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Button(
-                        onClick = {
-                            try {
-                                val intent = context.packageManager.getLaunchIntentForPackage("moe.shizuku.manager")
-                                if (intent != null) context.startActivity(intent)
-                                else Toast.makeText(context, "Shizuku not installed", Toast.LENGTH_SHORT).show()
-                            } catch (e: Exception) {
-                                Toast.makeText(context, "Cannot open Shizuku", Toast.LENGTH_SHORT).show()
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                    ) {
-                        Icon(Icons.Default.OpenInNew, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Open Shizuku")
-                    }
-                }
-            }
-        }
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Text("System Status", fontSize = 18.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(bottom = 8.dp))
-
-        val statusItems = listOf(
-            "Android Version" to androidVersion,
-            "Manufacturer" to manufacturer,
-            "Device Model" to model,
-            "CPU Architecture" to cpuArch,
-            "SDK Level" to sdkVersion.toString(),
-            "Battery Level" to "$batteryLevel%",
-            "Battery Health" to batteryHealth,
-            "Total RAM" to ramInfo.first,
-            "Available RAM" to ramInfo.second,
-            "Storage (data)" to storageInfo,
-            "Uptime" to uptime
-        )
-
-        for (i in statusItems.indices step 2) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                StatusCard(statusItems[i].first, statusItems[i].second, Modifier.weight(1f))
-                if (i + 1 < statusItems.size) {
-                    StatusCard(statusItems[i + 1].first, statusItems[i + 1].second, Modifier.weight(1f))
-                } else {
-                    Spacer(modifier = Modifier.weight(1f))
-                }
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-    }
-}
-
-@Composable
-fun StatusCard(label: String, value: String, modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text(label, fontSize = 10.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(value.takeIf { it.isNotBlank() } ?: "Unknown", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, maxLines = 2)
-        }
-    }
-}
-
-// ─── Terminal Tab ──────────────────────────────────────────────────────────
+// ─── Terminal Tab ─────────────────────────────────────────────────────────
 
 @Composable
 fun TerminalTab() {
@@ -520,31 +286,49 @@ fun TerminalTab() {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    // Check Shizuku state directly
     val shizukuAvailable = ShizukuShellManager.checkAvailability()
     val hasPermission = ShizukuShellManager.hasPermission()
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
         GradientHeader("Terminal")
 
         if (!shizukuAvailable || !hasPermission) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                )
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
-                    Text(if (!shizukuAvailable) "Shizuku is not running" else "Shizuku permission required",
-                        color = MaterialTheme.colorScheme.onErrorContainer, fontWeight = FontWeight.Bold)
-                    Text(if (!shizukuAvailable) "Start Shizuku and try again." else "Grant DroidUtility access in Shizuku.",
-                        color = MaterialTheme.colorScheme.onErrorContainer, fontSize = 13.sp)
+                    Text(
+                        if (!shizukuAvailable) "Shizuku is not running" else "Shizuku permission required",
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        if (!shizukuAvailable) "Start Shizuku and try again."
+                        else "Grant DroidUtility access in Shizuku.",
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        fontSize = 13.sp
+                    )
+
                     if (shizukuAvailable && !hasPermission) {
                         Spacer(modifier = Modifier.height(8.dp))
-                        Button(onClick = {
-                            if (context is Activity) {
-                                ShizukuShellManager.requestPermission(context)
-                                Toast.makeText(context, "Check Shizuku app", Toast.LENGTH_SHORT).show()
-                            }
-                        }, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)) {
+                        Button(
+                            onClick = {
+                                if (context is Activity) {
+                                    ShizukuShellManager.requestPermission(context)
+                                    Toast.makeText(context, "Check Shizuku app", Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
+                        ) {
                             Text("Grant Permission")
                         }
                     }
@@ -554,9 +338,13 @@ fun TerminalTab() {
         }
 
         OutlinedTextField(
-            value = command, onValueChange = { command = it },
-            label = { Text("Shell command") }, placeholder = { Text("e.g., pm list packages") },
-            modifier = Modifier.fillMaxWidth(), singleLine = true, shape = RoundedCornerShape(12.dp),
+            value = command,
+            onValueChange = { command = it },
+            label = { Text("Shell command") },
+            placeholder = { Text("e.g., pm list packages") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            shape = RoundedCornerShape(12.dp),
             enabled = !isRunning && hasPermission,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor = MaterialTheme.colorScheme.surface,
@@ -568,29 +356,61 @@ fun TerminalTab() {
                 unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
             )
         )
+
         Spacer(modifier = Modifier.height(8.dp))
+
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = {
-                scope.launch {
-                    isRunning = true
-                    val result = withContext(Dispatchers.IO) { ShizukuShellManager.executeCommand(command) }
-                    output = result.displayText()
-                    isRunning = false
-                }
-            }, enabled = command.isNotBlank() && !isRunning && hasPermission) {
+            Button(
+                onClick = {
+                    scope.launch {
+                        isRunning = true
+                        val result = withContext(Dispatchers.IO) {
+                            ShizukuShellManager.executeCommand(command)
+                        }
+                        output = result.displayText()
+                        isRunning = false
+                    }
+                },
+                enabled = command.isNotBlank() && !isRunning && hasPermission
+            ) {
                 if (isRunning) {
-                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
                     Spacer(modifier = Modifier.width(8.dp))
                 }
                 Text("Execute")
             }
-            OutlinedButton(onClick = { command = ""; output = "Cleared." }) { Text("Clear") }
+
+            OutlinedButton(
+                onClick = {
+                    command = ""
+                    output = "Cleared."
+                }
+            ) {
+                Text("Clear")
+            }
         }
+
         Spacer(modifier = Modifier.height(12.dp))
-        Surface(modifier = Modifier.fillMaxWidth().weight(1f), color = MaterialTheme.colorScheme.surfaceVariant, shape = MaterialTheme.shapes.medium) {
+
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            shape = MaterialTheme.shapes.medium
+        ) {
             Box(modifier = Modifier.padding(12.dp)) {
                 SelectionContainer {
-                    Text(text = output, fontFamily = FontFamily.Monospace, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
+                    Text(
+                        text = output,
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
                 }
             }
         }
@@ -622,7 +442,8 @@ fun DebloatTab() {
     fun applyFilters() {
         val query = searchQuery.lowercase().trim()
         filteredPackages = allPackages.filter { app ->
-            val matchesSearch = app.appName.lowercase().contains(query) || app.packageName.lowercase().contains(query)
+            val matchesSearch = app.appName.lowercase().contains(query) ||
+                    app.packageName.lowercase().contains(query)
             val matchesFilter = when (selectedFilter) {
                 "All" -> true
                 "System" -> app.isSystem
@@ -656,15 +477,29 @@ fun DebloatTab() {
     }
 
     LaunchedEffect(Unit) { loadPackages() }
+    LaunchedEffect(hasPermission) { if (hasPermission) loadPackages() }
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
         GradientHeader("Debloat Manager")
-        Text(text = "${allPackages.size} apps • ${allPackages.count { it.isUser }} user apps",
-            fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-            modifier = Modifier.padding(bottom = 12.dp))
-        OutlinedTextField(value = searchQuery, onValueChange = { searchQuery = it; applyFilters() },
+
+        Text(
+            text = "${allPackages.size} apps • ${allPackages.count { it.isUser }} user apps",
+            fontSize = 14.sp,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it; applyFilters() },
             placeholder = { Text("Search packages...") },
-            modifier = Modifier.fillMaxWidth(), singleLine = true, shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor = MaterialTheme.colorScheme.surface,
                 unfocusedContainerColor = MaterialTheme.colorScheme.surface,
@@ -673,10 +508,15 @@ fun DebloatTab() {
             )
         )
         Spacer(modifier = Modifier.height(8.dp))
+
         val filters = listOf("All", "System", "User")
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             filters.forEach { filter ->
-                FilterChip(selected = selectedFilter == filter,
+                FilterChip(
+                    selected = selectedFilter == filter,
                     onClick = { selectedFilter = filter; applyFilters() },
                     label = { Text(filter, fontSize = 12.sp) },
                     modifier = Modifier.weight(1f),
@@ -689,7 +529,9 @@ fun DebloatTab() {
                 )
             }
         }
+
         Spacer(modifier = Modifier.height(12.dp))
+
         if (isLoading) {
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
@@ -737,57 +579,102 @@ fun PackageItem(
     onDisable: () -> Unit
 ) {
     val icon = rememberAppIcon(app.packageName, context)
+
     Card(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(modifier = Modifier.size(44.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primaryContainer)) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.primaryContainer)
+            ) {
                 if (icon != null) {
-                    Image(bitmap = icon, contentDescription = null, modifier = Modifier.fillMaxSize().padding(6.dp))
+                    Image(
+                        bitmap = icon,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize().padding(6.dp)
+                    )
                 } else {
-                    Icon(Icons.Default.Android, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.fillMaxSize().padding(6.dp))
+                    Icon(
+                        Icons.Default.Android,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.fillMaxSize().padding(6.dp)
+                    )
                 }
             }
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(app.appName, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
-                Text(app.packageName, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    app.appName,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    app.packageName,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 if (app.isSystem) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("System", fontSize = 10.sp, color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(4.dp))
-                                .padding(horizontal = 6.dp, vertical = 2.dp))
+                        Text(
+                            "System",
+                            fontSize = 10.sp,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier
+                                .background(
+                                    MaterialTheme.colorScheme.primaryContainer,
+                                    RoundedCornerShape(4.dp)
+                                )
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Icon(Icons.Default.Warning, contentDescription = null, tint = Color.Yellow, modifier = Modifier.size(14.dp))
+                        Icon(
+                            Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = Color.Yellow,
+                            modifier = Modifier.size(14.dp)
+                        )
                     }
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                IconButton(onClick = onUninstall,
-                    colors = IconButtonDefaults.iconButtonColors(containerColor = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.error),
-                    modifier = Modifier.size(36.dp)) {
+                IconButton(
+                    onClick = onUninstall,
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.error
+                    ),
+                    modifier = Modifier.size(36.dp)
+                ) {
                     Icon(Icons.Default.Delete, contentDescription = "Uninstall", modifier = Modifier.size(18.dp))
                 }
-                IconButton(onClick = onDisable,
-                    colors = IconButtonDefaults.iconButtonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.secondary),
-                    modifier = Modifier.size(36.dp)) {
+                IconButton(
+                    onClick = onDisable,
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.secondary
+                    ),
+                    modifier = Modifier.size(36.dp)
+                ) {
                     Icon(Icons.Default.Block, contentDescription = "Disable", modifier = Modifier.size(18.dp))
                 }
             }
         }
-    }
-}
-
-// ─── Console Tab (simplified) ────────────────────────────────────────────
-
-@Composable
-fun ConsoleTab() {
-    // Simplified: just a placeholder to avoid crashes
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-        Text("Console Tab (coming soon)", fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurface)
-        Text("Full terminal emulator will be here", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
     }
 }
 
@@ -799,6 +686,7 @@ fun SettingsTab(
     onThemeChange: (ThemeMode) -> Unit
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var updateAvailable by remember { mutableStateOf<String?>(null) }
     var isChecking by remember { mutableStateOf(false) }
 
@@ -815,7 +703,12 @@ fun SettingsTab(
         context.packageManager.getPackageInfo(context.packageName, 0).versionName
     } catch (e: Exception) { "1.0.0" }
 
-    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp)
+    ) {
         GradientHeader("Settings")
 
         // Appearance
@@ -823,7 +716,10 @@ fun SettingsTab(
             Text("Theme Mode", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(4.dp))
             val themeOptions = listOf(ThemeMode.LIGHT, ThemeMode.DARK, ThemeMode.AMOLED, ThemeMode.SYSTEM)
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 themeOptions.forEach { mode ->
                     FilterChip(
                         selected = currentTheme == mode,
@@ -848,9 +744,11 @@ fun SettingsTab(
             } else if (updateAvailable != null) {
                 Text("✅ New version available!", color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(8.dp))
-                Button(onClick = { UpdateManager.downloadAndInstall(context, updateAvailable!!) },
+                Button(
+                    onClick = { UpdateManager.downloadAndInstall(context, updateAvailable!!) },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                    modifier = Modifier.fillMaxWidth()) {
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     Icon(Icons.Default.Download, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Download & Install")
@@ -867,30 +765,43 @@ fun SettingsTab(
         // Shizuku Status
         SettingsCard(icon = Icons.Default.Security, title = "Shizuku Status") {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(if (shizukuAvailable) Icons.Default.CheckCircle else Icons.Default.Error,
-                    contentDescription = null, tint = if (shizukuAvailable) Color(0xFF4CAF50) else Color(0xFFEF5350))
+                Icon(
+                    if (shizukuAvailable) Icons.Default.CheckCircle else Icons.Default.Error,
+                    contentDescription = null,
+                    tint = if (shizukuAvailable) Color(0xFF4CAF50) else Color(0xFFEF5350)
+                )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(if (shizukuAvailable) "Shizuku is running" else "Shizuku is not running",
-                    color = MaterialTheme.colorScheme.onSurface)
+                Text(
+                    if (shizukuAvailable) "Shizuku is running" else "Shizuku is not running",
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             }
             Spacer(modifier = Modifier.height(4.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(if (hasPermission) Icons.Default.CheckCircle else Icons.Default.Error,
-                    contentDescription = null, tint = if (hasPermission) Color(0xFF4CAF50) else Color(0xFFEF5350))
+                Icon(
+                    if (hasPermission) Icons.Default.CheckCircle else Icons.Default.Error,
+                    contentDescription = null,
+                    tint = if (hasPermission) Color(0xFF4CAF50) else Color(0xFFEF5350)
+                )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(if (hasPermission) "Permission granted" else "Permission not granted",
-                    color = MaterialTheme.colorScheme.onSurface)
+                Text(
+                    if (hasPermission) "Permission granted" else "Permission not granted",
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             }
             if (!shizukuAvailable || !hasPermission) {
                 Spacer(modifier = Modifier.height(8.dp))
-                Button(onClick = {
-                    if (context is Activity) {
-                        ShizukuShellManager.requestPermission(context)
-                        Toast.makeText(context, "Check Shizuku app", Toast.LENGTH_SHORT).show()
-                    }
-                }, modifier = Modifier.fillMaxWidth(),
+                Button(
+                    onClick = {
+                        if (context is Activity) {
+                            ShizukuShellManager.requestPermission(context)
+                            Toast.makeText(context, "Check Shizuku app", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
                     enabled = shizukuAvailable && !hasPermission,
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)) {
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                ) {
                     Text("Grant Shizuku Permission")
                 }
             }
