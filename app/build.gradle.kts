@@ -6,7 +6,7 @@ plugins {
 // ─── Version numbers (you change these manually for each release) ───
 val versionMajor = 1
 val versionMinor = 0
-val versionPatch = 2   // bump this for patch releases
+val versionPatch = 3   // bump this for patch releases
 
 val appVersionName = "$versionMajor.$versionMinor.$versionPatch"
 
