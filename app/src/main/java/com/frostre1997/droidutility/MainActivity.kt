@@ -1,6 +1,7 @@
 package com.frostre1997.droidutility
 
 import android.app.Activity
+import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -12,6 +13,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.*
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -19,6 +21,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
@@ -34,6 +37,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -666,12 +670,10 @@ fun PackageItem(
     }
 }
 
-// ─── Status Tab ───────────────────────────────────────────────────────────
+// ─── Status Tab (placeholder) ────────────────────────────────────────────
 
 @Composable
 fun StatusTab() {
-    // ... (this tab is still under development – you can keep the old version or remove it)
-    // I've included a placeholder for now.
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         GradientHeader("Status")
         Text("Coming soon...", color = MaterialTheme.colorScheme.onSurface)
