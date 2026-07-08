@@ -1,5 +1,6 @@
 package com.frostre1997.droidutility
 
+import androidx.compose.material3.tabIndicatorOffset
 import android.app.Activity
 import android.content.Context
 import android.content.pm.ApplicationInfo
