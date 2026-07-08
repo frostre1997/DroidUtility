@@ -266,7 +266,6 @@ fun getBatteryLevel(context: Context): Int {
 fun getBatteryHealth(context: Context): String {
     return try {
         val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
-        // Using integer constant (4) as fallback for BATTERY_PROPERTY_HEALTH
         val health = batteryManager.getIntProperty(4)
         when (health) {
             BatteryManager.BATTERY_HEALTH_GOOD -> "Good"
