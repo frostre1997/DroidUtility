@@ -248,8 +248,12 @@ fun MainScreen(
                         containerColor = Color.Transparent,
                         edgePadding = 8.dp,
                         indicator = { tabPositions ->
+                            val selectedPosition = tabPositions[selectedTab]
                             TabRowDefaults.Indicator(
-                                modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
+                                modifier = Modifier
+                                  .fillmaxWidth()
+                                  .offset(x =  selectedPosition.left, y 0.{ = dp)
+                                  .width(SelectedPosition.width)
                                 height = 3.dp,
                                 color = MaterialTheme.colorScheme.primary
                             )
