@@ -117,7 +117,7 @@ object ShizukuShellManager {
         return commands.map { executeCommand(it) }
     }
 
-    // ─── New functions for persistent shell ──────────────────────────────
+    // ─── Persistent shell support ──────────────────────────────
 
     @Suppress("PrivateApi")
     fun startPersistentShell(): Process? {
@@ -141,8 +141,6 @@ object ShizukuShellManager {
         }
     }
 
-    // ─── Data class ──────────────────────────────────────────────────────
-
     data class ShellResult(
         val success: Boolean,
         val output: String,
@@ -151,7 +149,6 @@ object ShizukuShellManager {
     )
 }
 
-// Extension function stays outside
 fun ShizukuShellManager.ShellResult.displayText(): String {
     return buildString {
         append("Exit code: $exitCode\n\n")
