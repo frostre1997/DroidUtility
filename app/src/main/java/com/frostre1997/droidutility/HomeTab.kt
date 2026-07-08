@@ -86,7 +86,6 @@ fun HomeTab() {
                 )
             }
             Row {
-                // Refresh button
                 IconButton(
                     onClick = { refresh() },
                     enabled = !isRefreshing
@@ -97,7 +96,6 @@ fun HomeTab() {
                         Icon(Icons.Default.Refresh, contentDescription = "Refresh")
                     }
                 }
-                // Sync Shizuku button
                 IconButton(
                     onClick = {
                         ShizukuShellManager.refreshState()
@@ -185,7 +183,6 @@ fun HomeTab() {
                     )
                 }
 
-                // Open Shizuku button if not running
                 if (shizukuState == ShizukuShellManager.ShizukuState.NOT_AVAILABLE) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(
@@ -257,8 +254,6 @@ fun HomeTab() {
         }
     }
 }
-
-// ─── StatusCard composable (defined BEFORE it's used) ───────────────────
 
 @Composable
 fun StatusCard(
