@@ -234,7 +234,6 @@ fun MainScreen(
                 shadowElevation = 4.dp
             ) {
                 Column {
-                    // App title
                     Text(
                         text = "DroidUtility",
                         fontSize = 20.sp,
@@ -242,7 +241,6 @@ fun MainScreen(
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 4.dp)
                     )
-                    // Scrollable row of tabs
                     ScrollableTabRow(
                         selectedTabIndex = selectedTab,
                         containerColor = Color.Transparent,
@@ -251,9 +249,9 @@ fun MainScreen(
                             val selectedPosition = tabPositions[selectedTab]
                             TabRowDefaults.Indicator(
                                 modifier = Modifier
-                                  .fillmaxWidth()
-                                  .offset(x =  selectedPosition.left, y 0.{ = dp)
-                                  .width(SelectedPosition.width)
+                                    .fillMaxWidth()
+                                    .offset(x = selectedPosition.left, y = 0.dp)
+                                    .width(selectedPosition.width),
                                 height = 3.dp,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -306,7 +304,8 @@ fun TerminalTab() {
 
     val shizukuState by ShizukuShellManager.shizukuState.collectAsState()
     val hasPermission = shizukuState == ShizukuShellManager.ShizukuState.AVAILABLE_GRANTED
-    val shizukuAvailable = shizukuState == ShizukuShellManager.ShizukuState.AVAILABLE_GRANTED || shizukuState == ShizukuShellManager.ShizukuState.AVAILABLE_NO_PERMISSION
+    val shizukuAvailable = shizukuState == ShizukuShellManager.ShizukuState.AVAILABLE_GRANTED ||
+            shizukuState == ShizukuShellManager.ShizukuState.AVAILABLE_NO_PERMISSION
 
     Column(
         modifier = Modifier
@@ -531,8 +530,8 @@ fun DebloatTab() {
 
         val filters = listOf("All", "System", "User")
         Row(
-          modifier = Modifier.fillMaxWidth(),
-          horizontalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             filters.forEach { filter ->
                 FilterChip(
@@ -711,7 +710,8 @@ fun SettingsTab(
     var isChecking by remember { mutableStateOf(false) }
 
     val shizukuState by ShizukuShellManager.shizukuState.collectAsState()
-    val shizukuAvailable = shizukuState == ShizukuShellManager.ShizukuState.AVAILABLE_GRANTED || shizukuState == ShizukuShellManager.ShizukuState.AVAILABLE_NO_PERMISSION
+    val shizukuAvailable = shizukuState == ShizukuShellManager.ShizukuState.AVAILABLE_GRANTED ||
+            shizukuState == ShizukuShellManager.ShizukuState.AVAILABLE_NO_PERMISSION
     val hasPermission = shizukuState == ShizukuShellManager.ShizukuState.AVAILABLE_GRANTED
 
     LaunchedEffect(Unit) {
