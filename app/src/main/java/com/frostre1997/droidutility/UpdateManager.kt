@@ -3,7 +3,6 @@ package com.frostre1997.droidutility
 import android.app.DownloadManager
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
@@ -45,14 +44,9 @@ object UpdateManager {
             if (json != null) {
                 val release = Gson().fromJson(json, GitHubRelease::class.java)
                 val latestVersion = release.tag_name.replace("v", "")
-                
-                // Get current version from PackageManager
                 val currentVersion = try {
-                    val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-                    packageInfo.versionName
-                } catch (e: Exception) {
-                    return null
-                }
+                    context.packageManager.getPackageInfo(context.packageName, 0).versionName
+                } catch (e: Exception) { return null }
 
                 if (latestVersion > currentVersion) {
                     val apkAsset = release.assets.find { it.name.endsWith(".apk") }
