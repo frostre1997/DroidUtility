@@ -1,20 +1,24 @@
 package com.frostre1997.droidutility
 
-import androidx.compose.material.icons.filled.Code
-import android.content.pm.PackageManager
-import com.frostre1997.droidutility.BuildConfig
 import android.app.Activity
 import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.drawable.BitmapDrawable
+import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
@@ -25,7 +29,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -55,12 +63,16 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+// ─── Theme ─────────────────────────────────────────────────────────────────
+
 @Composable
 fun DroidUtilityTheme(
     themeMode: ThemeMode,
     content: @Composable () -> Unit
 ) {
+    val context = LocalContext.current
     val systemDark = isSystemInDarkTheme()
+
     val isDark = when (themeMode) {
         ThemeMode.LIGHT -> false
         ThemeMode.DARK -> true
@@ -69,40 +81,47 @@ fun DroidUtilityTheme(
     }
 
     val colorScheme = if (isDark) {
-        val background = if (themeMode == ThemeMode.AMOLED) Color.Black else Color(0xFF121212)
-        darkColorScheme(
-            primary = Color(0xFF90CAF9),
-            secondary = Color(0xFF80CBC4),
-            tertiary = Color(0xFFA5D6A7),
-            background = background,
-            surface = if (themeMode == ThemeMode.AMOLED) Color.Black else Color(0xFF1E1E1E),
-            surfaceVariant = if (themeMode == ThemeMode.AMOLED) Color(0xFF1A1A1A) else Color(0xFF2C2C2C),
-            onPrimary = Color(0xFF0D0D0D),
-            onSecondary = Color(0xFF0D0D0D),
-            onBackground = Color(0xFFE0E0E0),
-            onSurface = Color(0xFFE0E0E0),
-            error = Color(0xFFCF6679),
-            errorContainer = Color(0xFFB00020),
-            onError = Color.Black,
-            onErrorContainer = Color.White,
-        )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            dynamicDarkColorScheme(context)
+        } else {
+            darkColorScheme(
+                primary = Color(0xFF90CAF9),
+                secondary = Color(0xFF80CBC4),
+                tertiary = Color(0xFFA5D6A7),
+                background = if (themeMode == ThemeMode.AMOLED) Color.Black else Color(0xFF121212),
+                surface = if (themeMode == ThemeMode.AMOLED) Color.Black else Color(0xFF1E1E1E),
+                surfaceVariant = if (themeMode == ThemeMode.AMOLED) Color(0xFF1A1A1A) else Color(0xFF2C2C2C),
+                onPrimary = Color(0xFF0D0D0D),
+                onSecondary = Color(0xFF0D0D0D),
+                onBackground = Color(0xFFE0E0E0),
+                onSurface = Color(0xFFE0E0E0),
+                error = Color(0xFFCF6679),
+                errorContainer = Color(0xFFB00020),
+                onError = Color.Black,
+                onErrorContainer = Color.White,
+            )
+        }
     } else {
-        lightColorScheme(
-            primary = Color(0xFF1976D2),
-            secondary = Color(0xFF00897B),
-            tertiary = Color(0xFF388E3C),
-            background = Color(0xFFF5F5F5),
-            surface = Color(0xFFFFFFFF),
-            surfaceVariant = Color(0xFFE8E8E8),
-            onPrimary = Color.White,
-            onSecondary = Color.White,
-            onBackground = Color(0xFF1A1A1A),
-            onSurface = Color(0xFF1A1A1A),
-            error = Color(0xFFB00020),
-            errorContainer = Color(0xFFFFDAD6),
-            onError = Color.White,
-            onErrorContainer = Color(0xFF410002),
-        )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            dynamicLightColorScheme(context)
+        } else {
+            lightColorScheme(
+                primary = Color(0xFF1976D2),
+                secondary = Color(0xFF00897B),
+                tertiary = Color(0xFF388E3C),
+                background = Color(0xFFF5F5F5),
+                surface = Color(0xFFFFFFFF),
+                surfaceVariant = Color(0xFFE8E8E8),
+                onPrimary = Color.White,
+                onSecondary = Color.White,
+                onBackground = Color(0xFF1A1A1A),
+                onSurface = Color(0xFF1A1A1A),
+                error = Color(0xFFB00020),
+                errorContainer = Color(0xFFFFDAD6),
+                onError = Color.White,
+                onErrorContainer = Color(0xFF410002),
+            )
+        }
     }
 
     MaterialTheme(
@@ -117,6 +136,76 @@ fun DroidUtilityTheme(
     }
 }
 
+// ─── Reusable UI Components ──────────────────────────────────────────────
+
+@Composable
+fun GradientHeader(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text = text,
+        fontSize = 28.sp,
+        fontWeight = FontWeight.Bold,
+        modifier = modifier.padding(bottom = 12.dp),
+        style = MaterialTheme.typography.titleLarge.copy(
+            brush = Brush.horizontalGradient(
+                colors = listOf(
+                    MaterialTheme.colorScheme.primary,
+                    MaterialTheme.colorScheme.secondary
+                )
+            )
+        )
+    )
+}
+
+@Composable
+fun SettingsCard(
+    icon: ImageVector,
+    title: String,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(bottom = 8.dp)
+            ) {
+                Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(title, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
+            }
+            content()
+        }
+    }
+}
+
+@Composable
+fun rememberAppIcon(packageName: String, context: Context): ImageBitmap? {
+    return remember(packageName) {
+        try {
+            val drawable = context.packageManager.getApplicationIcon(packageName)
+            val bitmap = when (drawable) {
+                is BitmapDrawable -> drawable.bitmap
+                else -> {
+                    val bmp = Bitmap.createBitmap(48, 48, Bitmap.Config.ARGB_8888)
+                    val canvas = Canvas(bmp)
+                    drawable.setBounds(0, 0, 48, 48)
+                    drawable.draw(canvas)
+                    bmp
+                }
+            }
+            bitmap.asImageBitmap()
+        } catch (e: Exception) { null }
+    }
+}
+
+// ─── Main Screen ─────────────────────────────────────────────────────────
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
@@ -128,6 +217,7 @@ fun MainScreen(
     val tabs = listOf(
         Triple("Terminal", Icons.Default.Terminal, "Execute shell commands"),
         Triple("Debloat", Icons.Default.DeleteSweep, "Remove bloatware"),
+        Triple("Console", Icons.Default.Code, "Full terminal emulator"),
         Triple("Settings", Icons.Default.Settings, "App settings")
     )
 
@@ -135,31 +225,45 @@ fun MainScreen(
         bottomBar = {
             NavigationBar(
                 containerColor = MaterialTheme.colorScheme.surface,
-                tonalElevation = 0.dp
+                tonalElevation = 8.dp,
+                contentColor = MaterialTheme.colorScheme.onSurface
             ) {
                 tabs.forEachIndexed { index, (title, icon, _) ->
                     NavigationBarItem(
                         icon = { Icon(icon, contentDescription = title) },
                         label = { Text(title) },
                         selected = selectedTab == index,
-                        onClick = { selectedTab = index }
+                        onClick = { selectedTab = index },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                        )
                     )
                 }
             }
         }
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
-            when (selectedTab) {
-                0 -> TerminalTab()
-                1 -> DebloatTab()
-                2 -> ConsoleTab()
-                3 -> SettingsTab(themeMode, onThemeChanged)
+            AnimatedContent(
+                targetState = selectedTab,
+                transitionSpec = {
+                    fadeIn() + slideInHorizontally() togetherWith
+                    fadeOut() + slideOutHorizontally()
+                }
+            ) { target ->
+                when (target) {
+                    0 -> TerminalTab()
+                    1 -> DebloatTab()
+                    2 -> ConsoleTab()
+                    3 -> SettingsTab(themeMode, onThemeChanged)
+                }
             }
         }
     }
 }
 
-// ─── Terminal Tab ──────────────────────────────────────────────────────────────
+// ─── Terminal Tab ─────────────────────────────────────────────────────────
 
 @Composable
 fun TerminalTab() {
@@ -177,12 +281,7 @@ fun TerminalTab() {
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Text(
-            text = "DroidUtility • Terminal",
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
+        GradientHeader("Terminal")
 
         if (!shizukuAvailable || !hasPermission) {
             Card(
@@ -210,14 +309,14 @@ fun TerminalTab() {
                             onClick = {
                                 if (context is Activity) {
                                     ShizukuShellManager.requestPermission(context)
-                                    Toast.makeText(context, "Check Shizuku app for permission request", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, "Check Shizuku app", Toast.LENGTH_SHORT).show()
                                 }
                             },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.primary
                             )
                         ) {
-                            Text("Grant Shizuku Permission")
+                            Text("Grant Permission")
                         }
                     }
                 }
@@ -305,7 +404,7 @@ fun TerminalTab() {
     }
 }
 
-// ─── Debloat Tab ──────────────────────────────────────────────────────────────
+// ─── Debloat Tab ──────────────────────────────────────────────────────────
 
 data class AppInfo(
     val packageName: String,
@@ -372,12 +471,8 @@ fun DebloatTab() {
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Text(
-            text = "DroidUtility • Debloat Manager",
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 4.dp)
-        )
+        GradientHeader("Debloat Manager")
+
         Text(
             text = "${allPackages.size} apps • ${allPackages.count { it.isUser }} user apps",
             fontSize = 14.sp,
@@ -466,33 +561,79 @@ fun DebloatTab() {
 @Composable
 fun PackageItem(
     app: AppInfo,
-    context: android.content.Context,
+    context: Context,
     onUninstall: () -> Unit,
     onDisable: () -> Unit
 ) {
+    val icon = rememberAppIcon(app.packageName, context)
+
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            // App icon with rounded background
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.primaryContainer)
+            ) {
+                if (icon != null) {
+                    Image(
+                        bitmap = icon,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize().padding(6.dp)
+                    )
+                } else {
+                    Icon(
+                        Icons.Default.Android,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.fillMaxSize().padding(6.dp)
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(app.appName, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Text(app.packageName, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                Text(
+                    app.appName,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    app.packageName,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 if (app.isSystem) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("System app", fontSize = 10.sp, color = MaterialTheme.colorScheme.primary)
+                        Text(
+                            "System",
+                            fontSize = 10.sp,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier
+                                .background(
+                                    MaterialTheme.colorScheme.primaryContainer,
+                                    RoundedCornerShape(4.dp)
+                                )
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
                         Spacer(modifier = Modifier.width(4.dp))
                         Icon(
                             Icons.Default.Warning,
-                            contentDescription = "Warning",
+                            contentDescription = null,
                             tint = Color.Yellow,
                             modifier = Modifier.size(14.dp)
                         )
@@ -500,22 +641,44 @@ fun PackageItem(
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(
+                IconButton(
                     onClick = onUninstall,
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                    modifier = Modifier.height(32.dp)
-                ) { Text("Uninstall", fontSize = 11.sp) }
-                Button(
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.error
+                    ),
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(Icons.Default.Delete, contentDescription = "Uninstall", modifier = Modifier.size(18.dp))
+                }
+                IconButton(
                     onClick = onDisable,
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
-                    modifier = Modifier.height(32.dp)
-                ) { Text("Disable", fontSize = 11.sp) }
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.secondary
+                    ),
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(Icons.Default.Block, contentDescription = "Disable", modifier = Modifier.size(18.dp))
+                }
             }
         }
     }
 }
 
-// ─── Settings Tab (with Update check) ─────────────────────────────────────────
+// ─── Status Tab ───────────────────────────────────────────────────────────
+
+@Composable
+fun StatusTab() {
+    // ... (this tab is still under development – you can keep the old version or remove it)
+    // I've included a placeholder for now.
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        GradientHeader("Status")
+        Text("Coming soon...", color = MaterialTheme.colorScheme.onSurface)
+    }
+}
+
+// ─── Settings Tab ─────────────────────────────────────────────────────────
 
 @Composable
 fun SettingsTab(
@@ -536,12 +699,9 @@ fun SettingsTab(
         isChecking = false
     }
 
-    // Get current version from PackageManager
     val currentVersion = try {
         context.packageManager.getPackageInfo(context.packageName, 0).versionName
-    } catch (e: Exception) {
-        "1.0.0"
-    }
+    } catch (e: Exception) { "1.0.0" }
 
     Column(
         modifier = Modifier
@@ -549,159 +709,109 @@ fun SettingsTab(
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        Text(
-            text = "DroidUtility • Settings",
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
+        GradientHeader("Settings")
 
-        // ─── Appearance ──────────────────────────────────────────────
-        Card(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text("Appearance", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
+        // Appearance
+        SettingsCard(icon = Icons.Default.Palette, title = "Appearance") {
+            Text("Theme Mode", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
+            Spacer(modifier = Modifier.height(4.dp))
+            val themeOptions = listOf(ThemeMode.LIGHT, ThemeMode.DARK, ThemeMode.AMOLED, ThemeMode.SYSTEM)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                themeOptions.forEach { mode ->
+                    FilterChip(
+                        selected = currentTheme == mode,
+                        onClick = { onThemeChange(mode) },
+                        label = { Text(mode.name, fontSize = 12.sp) },
+                        modifier = Modifier.weight(1f),
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primary,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            labelColor = MaterialTheme.colorScheme.onSurface,
+                        )
+                    )
+                }
+            }
+        }
+
+        // Updates
+        SettingsCard(icon = Icons.Default.SystemUpdate, title = "Updates") {
+            if (isChecking) {
+                CircularProgressIndicator(modifier = Modifier.size(20.dp))
+            } else if (updateAvailable != null) {
+                Text("✅ New version available!", color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("Theme Mode", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
-                Spacer(modifier = Modifier.height(4.dp))
-                val themeOptions = listOf(ThemeMode.LIGHT, ThemeMode.DARK, ThemeMode.AMOLED, ThemeMode.SYSTEM)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                Button(
+                    onClick = { UpdateManager.downloadAndInstall(context, updateAvailable!!) },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    themeOptions.forEach { mode ->
-                        FilterChip(
-                            selected = currentTheme == mode,
-                            onClick = { onThemeChange(mode) },
-                            label = { Text(mode.name, fontSize = 12.sp) },
-                            modifier = Modifier.weight(1f),
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = MaterialTheme.colorScheme.primary,
-                                selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
-                                containerColor = MaterialTheme.colorScheme.surface,
-                                labelColor = MaterialTheme.colorScheme.onSurface,
-                            )
-                        )
-                    }
+                    Icon(Icons.Default.Download, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Download & Install")
+                }
+            } else {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFF4CAF50), modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("You're on the latest version (v$currentVersion)", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
                 }
             }
         }
 
-        // ─── Updates ─────────────────────────────────────────────────
-        Card(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Row(
+        // Shizuku Status
+        SettingsCard(icon = Icons.Default.Security, title = "Shizuku Status") {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    if (shizukuAvailable) Icons.Default.CheckCircle else Icons.Default.Error,
+                    contentDescription = null,
+                    tint = if (shizukuAvailable) Color(0xFF4CAF50) else Color(0xFFEF5350)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    if (shizukuAvailable) "Shizuku is running" else "Shizuku is not running",
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    if (hasPermission) Icons.Default.CheckCircle else Icons.Default.Error,
+                    contentDescription = null,
+                    tint = if (hasPermission) Color(0xFF4CAF50) else Color(0xFFEF5350)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    if (hasPermission) "Permission granted" else "Permission not granted",
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+            if (!shizukuAvailable || !hasPermission) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    onClick = {
+                        if (context is Activity) {
+                            ShizukuShellManager.requestPermission(context)
+                            Toast.makeText(context, "Check Shizuku app", Toast.LENGTH_SHORT).show()
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    enabled = shizukuAvailable && !hasPermission,
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
-                    Text("Updates", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
-                    if (isChecking) {
-                        CircularProgressIndicator(modifier = Modifier.size(20.dp))
-                    }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                if (updateAvailable != null) {
-                    Text("✅ New version available!", color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold)
-                    Text("Tap below to download and install", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Button(
-                        onClick = { UpdateManager.downloadAndInstall(context, updateAvailable!!) },
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(Icons.Default.Download, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Download & Install")
-                    }
-                } else {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.CheckCircle,
-                            contentDescription = null,
-                            tint = Color(0xFF4CAF50),
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            "You're on the latest version (v$currentVersion)",
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                            fontSize = 13.sp
-                        )
-                    }
+                    Text("Grant Shizuku Permission")
                 }
             }
         }
 
-        // ─── Shizuku Status ───────────────────────────────────────────
-        Card(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text("Shizuku Status", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        if (shizukuAvailable) Icons.Default.CheckCircle else Icons.Default.Error,
-                        contentDescription = null,
-                        tint = if (shizukuAvailable) Color(0xFF4CAF50) else Color(0xFFEF5350)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        if (shizukuAvailable) "Shizuku is running" else "Shizuku is not running",
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        if (hasPermission) Icons.Default.CheckCircle else Icons.Default.Error,
-                        contentDescription = null,
-                        tint = if (hasPermission) Color(0xFF4CAF50) else Color(0xFFEF5350)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        if (hasPermission) "Permission granted" else "Permission not granted",
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-                if (!shizukuAvailable || !hasPermission) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Button(
-                        onClick = {
-                            if (context is Activity) {
-                                ShizukuShellManager.requestPermission(context)
-                                Toast.makeText(context, "Check Shizuku app", Toast.LENGTH_SHORT).show()
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = shizukuAvailable && !hasPermission,
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                    ) {
-                        Text("Grant Shizuku Permission")
-                    }
-                }
-            }
-        }
-
-        // ─── About ────────────────────────────────────────────────────
-        Card(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text("About", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
-                Spacer(modifier = Modifier.height(8.dp))
-                Text("DroidUtility v1.0.0", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                Text("A powerful Android utility tool for debloating and terminal access.", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
-                Text("No root required - uses Shizuku for elevated privileges.", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
-            }
+        // About
+        SettingsCard(icon = Icons.Default.Info, title = "About") {
+            Text("DroidUtility v1.0.0", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+            Text("A powerful Android utility tool for debloating and terminal access.", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
+            Text("No root required - uses Shizuku for elevated privileges.", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
         }
     }
 }
