@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Code
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -31,7 +29,8 @@ fun ConsoleTab() {
     val listState = rememberLazyListState()
     var process: Process? by remember { mutableStateOf(null) }
     var isRunning by remember { mutableStateOf(false) }
-    val isShizukuReady = remember { ShizukuShellManager.checkAvailability() && ShizukuShellManager.hasPermission() }
+    val shizukuState by ShizukuShellManager.shizukuState.collectAsState()
+    val isShizukuReady = shizukuState == ShizukuShellManager.ShizukuState.AVAILABLE_GRANTED
 
     fun startShell() {
         try {
