@@ -152,7 +152,8 @@ fun MainScreen(
             when (selectedTab) {
                 0 -> TerminalTab()
                 1 -> DebloatTab()
-                2 -> SettingsTab(themeMode, onThemeChanged)
+                2 -> ConsoleTab()
+                3 -> SettingsTab(themeMode, onThemeChanged)
             }
         }
     }
