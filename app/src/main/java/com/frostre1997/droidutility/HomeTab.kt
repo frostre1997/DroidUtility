@@ -50,10 +50,11 @@ fun HomeTab() {
     val uptime = getUptime()
 
     var isRefreshing by remember { mutableStateOf(false) }
-
     fun refresh() {
         scope.launch {
             isRefreshing = true
+            // Force state update by calling checkAvailability again
+            ShizukuShellManager.checkAvailability()
             delay(500)
             isRefreshing = false
         }
@@ -65,7 +66,7 @@ fun HomeTab() {
             .padding(16.dp)
             .verticalScroll(rememberScrollState())
     ) {
-        // Header
+        // ─── Header ────────────────────────────────────────────────────
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -73,8 +74,8 @@ fun HomeTab() {
         ) {
             Column {
                 Text(
-                    text = "DroidUtility",
-                    fontSize = 28.sp,
+                    text = "DroidUtility", // only one title
+                    fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -84,20 +85,31 @@ fun HomeTab() {
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                 )
             }
-            IconButton(
-                onClick = { refresh() },
-                enabled = !isRefreshing
-            ) {
-                if (isRefreshing) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                } else {
-                    Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+            Row {
+                IconButton(
+                    onClick = { refresh() },
+                    enabled = !isRefreshing
+                ) {
+                    if (isRefreshing) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    } else {
+                        Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                    }
+                }
+                // Manual Shizuku refresh
+                IconButton(
+                    onClick = {
+                        // Force a state update
+                        ShizukuShellManager.checkAvailability()
+                    }
+                ) {
+                    Icon(Icons.Default.Sync, contentDescription = "Sync Shizuku")
                 }
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Shizuku Status Card
+        // ─── Shizuku Status Card ────────────────────────────────────
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
@@ -175,7 +187,7 @@ fun HomeTab() {
         }
         Spacer(modifier = Modifier.height(12.dp))
 
-        // System Status Section
+        // ─── System Status Section ──────────────────────────────────
         Text(
             "System Status",
             fontSize = 18.sp,
@@ -223,38 +235,7 @@ fun HomeTab() {
     }
 }
 
-@Composable
-fun StatusCard(
-    label: String,
-    value: String,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text(
-                label,
-                fontSize = 10.sp,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Medium
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                value.takeIf { it.isNotBlank() } ?: "Unknown",
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 2
-            )
-        }
-    }
-}
-
-// ─── Helper functions ──────────────────────────────────────────────────────
+// ─── Helper functions (same as before) ──────────────────────────────────────
 
 fun getBatteryLevel(context: Context): Int {
     return try {
@@ -266,7 +247,7 @@ fun getBatteryLevel(context: Context): Int {
 fun getBatteryHealth(context: Context): String {
     return try {
         val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
-        val health = batteryManager.getIntProperty(4)
+        val health = batteryManager.getIntProperty(4) // BATTERY_PROPERTY_HEALTH = 4
         when (health) {
             BatteryManager.BATTERY_HEALTH_GOOD -> "Good"
             BatteryManager.BATTERY_HEALTH_OVERHEAT -> "Overheat"
