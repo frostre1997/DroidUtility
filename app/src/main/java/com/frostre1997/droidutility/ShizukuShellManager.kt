@@ -70,6 +70,11 @@ object ShizukuShellManager {
         updateState() // initial state
     }
 
+    fun refreshState() {
+        updateState()
+        Log.d(TAG, "State manually refreshed: ${_shizukuState.value}")
+    }
+    
     private fun updateState() {
         val available = isShizukuAvailableInternal()
         val granted = if (available) isPermissionGrantedInternal() else false
