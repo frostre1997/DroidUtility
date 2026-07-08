@@ -1,5 +1,6 @@
 package com.frostre1997.droidutility
 
+import androidx.compose.material.icons.filled.Code
 import android.content.pm.PackageManager
 import com.frostre1997.droidutility.BuildConfig
 import android.app.Activity
