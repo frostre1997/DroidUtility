@@ -208,7 +208,7 @@ fun rememberAppIcon(packageName: String, context: Context): ImageBitmap? {
     }
 }
 
-// ─── Main Screen ─────────────────────────────────────────────────────────
+// ─── Main Screen with Bottom Navigation ──────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -227,47 +227,23 @@ fun MainScreen(
     )
 
     Scaffold(
-        topBar = {
-            Surface(
-                color = MaterialTheme.colorScheme.surface,
-                tonalElevation = 0.dp,
-                shadowElevation = 4.dp
+        bottomBar = {
+            NavigationBar(
+                containerColor = MaterialTheme.colorScheme.surface,
+                tonalElevation = 8.dp
             ) {
-                Column {
-                    Text(
-                        text = "DroidUtility",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 4.dp)
+                tabs.forEachIndexed { index, (title, icon, _) ->
+                    NavigationBarItem(
+                        icon = { Icon(icon, contentDescription = title) },
+                        label = { Text(title) },
+                        selected = selectedTab == index,
+                        onClick = { selectedTab = index },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                        )
                     )
-                    ScrollableTabRow(
-                        selectedTabIndex = selectedTab,
-                        containerColor = Color.Transparent,
-                        edgePadding = 8.dp,
-                        indicator = { tabPositions ->
-                            val selectedPosition = tabPositions[selectedTab]
-                            TabRowDefaults.Indicator(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .offset(x = selectedPosition.left, y = 0.dp)
-                                    .width(selectedPosition.width),
-                                height = 3.dp,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    ) {
-                        tabs.forEachIndexed { index, (title, icon, _) ->
-                            Tab(
-                                selected = selectedTab == index,
-                                onClick = { selectedTab = index },
-                                text = { Text(title, fontSize = 13.sp) },
-                                icon = { Icon(icon, contentDescription = title, modifier = Modifier.size(20.dp)) },
-                                selectedContentColor = MaterialTheme.colorScheme.primary,
-                                unselectedContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                            )
-                        }
-                    }
                 }
             }
         }
