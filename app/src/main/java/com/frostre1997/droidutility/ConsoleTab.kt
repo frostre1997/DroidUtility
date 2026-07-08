@@ -29,8 +29,11 @@ fun ConsoleTab() {
     val listState = rememberLazyListState()
     var process: Process? by remember { mutableStateOf(null) }
     var isRunning by remember { mutableStateOf(false) }
-    val shizukuState by ShizukuShellManager.shizukuState.collectAsState()
-    val isShizukuReady = shizukuState == ShizukuShellManager.ShizukuState.AVAILABLE_GRANTED
+
+    // Check Shizuku status
+    val shizukuAvailable = ShizukuShellManager.checkAvailability()
+    val hasPermission = ShizukuShellManager.hasPermission()
+    val isShizukuReady = shizukuAvailable && hasPermission
 
     fun startShell() {
         try {
