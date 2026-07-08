@@ -116,7 +116,7 @@ Official website: https://frostre1997.github.io/DroidUtility/
 
 📄 License
 
-MIT License – see LICENSE for details.
+MIT License – see [LICENSE](https://github.com/frostre1997/DroidUtility/blob/main/LICENSE) for details.
 
 ---
 
