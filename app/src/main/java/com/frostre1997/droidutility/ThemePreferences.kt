@@ -4,10 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 
 enum class ThemeMode {
-    LIGHT,
-    DARK,
-    AMOLED,
-    SYSTEM
+    LIGHT, DARK, AMOLED, SYSTEM
 }
 
 object ThemePreferences {
