@@ -31,33 +31,24 @@ fun HomeTab() {
     val scope = rememberCoroutineScope()
     val shizukuState by ShizukuShellManager.shizukuState.collectAsState()
     
-    // ─── App info ──────────────────────────────────────────────────────
     val appVersion = try {
         context.packageManager.getPackageInfo(context.packageName, 0).versionName
     } catch (e: Exception) { "1.0.0" }
     val packageName = context.packageName
 
-    // ─── Device info ──────────────────────────────────────────────────
     val androidVersion = Build.VERSION.RELEASE
     val sdkVersion = Build.VERSION.SDK_INT
     val manufacturer = Build.MANUFACTURER
     val model = Build.MODEL
     val cpuArch = Build.SUPPORTED_ABIS.firstOrNull() ?: "unknown"
 
-    // ─── Battery info ──────────────────────────────────────────────────
     val batteryLevel = getBatteryLevel(context)
     val batteryHealth = getBatteryHealth(context)
 
-    // ─── Storage info ──────────────────────────────────────────────────
     val storageInfo = getStorageInfo()
-
-    // ─── RAM info ──────────────────────────────────────────────────────
     val ramInfo = getRamInfo()
-
-    // ─── Uptime ────────────────────────────────────────────────────────
     val uptime = getUptime()
 
-    // ─── State ─────────────────────────────────────────────────────────
     var isRefreshing by remember { mutableStateOf(false) }
 
     fun refresh() {
@@ -74,7 +65,7 @@ fun HomeTab() {
             .padding(16.dp)
             .verticalScroll(rememberScrollState())
     ) {
-        // ─── Header ────────────────────────────────────────────────────
+        // Header
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -106,7 +97,7 @@ fun HomeTab() {
         }
         Spacer(modifier = Modifier.height(16.dp))
 
-        // ─── Shizuku Status Card ────────────────────────────────────
+        // Shizuku Status Card
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
@@ -149,7 +140,6 @@ fun HomeTab() {
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     }
-                    // Grant button
                     if (shizukuState == ShizukuShellManager.ShizukuState.AVAILABLE_NO_PERMISSION) {
                         Button(
                             onClick = {
@@ -170,14 +160,13 @@ fun HomeTab() {
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // Shizuku version info
                 val shizukuVersion = try {
                     rikka.shizuku.Shizuku.getVersion()
                 } catch (e: Exception) { -1 }
 
                 if (shizukuVersion != -1) {
                     Text(
-                        "Shizuku v$shizukuVersion • API ${ShizukuShellManager.getApiVersion()}",
+                        "Shizuku v$shizukuVersion",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )
@@ -186,7 +175,7 @@ fun HomeTab() {
         }
         Spacer(modifier = Modifier.height(12.dp))
 
-        // ─── System Status Section ──────────────────────────────────
+        // System Status Section
         Text(
             "System Status",
             fontSize = 18.sp,
@@ -195,7 +184,6 @@ fun HomeTab() {
             modifier = Modifier.padding(bottom = 8.dp)
         )
 
-        // Status cards grid (2 columns)
         val statusItems = listOf(
             "Android Version" to androidVersion,
             "Manufacturer" to manufacturer,
@@ -210,7 +198,6 @@ fun HomeTab() {
             "Uptime" to uptime
         )
 
-        // 2‑column grid
         for (i in statusItems.indices step 2) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -325,10 +312,4 @@ fun getUptime(): String {
             else -> "${minutes}m"
         }
     } catch (e: Exception) { "Unknown" }
-}
-
-fun ShizukuShellManager.getApiVersion(): Int {
-    return try {
-        rikka.shizuku.Shizuku.getVersion()
-    } catch (e: Exception) { -1 }
 }
