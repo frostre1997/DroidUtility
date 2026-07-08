@@ -50,11 +50,11 @@ fun HomeTab() {
     val uptime = getUptime()
 
     var isRefreshing by remember { mutableStateOf(false) }
+
     fun refresh() {
         scope.launch {
             isRefreshing = true
-            // Force state update by calling checkAvailability again
-            ShizukuShellManager.checkAvailability()
+            ShizukuShellManager.refreshState()
             delay(500)
             isRefreshing = false
         }
@@ -74,7 +74,7 @@ fun HomeTab() {
         ) {
             Column {
                 Text(
-                    text = "DroidUtility", // only one title
+                    text = "DroidUtility",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -86,6 +86,7 @@ fun HomeTab() {
                 )
             }
             Row {
+                // Refresh button
                 IconButton(
                     onClick = { refresh() },
                     enabled = !isRefreshing
@@ -96,11 +97,11 @@ fun HomeTab() {
                         Icon(Icons.Default.Refresh, contentDescription = "Refresh")
                     }
                 }
-                // Manual Shizuku refresh
+                // Sync Shizuku button
                 IconButton(
                     onClick = {
-                        // Force a state update
-                        ShizukuShellManager.checkAvailability()
+                        ShizukuShellManager.refreshState()
+                        Toast.makeText(context, "Shizuku state refreshed", Toast.LENGTH_SHORT).show()
                     }
                 ) {
                     Icon(Icons.Default.Sync, contentDescription = "Sync Shizuku")
@@ -183,6 +184,28 @@ fun HomeTab() {
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )
                 }
+
+                // Open Shizuku button if not running
+                if (shizukuState == ShizukuShellManager.ShizukuState.NOT_AVAILABLE) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = {
+                            try {
+                                val intent = context.packageManager.getLaunchIntentForPackage("moe.shizuku.manager")
+                                if (intent != null) context.startActivity(intent)
+                                else Toast.makeText(context, "Shizuku app not installed", Toast.LENGTH_SHORT).show()
+                            } catch (e: Exception) {
+                                Toast.makeText(context, "Cannot open Shizuku", Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    ) {
+                        Icon(Icons.Default.OpenInNew, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Open Shizuku")
+                    }
+                }
             }
         }
         Spacer(modifier = Modifier.height(12.dp))
@@ -235,7 +258,40 @@ fun HomeTab() {
     }
 }
 
-// ─── Helper functions (same as before) ──────────────────────────────────────
+// ─── StatusCard composable (defined BEFORE it's used) ───────────────────
+
+@Composable
+fun StatusCard(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(
+                label,
+                fontSize = 10.sp,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Medium
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                value.takeIf { it.isNotBlank() } ?: "Unknown",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 2
+            )
+        }
+    }
+}
+
+// ─── Helper functions ──────────────────────────────────────────────────────
 
 fun getBatteryLevel(context: Context): Int {
     return try {
