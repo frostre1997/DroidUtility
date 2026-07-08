@@ -7,7 +7,6 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
-import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -67,14 +66,13 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-// ─── Theme ─────────────────────────────────────────────────────────────────
+// ─── Theme (static, no dynamic color) ─────────────────────────────────────
 
 @Composable
 fun DroidUtilityTheme(
     themeMode: ThemeMode,
     content: @Composable () -> Unit
 ) {
-    val context = LocalContext.current
     val systemDark = isSystemInDarkTheme()
 
     val isDark = when (themeMode) {
@@ -85,47 +83,39 @@ fun DroidUtilityTheme(
     }
 
     val colorScheme = if (isDark) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            dynamicDarkColorScheme(context)
-        } else {
-            darkColorScheme(
-                primary = Color(0xFF90CAF9),
-                secondary = Color(0xFF80CBC4),
-                tertiary = Color(0xFFA5D6A7),
-                background = if (themeMode == ThemeMode.AMOLED) Color.Black else Color(0xFF121212),
-                surface = if (themeMode == ThemeMode.AMOLED) Color.Black else Color(0xFF1E1E1E),
-                surfaceVariant = if (themeMode == ThemeMode.AMOLED) Color(0xFF1A1A1A) else Color(0xFF2C2C2C),
-                onPrimary = Color(0xFF0D0D0D),
-                onSecondary = Color(0xFF0D0D0D),
-                onBackground = Color(0xFFE0E0E0),
-                onSurface = Color(0xFFE0E0E0),
-                error = Color(0xFFCF6679),
-                errorContainer = Color(0xFFB00020),
-                onError = Color.Black,
-                onErrorContainer = Color.White,
-            )
-        }
+        darkColorScheme(
+            primary = Color(0xFF90CAF9),
+            secondary = Color(0xFF80CBC4),
+            tertiary = Color(0xFFA5D6A7),
+            background = if (themeMode == ThemeMode.AMOLED) Color.Black else Color(0xFF121212),
+            surface = if (themeMode == ThemeMode.AMOLED) Color.Black else Color(0xFF1E1E1E),
+            surfaceVariant = if (themeMode == ThemeMode.AMOLED) Color(0xFF1A1A1A) else Color(0xFF2C2C2C),
+            onPrimary = Color(0xFF0D0D0D),
+            onSecondary = Color(0xFF0D0D0D),
+            onBackground = Color(0xFFE0E0E0),
+            onSurface = Color(0xFFE0E0E0),
+            error = Color(0xFFCF6679),
+            errorContainer = Color(0xFFB00020),
+            onError = Color.Black,
+            onErrorContainer = Color.White,
+        )
     } else {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            dynamicLightColorScheme(context)
-        } else {
-            lightColorScheme(
-                primary = Color(0xFF1976D2),
-                secondary = Color(0xFF00897B),
-                tertiary = Color(0xFF388E3C),
-                background = Color(0xFFF5F5F5),
-                surface = Color(0xFFFFFFFF),
-                surfaceVariant = Color(0xFFE8E8E8),
-                onPrimary = Color.White,
-                onSecondary = Color.White,
-                onBackground = Color(0xFF1A1A1A),
-                onSurface = Color(0xFF1A1A1A),
-                error = Color(0xFFB00020),
-                errorContainer = Color(0xFFFFDAD6),
-                onError = Color.White,
-                onErrorContainer = Color(0xFF410002),
-            )
-        }
+        lightColorScheme(
+            primary = Color(0xFF1976D2),
+            secondary = Color(0xFF00897B),
+            tertiary = Color(0xFF388E3C),
+            background = Color(0xFFF5F5F5),
+            surface = Color(0xFFFFFFFF),
+            surfaceVariant = Color(0xFFE8E8E8),
+            onPrimary = Color.White,
+            onSecondary = Color.White,
+            onBackground = Color(0xFF1A1A1A),
+            onSurface = Color(0xFF1A1A1A),
+            error = Color(0xFFB00020),
+            errorContainer = Color(0xFFFFDAD6),
+            onError = Color.White,
+            onErrorContainer = Color(0xFF410002),
+        )
     }
 
     MaterialTheme(
@@ -208,7 +198,7 @@ fun rememberAppIcon(packageName: String, context: Context): ImageBitmap? {
     }
 }
 
-// ─── Main Screen with Bottom Navigation ──────────────
+// ─── Main Screen (bottom nav, centered) ──────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
