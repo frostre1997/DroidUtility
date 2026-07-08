@@ -4,6 +4,8 @@ import android.app.Activity
 import android.content.pm.PackageManager
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
 import rikka.shizuku.Shizuku
 
@@ -11,24 +13,38 @@ object ShizukuShellManager {
     private const val TAG = "ShizukuShellManager"
     private const val REQUEST_CODE = 1001
 
+    // StateFlow for UI to observe
+    private val _shizukuState = MutableStateFlow(ShizukuState.UNKNOWN)
+    val shizukuState: StateFlow<ShizukuState> = _shizukuState
+
+    enum class ShizukuState {
+        UNKNOWN,
+        NOT_AVAILABLE,
+        AVAILABLE_NO_PERMISSION,
+        AVAILABLE_GRANTED
+    }
+
     private var isBinderReceived = false
     private var isPermissionGranted = false
 
     private val binderReceivedListener = Shizuku.OnBinderReceivedListener {
         isBinderReceived = true
         Log.i(TAG, "Shizuku binder received")
+        updateState()
     }
 
     private val binderDeadListener = Shizuku.OnBinderDeadListener {
         isBinderReceived = false
         isPermissionGranted = false
         Log.w(TAG, "Shizuku binder dead")
+        updateState()
     }
 
     private val permissionResultListener = Shizuku.OnRequestPermissionResultListener { requestCode, grantResult ->
         if (requestCode == REQUEST_CODE) {
             isPermissionGranted = grantResult == PackageManager.PERMISSION_GRANTED
             Log.i(TAG, "Permission result: ${if (isPermissionGranted) "granted" else "denied"}")
+            updateState()
         }
     }
 
@@ -51,44 +67,47 @@ object ShizukuShellManager {
         Shizuku.addBinderReceivedListenerSticky(binderReceivedListener)
         Shizuku.addBinderDeadListener(binderDeadListener)
         Shizuku.addRequestPermissionResultListener(permissionResultListener)
+        updateState() // initial state
     }
 
-    fun checkAvailability(): Boolean {
+    private fun updateState() {
+        val available = isShizukuAvailableInternal()
+        val granted = if (available) isPermissionGrantedInternal() else false
+        _shizukuState.value = when {
+            !available -> ShizukuState.NOT_AVAILABLE
+            available && !granted -> ShizukuState.AVAILABLE_NO_PERMISSION
+            available && granted -> ShizukuState.AVAILABLE_GRANTED
+            else -> ShizukuState.UNKNOWN
+        }
+    }
+
+    private fun isShizukuAvailableInternal(): Boolean {
         return try {
-            Shizuku.pingBinder()
+            Shizuku.getVersion() != -1
         } catch (e: Exception) {
             false
         }
     }
 
-    fun hasPermission(): Boolean {
+    private fun isPermissionGrantedInternal(): Boolean {
         return try {
-            if (!checkAvailability()) return false
-            if (Shizuku.isPreV11()) {
-                false
-            } else {
-                Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED
-            }
+            if (!isShizukuAvailableInternal()) return false
+            if (Shizuku.isPreV11()) return false
+            Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED
         } catch (e: Exception) {
             false
         }
     }
 
-    @Suppress("UNUSED_PARAMETER")
+    fun checkAvailability(): Boolean = _shizukuState.value == ShizukuState.AVAILABLE_GRANTED || _shizukuState.value == ShizukuState.AVAILABLE_NO_PERMISSION
+    fun hasPermission(): Boolean = _shizukuState.value == ShizukuState.AVAILABLE_GRANTED
+
     fun requestPermission(activity: Activity) {
-        if (!checkAvailability()) {
+        if (checkAvailability() && !hasPermission()) {
+            Shizuku.requestPermission(REQUEST_CODE)
+        } else if (!checkAvailability()) {
             Log.w(TAG, "Shizuku not available")
-            return
         }
-        if (Shizuku.isPreV11()) {
-            Log.w(TAG, "Shizuku pre-v11 not supported")
-            return
-        }
-        if (Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED) {
-            isPermissionGranted = true
-            return
-        }
-        Shizuku.requestPermission(REQUEST_CODE)
     }
 
     suspend fun executeCommand(command: String): ShellResult {
