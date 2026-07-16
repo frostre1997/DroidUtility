@@ -50,6 +50,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        try {
+            Class.forName("rikka.shizuku.ShizukuProvider")
+        } catch (_: Exception) { }
+
         setContent {
             var themeMode by remember { mutableStateOf(ThemePreferences.getThemeMode(this)) }
 
