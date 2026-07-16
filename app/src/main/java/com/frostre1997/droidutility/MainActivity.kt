@@ -3,9 +3,11 @@ package com.frostre1997.droidutility
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -21,9 +23,17 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            DroidUtilityTheme {
-                Surface(modifier = androidx.compose.ui.Modifier.fillMaxSize()) {
-                    AppNav()
+            var themeMode by remember { mutableStateOf(ThemePreferences.getThemeMode(this)) }
+
+            DroidUtilityTheme(themeMode = themeMode) {
+                Surface(modifier = Modifier) {
+                    AppNav(
+                        themeMode = themeMode,
+                        onThemeChanged = { newMode ->
+                            themeMode = newMode
+                            ThemePreferences.setThemeMode(this, newMode)
+                        }
+                    )
                 }
             }
         }
@@ -31,7 +41,10 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun AppNav() {
+private fun AppNav(
+    themeMode: ThemeMode,
+    onThemeChanged: (ThemeMode) -> Unit
+) {
     val navController = rememberNavController()
 
     NavHost(
@@ -56,7 +69,11 @@ private fun AppNav() {
             ConsoleScreen(onBack = { navController.popBackStack() })
         }
         composable(Screen.Settings.route) {
-            SettingsScreen(onBack = { navController.popBackStack() })
+            SettingsScreen(
+                onBack = { navController.popBackStack() },
+                themeMode = themeMode,
+                onThemeChanged = onThemeChanged
+            )
         }
     }
 }
