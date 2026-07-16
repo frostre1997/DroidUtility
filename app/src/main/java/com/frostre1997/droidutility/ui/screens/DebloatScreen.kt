@@ -1,8 +1,6 @@
 package com.frostre1997.droidutility.ui.screens
 
 import android.content.Context
-import android.content.pm.ApplicationInfo
-import android.content.pm.PackageManager
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -26,13 +24,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-data class AppInfo(
-    val packageName: String,
-    val appName: String,
-    val isSystem: Boolean,
-    val isUser: Boolean
-)
-
 @Composable
 fun DebloatScreen(onBack: () -> Unit) {
     val context = LocalContext.current
@@ -46,123 +37,87 @@ fun DebloatScreen(onBack: () -> Unit) {
     }
 }
 
+private data class UiState(
+    val allApps: List<BloatApp> = emptyList(),
+    val query: String = "",
+    val category: BloatCategory? = null,
+    val selected: BloatApp? = null,
+    val loading: Boolean = true
+)
+
 @Composable
 private fun DebloatPhoneScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    var uiState by remember { mutableStateOf(UiState()) }
 
-    var allApps by remember { mutableStateOf<List<AppInfo>>(emptyList()) }
-    var query by remember { mutableStateOf("") }
-    var filter by remember { mutableStateOf("All") }
-    var selectedApp by remember { mutableStateOf<AppInfo?>(null) }
-    var loading by remember { mutableStateOf(true) }
-
-    fun loadApps() {
+    fun loadData() {
         scope.launch {
-            loading = true
-            allApps = withContext(Dispatchers.IO) { loadInstalledApps(context) }
-            if (selectedApp == null) selectedApp = allApps.firstOrNull()
-            loading = false
+            uiState = uiState.copy(loading = true)
+            val apps = withContext(Dispatchers.Default) { BloatList.ALL }
+            uiState = uiState.copy(
+                allApps = apps,
+                selected = uiState.selected ?: apps.firstOrNull(),
+                loading = false
+            )
         }
     }
 
-    val filteredApps = remember(allApps, query, filter) {
-        allApps.filter { app ->
-            val matchesQuery = query.isBlank() ||
-                app.appName.contains(query, ignoreCase = true) ||
-                app.packageName.contains(query, ignoreCase = true)
+    LaunchedEffect(Unit) { loadData() }
 
-            val matchesFilter = when (filter) {
-                "System" -> app.isSystem
-                "User" -> app.isUser
-                else -> true
-            }
+    val filtered = remember(uiState.allApps, uiState.query, uiState.category) {
+        uiState.allApps.filter { app ->
+            val matchesQuery = uiState.query.isBlank() ||
+                    app.name.contains(uiState.query, ignoreCase = true) ||
+                    app.packageName.contains(uiState.query, ignoreCase = true) ||
+                    app.description.contains(uiState.query, ignoreCase = true)
 
-            matchesQuery && matchesFilter
+            val matchesCategory = uiState.category == null || app.category == uiState.category
+            matchesQuery && matchesCategory
         }
     }
 
-    LaunchedEffect(Unit) { loadApps() }
+    Column(Modifier.fillMaxSize().padding(16.dp)) {
+        TopBar(onBack = onBack, title = "Debloat Manager")
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-            }
-            Text("Debloat Manager", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-        }
+        Spacer(Modifier.height(12.dp))
 
-        Spacer(modifier = Modifier.height(12.dp))
-
-        if (loading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        if (uiState.loading) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
             return
         }
 
-        OutlinedTextField(
-            value = query,
-            onValueChange = { query = it },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            placeholder = { Text("Search apps") },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) }
+        SearchAndFilters(
+            query = uiState.query,
+            onQueryChange = { uiState = uiState.copy(query = it) },
+            category = uiState.category,
+            onCategoryChange = { uiState = uiState.copy(category = it) }
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf("All", "System", "User").forEach { item ->
-                FilterChip(
-                    selected = filter == item,
-                    onClick = { filter = item },
-                    label = { Text(item) }
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            items(filtered) { app ->
+                BloatAppCard(
+                    app = app,
+                    selected = uiState.selected?.packageName == app.packageName,
+                    onClick = { uiState = uiState.copy(selected = app) }
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(Modifier.height(12.dp))
 
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(filteredApps) { app ->
-                val isSelected = selectedApp?.packageName == app.packageName
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { selectedApp = app },
-                    shape = RoundedCornerShape(18.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (isSelected)
-                            MaterialTheme.colorScheme.primaryContainer
-                        else
-                            MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) {
-                    Column(modifier = Modifier.padding(12.dp)) {
-                        Text(app.appName, fontWeight = FontWeight.SemiBold)
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            app.packageName,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        selectedApp?.let {
-            DebloatDetailCard(app = it, onReload = { loadApps() })
+        uiState.selected?.let { app ->
+            BloatDetailCard(
+                app = app,
+                onAction = { /* hook Shizuku/PM disable action here */ }
+            )
         }
     }
 }
@@ -171,56 +126,40 @@ private fun DebloatPhoneScreen(onBack: () -> Unit) {
 private fun DebloatTabletScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    var uiState by remember { mutableStateOf(UiState()) }
 
-    var allApps by remember { mutableStateOf<List<AppInfo>>(emptyList()) }
-    var query by remember { mutableStateOf("") }
-    var filter by remember { mutableStateOf("All") }
-    var selectedApp by remember { mutableStateOf<AppInfo?>(null) }
-    var loading by remember { mutableStateOf(true) }
-
-    fun loadApps() {
+    fun loadData() {
         scope.launch {
-            loading = true
-            allApps = withContext(Dispatchers.IO) { loadInstalledApps(context) }
-            if (selectedApp == null) selectedApp = allApps.firstOrNull()
-            loading = false
+            uiState = uiState.copy(loading = true)
+            val apps = withContext(Dispatchers.Default) { BloatList.ALL }
+            uiState = uiState.copy(
+                allApps = apps,
+                selected = uiState.selected ?: apps.firstOrNull(),
+                loading = false
+            )
         }
     }
 
-    val filteredApps = remember(allApps, query, filter) {
-        allApps.filter { app ->
-            val matchesQuery = query.isBlank() ||
-                app.appName.contains(query, ignoreCase = true) ||
-                app.packageName.contains(query, ignoreCase = true)
+    LaunchedEffect(Unit) { loadData() }
 
-            val matchesFilter = when (filter) {
-                "System" -> app.isSystem
-                "User" -> app.isUser
-                else -> true
-            }
+    val filtered = remember(uiState.allApps, uiState.query, uiState.category) {
+        uiState.allApps.filter { app ->
+            val matchesQuery = uiState.query.isBlank() ||
+                    app.name.contains(uiState.query, ignoreCase = true) ||
+                    app.packageName.contains(uiState.query, ignoreCase = true) ||
+                    app.description.contains(uiState.query, ignoreCase = true)
 
-            matchesQuery && matchesFilter
+            val matchesCategory = uiState.category == null || app.category == uiState.category
+            matchesQuery && matchesCategory
         }
     }
 
-    LaunchedEffect(Unit) { loadApps() }
+    Column(Modifier.fillMaxSize().padding(16.dp)) {
+        TopBar(onBack = onBack, title = "Debloat Manager")
+        Spacer(Modifier.height(12.dp))
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-            }
-            Text("Debloat Manager", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        if (loading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        if (uiState.loading) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
             return
@@ -230,169 +169,97 @@ private fun DebloatTabletScreen(onBack: () -> Unit) {
             modifier = Modifier.fillMaxSize(),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            DebloatListPane(
-                modifier = Modifier.weight(0.42f),
-                query = query,
-                onQueryChange = { query = it },
-                filter = filter,
-                onFilterChange = { filter = it },
-                apps = filteredApps,
-                selectedApp = selectedApp,
-                onAppSelected = { selectedApp = it }
-            )
-
-            DebloatDetailPane(
-                modifier = Modifier.weight(0.58f),
-                app = selectedApp,
-                onReload = { loadApps() }
-            )
-        }
-    }
-}
-
-@Composable
-private fun DebloatListPane(
-    modifier: Modifier,
-    query: String,
-    onQueryChange: (String) -> Unit,
-    filter: String,
-    onFilterChange: (String) -> Unit,
-    apps: List<AppInfo>,
-    selectedApp: AppInfo?,
-    onAppSelected: (AppInfo) -> Unit
-) {
-    Card(
-        modifier = modifier.fillMaxHeight(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-    ) {
-        Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-            Text("Installed Apps", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-            Spacer(modifier = Modifier.height(12.dp))
-
-            OutlinedTextField(
-                value = query,
-                onValueChange = onQueryChange,
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                placeholder = { Text("Search apps") },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) }
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("All", "System", "User").forEach { item ->
-                    FilterChip(
-                        selected = filter == item,
-                        onClick = { onFilterChange(item) },
-                        label = { Text(item) }
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+            Card(
+                modifier = Modifier.weight(0.44f).fillMaxHeight(),
+                shape = RoundedCornerShape(24.dp)
             ) {
-                items(apps) { app ->
-                    val isSelected = selectedApp?.packageName == app.packageName
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onAppSelected(app) },
-                        shape = RoundedCornerShape(18.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (isSelected)
-                                MaterialTheme.colorScheme.primaryContainer
-                            else
-                                MaterialTheme.colorScheme.surface
-                        )
+                Column(Modifier.fillMaxSize().padding(16.dp)) {
+                    Text("Installed Bloat", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(12.dp))
+
+                    SearchAndFilters(
+                        query = uiState.query,
+                        onQueryChange = { uiState = uiState.copy(query = it) },
+                        category = uiState.category,
+                        onCategoryChange = { uiState = uiState.copy(category = it) }
+                    )
+
+                    Spacer(Modifier.height(12.dp))
+
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Column(modifier = Modifier.padding(12.dp)) {
-                            Text(app.appName, fontWeight = FontWeight.SemiBold)
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                app.packageName,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                        items(filtered) { app ->
+                            BloatAppCard(
+                                app = app,
+                                selected = uiState.selected?.packageName == app.packageName,
+                                onClick = { uiState = uiState.copy(selected = app) }
                             )
                         }
                     }
                 }
             }
+
+            BloatDetailCard(
+                modifier = Modifier.weight(0.56f).fillMaxHeight(),
+                app = uiState.selected,
+                onAction = { /* hook Shizuku/PM disable action here */ }
+            )
         }
     }
 }
 
 @Composable
-private fun DebloatDetailPane(
-    modifier: Modifier,
-    app: AppInfo?,
-    onReload: () -> Unit
-) {
-    Card(
-        modifier = modifier.fillMaxHeight(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-    ) {
-        Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-            Text("App Details", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-            Spacer(modifier = Modifier.height(12.dp))
-
-            if (app == null) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Select an app to see details")
-                }
-                return
-            }
-
-            Text(app.appName, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(app.packageName, color = MaterialTheme.colorScheme.onSurfaceVariant)
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            AssistChip(
-                onClick = { },
-                label = { Text(if (app.isSystem) "System app" else "User app") }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
-                onClick = { },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(Icons.Default.DeleteSweep, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Disable / Uninstall")
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            OutlinedButton(
-                onClick = onReload,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Refresh")
-            }
+private fun TopBar(onBack: () -> Unit, title: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        IconButton(onClick = onBack) {
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
         }
+        Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
     }
 }
 
-private fun loadInstalledApps(context: Context): List<AppInfo> {
-    val pm = context.packageManager
-    return pm.getInstalledApplications(PackageManager.GET_META_DATA).map { app ->
-        val isSystem = (app.flags and ApplicationInfo.FLAG_SYSTEM) != 0
-        val isUpdatedSystem = (app.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
-        AppInfo(
-            packageName = app.packageName,
-            appName = pm.getApplicationLabel(app).toString(),
-            isSystem = isSystem || isUpdatedSystem,
-            isUser = !isSystem && !isUpdatedSystem
+@Composable
+private fun SearchAndFilters(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    category: BloatCategory?,
+    onCategoryChange: (BloatCategory?) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        OutlinedTextField(
+            value = query,
+            onValueChange = onQueryChange,
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            placeholder = { Text("Search app, package, or description") },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) }
         )
-    }.sortedBy { it.appName }
+
+        val chips = listOf(
+            null to "All",
+            BloatCategory.OEM_BLOATWARE to "OEM",
+            BloatCategory.CARRIER_APPS to "Carrier",
+            BloatCategory.SOCIAL_MEDIA to "Social",
+            BloatCategory.GAMES to "Games",
+            BloatCategory.PRODUCTIVITY_BLOAT to "Productivity",
+            BloatCategory.TRACKING_SPYWARE to "Tracking",
+            BloatCategory.ADVERTISING to "Ads",
+            BloatCategory.CLOUD_SERVICES to "Cloud",
+            BloatCategory.REDUNDANT_APPS to "Duplicate",
+            BloatCategory.PRIVACY_CONCERNING to "Privacy"
+        )
+
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            items(chips) { item ->
+                val selected = category == item.first
+                FilterChip(
+                    selected = selected,
+                    onClick = { onCategoryChange(item.first) },
+                    label = { Text(item.second) }
+                )
+            }
+        }
+    }
 }
