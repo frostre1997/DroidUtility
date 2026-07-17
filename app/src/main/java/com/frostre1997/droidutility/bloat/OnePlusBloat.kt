@@ -1,1 +1,65 @@
+package com.frostre1997.droidutility
 
+object OnePlusBloat {
+    val BLOATWARE = listOf(
+        BloatApp(
+            packageName = "com.oneplus.brickmode",
+            name = "Brick Mode",
+            description = "OnePlus app locker and privacy mode",
+            category = BloatCategory.OEM_BLOATWARE,
+            risk = BloatRisk.SAFE
+        ),
+        BloatApp(
+            packageName = "com.oneplus.gamezone",
+            name = "Game Zone",
+            description = "OnePlus gaming hub and performance optimizer",
+            category = BloatCategory.GAMES,
+            risk = BloatRisk.SAFE
+        ),
+        BloatApp(
+            packageName = "com.oneplus.screenshot",
+            name = "OnePlus Screenshot",
+            description = "Screenshot editing and sharing tool",
+            category = BloatCategory.OEM_BLOATWARE,
+            risk = BloatRisk.SAFE
+        ),
+        BloatApp(
+            packageName = "com.oneplus.health",
+            name = "OnePlus Health",
+            description = "Health and fitness tracking companion",
+            category = BloatCategory.OEM_BLOATWARE,
+            risk = BloatRisk.SAFE
+        ),
+        BloatApp(
+            packageName = "com.oneplus.logkit",
+            name = "OnePlus Log Kit",
+            description = "Diagnostic logging tool for OnePlus",
+            category = BloatCategory.TRACKING_SPYWARE,
+            risk = BloatRisk.CAUTION
+        ),
+        BloatApp(
+            packageName = "com.oneplus.filemanager",
+            name = "OnePlus File Manager",
+            description = "Built-in file manager",
+            category = BloatCategory.REDUNDANT_APPS,
+            risk = BloatRisk.SAFE,
+            alternatives = "Files by Google, Solid Explorer"
+        ),
+        BloatApp(
+            packageName = "com.oneplus.gallery",
+            name = "OnePlus Gallery",
+            description = "Default gallery application",
+            category = BloatCategory.REDUNDANT_APPS,
+            risk = BloatRisk.SAFE,
+            alternatives = "Google Photos"
+        ),
+        BloatApp(
+            packageName = "com.oneplus.cloud",
+            name = "OnePlus Cloud",
+            description = "OnePlus cloud backup and sync service",
+            category = BloatCategory.CLOUD_SERVICES,
+            risk = BloatRisk.SAFE,
+            alternatives = "Google Drive"
+        )
+    )
+}

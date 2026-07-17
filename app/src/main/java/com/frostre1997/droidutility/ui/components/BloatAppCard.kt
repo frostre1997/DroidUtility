@@ -1,4 +1,4 @@
-package com.frostre1997.droidutility.ui.screens
+package com.frostre1997.droidutility.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
