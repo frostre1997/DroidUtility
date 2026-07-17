@@ -1,5 +1,7 @@
 package com.frostre1997.droidutility
 
+import com.frostre1997.droidutility.bloat.BloatCategory.PRIVACY_CONCERNING
+
 object LenovoBloat {
     val BLOATWARE = listOf(
         BloatApp(
