@@ -9,7 +9,7 @@ enum class BloatCategory {
     GENERAL
 }
 
-enum class BloatRisk {
+enum class RiskLevel {
     SAFE,
     CAUTION,
     PRIVACY_CONCERNING,
