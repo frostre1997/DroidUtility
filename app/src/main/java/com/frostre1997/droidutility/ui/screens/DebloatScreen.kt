@@ -88,14 +88,12 @@ private fun DebloatPhoneScreen(onBack: () -> Unit) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
-            return
-        }
-
-        SearchAndFilters(
-            query = uiState.query,
-            onQueryChange = { uiState = uiState.copy(query = it) },
-            category = uiState.category,
-            onCategoryChange = { uiState = uiState.copy(category = it) }
+        } else { 
+             SearchAndFilters(
+                 query = uiState.query,
+                 onQueryChange = { uiState = uiState.copy(query = it) },
+                 category = uiState.category,
+                 onCategoryChange = { uiState = uiState.copy(category = it) }
         )
 
         Spacer(Modifier.height(12.dp))
@@ -118,7 +116,7 @@ private fun DebloatPhoneScreen(onBack: () -> Unit) {
         uiState.selected?.let { app ->
             BloatDetailCard(
                 app = app,
-                onAction = { /* hook Shizuku/PM disable action here */ }
+                onAction = { }
             )
         }
     }
@@ -164,26 +162,29 @@ private fun DebloatTabletScreen(onBack: () -> Unit) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
-            return
-        }
+        } else {
+            Row(
+               modifier = Modifier.fillMaxSize(),
+               horizontalArrangement = Arrangement.spacedBy(16.dp)
+           ) {
+               Card(
+                   modifier = Modifier.weight(0.44f).fillMaxHeight(),
+                   shape = RoundedCornerShape(24.dp)
+                ) {
+                   Column(Modifier.fillMaxSize().padding(16.dp)) {
+                       Text(
+                           "Installed Bloat", 
+                           style = MaterialTheme.typography.titleLarge, 
+                           fontWeight = FontWeight.Bold
+                           
+                        )
+                        Spacer(Modifier.height(12.dp))
 
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Card(
-                modifier = Modifier.weight(0.44f).fillMaxHeight(),
-                shape = RoundedCornerShape(24.dp)
-            ) {
-                Column(Modifier.fillMaxSize().padding(16.dp)) {
-                    Text("Installed Bloat", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    Spacer(Modifier.height(12.dp))
-
-                    SearchAndFilters(
-                        query = uiState.query,
-                        onQueryChange = { uiState = uiState.copy(query = it) },
-                        category = uiState.category,
-                        onCategoryChange = { uiState = uiState.copy(category = it) }
+                        SearchAndFilters(
+                            query = uiState.query,
+                            onQueryChange = { uiState = uiState.copy(query = it) },
+                            category = uiState.category,
+                            onCategoryChange = { uiState = uiState.copy(category = it) }
                     )
 
                     Spacer(Modifier.height(12.dp))
