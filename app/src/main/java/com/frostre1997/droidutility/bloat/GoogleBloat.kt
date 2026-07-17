@@ -1,8 +1,8 @@
 package com.frostre1997.droidutility.bloat
 
-import com.frostre1997.droidutility.BloatRisk
-import com.frostre1997.droidutility.ui.components.BloatApp
-import com.frostre1997.droidutility.ui.components.BloatCategory
+import com.frostre1997.droidutility.BloatApp
+import com.frostre1997.droidutility.BloatCategory
+import com.frostre1997.droidutility.RiskLevel
 
 object GoogleBloat {
     val BLOATWARE = listOf(
@@ -11,7 +11,7 @@ object GoogleBloat {
             name = "Google Search / Assistant",
             description = "Google search bar and voice assistant",
             category = BloatCategory.OEM_BLOATWARE,
-            riskLevel = BloatRisk.SAFE,
+            riskLevel = RiskLevel.SAFE,
             alternativeApps = listOf("None (core system app)")
         ),
         BloatApp(
@@ -19,7 +19,7 @@ object GoogleBloat {
             name = "Google Assistant",
             description = "Voice-activated AI assistant",
             category = BloatCategory.OEM_BLOATWARE,
-            riskLevel = BloatRisk.SAFE,
+            riskLevel = RiskLevel.SAFE,
             alternativeApps = emptyList()
         ),
         BloatApp(
@@ -27,7 +27,7 @@ object GoogleBloat {
             name = "YouTube",
             description = "Google's video streaming platform",
             category = BloatCategory.REDUNDANT_APPS,
-            riskLevel = BloatRisk.SAFE,
+            riskLevel = RiskLevel.SAFE,
             alternativeApps = listOf("NewPipe", "ReVanced")
         ),
         BloatApp(
@@ -35,7 +35,7 @@ object GoogleBloat {
             name = "YouTube Music",
             description = "Google's music streaming service",
             category = BloatCategory.REDUNDANT_APPS,
-            riskLevel = BloatRisk.SAFE,
+            riskLevel = RiskLevel.SAFE,
             alternativeApps = listOf("Spotify", "Tidal")
         ),
         BloatApp(
@@ -43,7 +43,7 @@ object GoogleBloat {
             name = "Google Photos",
             description = "Photo backup and management service",
             category = BloatCategory.CLOUD_SERVICES,
-            riskLevel = BloatRisk.SAFE,
+            riskLevel = RiskLevel.SAFE,
             alternativeApps = emptyList()
         ),
         BloatApp(
@@ -51,7 +51,7 @@ object GoogleBloat {
             name = "Google Docs",
             description = "Cloud document editor",
             category = BloatCategory.REDUNDANT_APPS,
-            riskLevel = BloatRisk.SAFE,
+            riskLevel = RiskLevel.SAFE,
             alternativeApps = emptyList()
         ),
         BloatApp(
@@ -59,7 +59,7 @@ object GoogleBloat {
             name = "Google Slides",
             description = "Cloud presentation editor",
             category = BloatCategory.REDUNDANT_APPS,
-            riskLevel = BloatRisk.SAFE,
+            riskLevel = RiskLevel.SAFE,
             alternativeApps = emptyList()
         ),
         BloatApp(
@@ -67,7 +67,7 @@ object GoogleBloat {
             name = "Google Sheets",
             description = "Cloud spreadsheet editor",
             category = BloatCategory.REDUNDANT_APPS,
-            riskLevel = BloatRisk.SAFE,
+            riskLevel = RiskLevel.SAFE,
             alternativeApps = emptyList()
         ),
         BloatApp(
@@ -75,7 +75,7 @@ object GoogleBloat {
             name = "Google Home",
             description = "Chromecast and smart home device manager",
             category = BloatCategory.OEM_BLOATWARE,
-            riskLevel = BloatRisk.SAFE,
+            riskLevel = RiskLevel.SAFE,
             alternativeApps = emptyList()
         ),
         BloatApp(
@@ -83,7 +83,7 @@ object GoogleBloat {
             name = "Google One",
             description = "Google cloud storage subscription manager",
             category = BloatCategory.CLOUD_SERVICES,
-            riskLevel = BloatRisk.SAFE,
+            riskLevel = RiskLevel.SAFE,
             alternativeApps = emptyList()
         )
     )
