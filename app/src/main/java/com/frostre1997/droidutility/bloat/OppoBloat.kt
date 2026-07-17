@@ -19,7 +19,7 @@ object OppoBloat {
             description = "Default weather app with ads",
             category = BloatCategory.REDUNDANT_APPS,
             risklevel = BloatRisk.SAFE,
-            alternatives = listOt("Google Weather")
+            alternatives = listOf("Google Weather")
         ),
         BloatApp(
             packageName = "com.heytap.browser",
