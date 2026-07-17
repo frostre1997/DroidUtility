@@ -13,60 +13,60 @@ object VivoBloat {
             name = "iQOO Game Center",
             description = "Gaming hub and performance manager",
             category = BloatCategory.GAMES,
-            risk = BloatRisk.SAFE
+            risklevel = BloatRisk.SAFE
         ),
         BloatApp(
             packageName = "com.bbk.cloud",
             name = "vivo Cloud",
             description = "Cloud backup and sync service",
             category = BloatCategory.CLOUD_SERVICES,
-            risk = BloatRisk.SAFE,
-            alternatives = "Google Drive"
+            risklevel = BloatRisk.SAFE,
+            alternatives = listOf("Google Drive")
         ),
         BloatApp(
             packageName = "com.vivo.weather",
             name = "vivo Weather",
             description = "Default weather application",
             category = BloatCategory.REDUNDANT_APPS,
-            risk = BloatRisk.SAFE,
-            alternatives = "Google Weather"
+            risklevel = BloatRisk.SAFE,
+            alternatives = listOf("Google Weather")
         ),
         BloatApp(
             packageName = "com.vivo.browser",
             name = "vivo Browser",
             description = "Built-in web browser",
             category = BloatCategory.REDUNDANT_APPS,
-            risk = BloatRisk.SAFE,
-            alternatives = "Chrome, Firefox"
+            risklevel = BloatRisk.SAFE,
+            alternatives = listOf("Chrome", "Firefox")
         ),
         BloatApp(
             packageName = "com.vivo.easyshare",
             name = "EasyShare",
             description = "File transfer between vivo devices",
             category = BloatCategory.OEM_BLOATWARE,
-            risk = BloatRisk.SAFE
+            risklevel = BloatRisk.SAFE
         ),
         BloatApp(
             packageName = "com.vivo.thememanager",
             name = "Theme Manager",
             description = "vivo theme and wallpaper store",
             category = BloatCategory.OEM_BLOATWARE,
-            risk = BloatRisk.SAFE
+            risklevel = BloatRisk.SAFE
         ),
         BloatApp(
             packageName = "com.vivo.appstore",
             name = "vivo App Store",
             description = "vivo's proprietary app store",
             category = BloatCategory.REDUNDANT_APPS,
-            risk = BloatRisk.SAFE,
-            alternatives = "Google Play Store"
+            risklevel = BloatRisk.SAFE,
+            alternatives = listOf("Google Play Store")
         ),
         BloatApp(
             packageName = "com.vivo.push",
             name = "vivo Push",
             description = "Background push notification service",
             category = BloatCategory.TRACKING_SPYWARE,
-            risk = BloatRisk.CAUTION
+            risklevel = BloatRisk.CAUTION
         )
     )
 }
