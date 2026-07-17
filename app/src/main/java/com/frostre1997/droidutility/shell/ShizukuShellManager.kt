@@ -5,9 +5,8 @@ import android.content.pm.PackageManager
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import rikka.shizuku.Shell
 import rikka.shizuku.Shizuku
-import java.io.BufferedReader
-import java.io.InputStreamReader
 
 object ShizukuShellManager {
     private const val TAG = "ShizukuShellManager"
@@ -67,11 +66,12 @@ object ShizukuShellManager {
 
     fun hasPermission(): Boolean {
         if (!checkAvailability() || Shizuku.isPreV11()) return false
-        return runCatching { 
-            Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED 
+        return runCatching {
+            Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED
         }.getOrDefault(false)
     }
 
+    // Fixed: Shizuku.requestPermission only takes an Int request code
     fun requestPermission(activity: Activity) {
         if (!checkAvailability() || Shizuku.isPreV11()) {
             Log.w(TAG, "Shizuku initialization or version check failed")
@@ -82,38 +82,25 @@ object ShizukuShellManager {
             return
         }
         runCatching {
-            Shizuku.requestPermission(activity, REQUEST_CODE)
+            Shizuku.requestPermission(REQUEST_CODE)
         }.onFailure { e ->
             Log.e(TAG, "Failed to request permission", e)
         }
     }
 
+    // Use Shell.run() instead of private Shizuku.newProcess
     suspend fun executeCommand(command: String): ShellResult = withContext(Dispatchers.IO) {
         if (!checkAvailability()) return@withContext ShellResult(false, "", "Shizuku is not available", -1)
         if (!hasPermission()) return@withContext ShellResult(false, "", "Shizuku permission not granted", -1)
 
         return@withContext runCatching {
-            // Using the official Shizuku.newProcess standard API safely
-            val process = Shizuku.newProcess(arrayOf("sh", "-c", command), null, null)
-            
-            val stdoutBuilder = StringBuilder()
-            val stderrBuilder = StringBuilder()
-
-            val outReader = BufferedReader(InputStreamReader(process.inputStream))
-            val errReader = BufferedReader(InputStreamReader(process.errorStream))
-
-            // Non-blocking consumption of output buffers to prevent process freezing
-            val outThread = Thread { outReader.forEachLine { stdoutBuilder.appendLine(it) } }.apply { start() }
-            val errThread = Thread { errReader.forEachLine { stderrBuilder.appendLine(it) } }.apply { start() }
-
-            val exitCode = process.waitFor()
-            outThread.join()
-            errThread.join()
-
-            val stdout = stdoutBuilder.toString().trim()
-            val stderr = stderrBuilder.toString().trim()
-
-            ShellResult(exitCode == 0, stdout, stderr, exitCode)
+            val result = Shell.run(command)
+            ShellResult(
+                success = result.isSuccess,
+                output = result.out,
+                error = result.err,
+                exitCode = result.code
+            )
         }.getOrElse { e ->
             Log.e(TAG, "Command execution failed: $command", e)
             ShellResult(false, "", e.message ?: "Unknown error", -1)
@@ -124,20 +111,14 @@ object ShizukuShellManager {
         return commands.map { executeCommand(it) }
     }
 
-    fun startPersistentShell(): Process? {
-        if (!checkAvailability() || !hasPermission()) return null
-        return runCatching {
-            Shizuku.newProcess(arrayOf("sh"), null, null)
-        }.getOrNull()
-    }
+    // Persistent shell removed because Shizuku.newProcess is private.
+    // Use executeCommand() for individual commands instead.
+    @Deprecated("Persistent shell is not supported; use executeCommand() instead.")
+    fun startPersistentShell(): Nothing? = null
 
-    fun writeCommand(process: Process, command: String) {
-        runCatching {
-            process.outputStream.write("$command\n".toByteArray())
-            process.outputStream.flush()
-        }.onFailure { e ->
-            Log.e(TAG, "Failed to write command to persistent shell", e)
-        }
+    @Deprecated("Persistent shell is not supported; use executeCommand() instead.")
+    fun writeCommand(process: Any, command: String) {
+        // No-op
     }
 
     data class ShellResult(
