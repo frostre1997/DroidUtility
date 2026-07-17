@@ -1,5 +1,9 @@
 package com.frostre1997.droidutility.ui.screens
 
+import com.frostre1997.droidutility.ui.screens.DebloatTabletScreen
+import com.frostre1997.droidutility.ui.components.BloatList
+import com.frostre1997.droidutility.ui.components.TopBar
+import com.frostre1997.droidutility.ui.components.SearchAndFilters
 import com.frostre1997.droidutility.model.BloatApp
 import com.frostre1997.droidutility.model.BloatCategory
 import android.content.Context
@@ -7,6 +11,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -90,36 +95,38 @@ private fun DebloatPhoneScreen(onBack: () -> Unit) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
-        } else { 
-             SearchAndFilters(
-                 query = uiState.query,
-                 onQueryChange = { uiState = uiState.copy(query = it) },
-                 category = uiState.category,
-                 onCategoryChange = { uiState = uiState.copy(category = it) }
-        )
+        } else {
+            // ✅ Fixed: the else block now contains all the UI elements
+            SearchAndFilters(
+                query = uiState.query,
+                onQueryChange = { uiState = uiState.copy(query = it) },
+                category = uiState.category,
+                onCategoryChange = { uiState = uiState.copy(category = it) }
+            )
 
-        Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(12.dp))
 
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            items(filtered) { app ->
-                BloatAppCard(
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                items(filtered) { app ->
+                    BloatAppCard(
+                        app = app,
+                        selected = uiState.selected?.packageName == app.packageName,
+                        onClick = { uiState = uiState.copy(selected = app) }
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            uiState.selected?.let { app ->
+                BloatDetailCard(
                     app = app,
-                    selected = uiState.selected?.packageName == app.packageName,
-                    onClick = { uiState = uiState.copy(selected = app) }
+                    onAction = { }
                 )
             }
-        }
-
-        Spacer(Modifier.height(12.dp))
-
-        uiState.selected?.let { app ->
-            BloatDetailCard(
-                app = app,
-                onAction = { }
-            )
         }
     }
 }
@@ -166,19 +173,18 @@ private fun DebloatTabletScreen(onBack: () -> Unit) {
             }
         } else {
             Row(
-               modifier = Modifier.fillMaxSize(),
-               horizontalArrangement = Arrangement.spacedBy(16.dp)
-           ) {
-               Card(
-                   modifier = Modifier.weight(0.44f).fillMaxHeight(),
-                   shape = RoundedCornerShape(24.dp)
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Card(
+                    modifier = Modifier.weight(0.44f).fillMaxHeight(),
+                    shape = RoundedCornerShape(24.dp)
                 ) {
-                   Column(Modifier.fillMaxSize().padding(16.dp)) {
-                       Text(
-                           "Installed Bloat", 
-                           style = MaterialTheme.typography.titleLarge, 
-                           fontWeight = FontWeight.Bold
-                           
+                    Column(Modifier.fillMaxSize().padding(16.dp)) {
+                        Text(
+                            "Installed Bloat",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
                         )
                         Spacer(Modifier.height(12.dp))
 
@@ -187,30 +193,31 @@ private fun DebloatTabletScreen(onBack: () -> Unit) {
                             onQueryChange = { uiState = uiState.copy(query = it) },
                             category = uiState.category,
                             onCategoryChange = { uiState = uiState.copy(category = it) }
-                    )
+                        )
 
-                    Spacer(Modifier.height(12.dp))
+                        Spacer(Modifier.height(12.dp))
 
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        items(filtered) { app ->
-                            BloatAppCard(
-                                app = app,
-                                selected = uiState.selected?.packageName == app.packageName,
-                                onClick = { uiState = uiState.copy(selected = app) }
-                            )
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            items(filtered) { app ->
+                                BloatAppCard(
+                                    app = app,
+                                    selected = uiState.selected?.packageName == app.packageName,
+                                    onClick = { uiState = uiState.copy(selected = app) }
+                                )
+                            }
                         }
                     }
                 }
-            }
 
-            BloatDetailCard(
-                modifier = Modifier.weight(0.56f).fillMaxHeight(),
-                app = uiState.selected,
-                onAction = { /* hook Shizuku/PM disable action here */ }
-            )
+                BloatDetailCard(
+                    modifier = Modifier.weight(0.56f).fillMaxHeight(),
+                    app = uiState.selected,
+                    onAction = { /* hook Shizuku/PM disable action here */ }
+                )
+            }
         }
     }
 }
@@ -257,12 +264,12 @@ private fun SearchAndFilters(
         )
 
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(chips) { item ->
-                val selected = category == item.first
+            items(chips) { (cat, label) ->
+                val selected = category == cat
                 FilterChip(
                     selected = selected,
-                    onClick = { onCategoryChange(item.first) },
-                    label = { Text(item.second) }
+                    onClick = { onCategoryChange(cat) },
+                    label = { Text(label) }
                 )
             }
         }
