@@ -6,16 +6,21 @@ import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import rikka.shizuku.Shizuku
+import java.io.BufferedReader
+import java.io.InputStreamReader
 
 object ShizukuShellManager {
     private const val TAG = "ShizukuShellManager"
     private const val REQUEST_CODE = 1001
 
+    @Volatile
     private var isBinderReceived = false
+    @Volatile
     private var isPermissionGranted = false
 
     private val binderReceivedListener = Shizuku.OnBinderReceivedListener {
         isBinderReceived = true
+        isPermissionGranted = hasPermission()
         Log.i(TAG, "Shizuku binder received")
     }
 
@@ -32,92 +37,86 @@ object ShizukuShellManager {
         }
     }
 
-    @Suppress("PrivateApi")
-    private val newProcessMethod by lazy {
+    init {
+        registerListeners()
+    }
+
+    fun registerListeners() {
         try {
-            Shizuku::class.java.getDeclaredMethod(
-                "newProcess",
-                Array<String>::class.java,
-                Array<String>::class.java,
-                String::class.java
-            ).apply { isAccessible = true }
+            Shizuku.addBinderReceivedListenerSticky(binderReceivedListener)
+            Shizuku.addBinderDeadListener(binderDeadListener)
+            Shizuku.addRequestPermissionResultListener(permissionResultListener)
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to get Shizuku.newProcess method", e)
-            null
+            Log.e(TAG, "Failed to register Shizuku listeners", e)
         }
     }
 
-    init {
-        Shizuku.addBinderReceivedListenerSticky(binderReceivedListener)
-        Shizuku.addBinderDeadListener(binderDeadListener)
-        Shizuku.addRequestPermissionResultListener(permissionResultListener)
+    fun unregisterListeners() {
+        try {
+            Shizuku.removeBinderReceivedListener(binderReceivedListener)
+            Shizuku.removeBinderDeadListener(binderDeadListener)
+            Shizuku.removeRequestPermissionResultListener(permissionResultListener)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to unregister Shizuku listeners", e)
+        }
     }
 
     fun checkAvailability(): Boolean {
-        return try {
-            Shizuku.pingBinder()
-        } catch (e: Exception) {
-            false
-        }
+        return runCatching { Shizuku.pingBinder() }.getOrDefault(false)
     }
 
     fun hasPermission(): Boolean {
-        return try {
-            if (!checkAvailability()) return false
-            if (Shizuku.isPreV11()) return false
-            Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED
-        } catch (e: Exception) {
-            false
-        }
+        if (!checkAvailability() || Shizuku.isPreV11()) return false
+        return runCatching { 
+            Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED 
+        }.getOrDefault(false)
     }
 
     fun requestPermission(activity: Activity) {
-        if (!checkAvailability()) {
-            Log.w(TAG, "Shizuku not available")
+        if (!checkAvailability() || Shizuku.isPreV11()) {
+            Log.w(TAG, "Shizuku initialization or version check failed")
             return
         }
-        if (Shizuku.isPreV11()) {
-            Log.w(TAG, "Shizuku pre-v11 not supported")
-            return
-        }
-        if (Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED) {
+        if (hasPermission()) {
             isPermissionGranted = true
             return
         }
-        Shizuku.requestPermission(REQUEST_CODE)
-    }
-
-    fun refreshState() {
-        // Force re-evaluation of listeners and state
-        if (checkAvailability()) {
-            isBinderReceived = true
-            isPermissionGranted = hasPermission()
-        } else {
-            isBinderReceived = false
-            isPermissionGranted = false
+        runCatching {
+            Shizuku.requestPermission(activity, REQUEST_CODE)
+        }.onFailure { e ->
+            Log.e(TAG, "Failed to request permission", e)
         }
-        Log.d(TAG, "State refreshed: available=$isBinderReceived, permission=$isPermissionGranted")
     }
 
-    suspend fun executeCommand(command: String): ShellResult {
-        return withContext(Dispatchers.IO) {
-            try {
-                if (!checkAvailability()) {
-                    return@withContext ShellResult(false, "", "Shizuku is not available", -1)
-                }
-                if (!hasPermission()) {
-                    return@withContext ShellResult(false, "", "Shizuku permission not granted", -1)
-                }
-                val method = newProcessMethod ?: return@withContext ShellResult(false, "", "newProcess not available", -1)
-                val process = method.invoke(null, arrayOf("sh", "-c", command), null, null) as Process
-                val exitCode = process.waitFor()
-                val stdout = process.inputStream.bufferedReader().readText()
-                val stderr = process.errorStream.bufferedReader().readText()
-                ShellResult(exitCode == 0, stdout, stderr, exitCode)
-            } catch (e: Exception) {
-                Log.e(TAG, "Command execution failed", e)
-                ShellResult(false, "", e.message ?: "Unknown error", -1)
-            }
+    suspend fun executeCommand(command: String): ShellResult = withContext(Dispatchers.IO) {
+        if (!checkAvailability()) return@withContext ShellResult(false, "", "Shizuku is not available", -1)
+        if (!hasPermission()) return@withContext ShellResult(false, "", "Shizuku permission not granted", -1)
+
+        return@withContext runCatching {
+            // Using the official Shizuku.newProcess standard API safely
+            val process = Shizuku.newProcess(arrayOf("sh", "-c", command), null, null)
+            
+            val stdoutBuilder = StringBuilder()
+            val stderrBuilder = StringBuilder()
+
+            val outReader = BufferedReader(InputStreamReader(process.inputStream))
+            val errReader = BufferedReader(InputStreamReader(process.errorStream))
+
+            // Non-blocking consumption of output buffers to prevent process freezing
+            val outThread = Thread { outReader.forEachLine { stdoutBuilder.appendLine(it) } }.apply { start() }
+            val errThread = Thread { errReader.forEachLine { stderrBuilder.appendLine(it) } }.apply { start() }
+
+            val exitCode = process.waitFor()
+            outThread.join()
+            errThread.join()
+
+            val stdout = stdoutBuilder.toString().trim()
+            val stderr = stderrBuilder.toString().trim()
+
+            ShellResult(exitCode == 0, stdout, stderr, exitCode)
+        }.getOrElse { e ->
+            Log.e(TAG, "Command execution failed: $command", e)
+            ShellResult(false, "", e.message ?: "Unknown error", -1)
         }
     }
 
@@ -125,25 +124,19 @@ object ShizukuShellManager {
         return commands.map { executeCommand(it) }
     }
 
-    @Suppress("PrivateApi")
     fun startPersistentShell(): Process? {
-        return try {
-            if (!checkAvailability() || !hasPermission()) return null
-            val method = newProcessMethod ?: return null
-            val process = method.invoke(null, arrayOf("sh"), null, null) as Process
-            process
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to start persistent shell", e)
-            null
-        }
+        if (!checkAvailability() || !hasPermission()) return null
+        return runCatching {
+            Shizuku.newProcess(arrayOf("sh"), null, null)
+        }.getOrNull()
     }
 
     fun writeCommand(process: Process, command: String) {
-        try {
+        runCatching {
             process.outputStream.write("$command\n".toByteArray())
             process.outputStream.flush()
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to write command", e)
+        }.onFailure { e ->
+            Log.e(TAG, "Failed to write command to persistent shell", e)
         }
     }
 
@@ -155,11 +148,9 @@ object ShizukuShellManager {
     )
 }
 
-fun ShizukuShellManager.ShellResult.displayText(): String {
-    return buildString {
-        append("Exit code: $exitCode\n\n")
-        if (output.isNotBlank()) append("--- STDOUT ---\n$output\n")
-        if (error.isNotBlank()) append("--- STDERR ---\n$error\n")
-        if (output.isBlank() && error.isBlank()) append("(no output)")
-    }
+fun ShizukuShellManager.ShellResult.displayText(): String = buildString {
+    append("Exit code: $exitCode\n\n")
+    if (output.isNotBlank()) append("--- STDOUT ---\n$output\n")
+    if (error.isNotBlank()) append("--- STDERR ---\n$error\n")
+    if (output.isBlank() && error.isBlank()) append("(no output)")
 }
