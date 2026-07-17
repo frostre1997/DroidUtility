@@ -20,7 +20,10 @@ class DroidUtilityApp : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             DroidUtilityTheme {
-                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
                     AppNavigation()
                 }
             }
@@ -31,9 +34,18 @@ class DroidUtilityApp : ComponentActivity() {
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = "debloat") {
-        composable("debloat") { DebloatScreen() }
-        composable("terminal") { TerminalScreen() }
-        // add other destinations as needed
+
+    NavHost(navController = navController, startDestination = 
+"debloat") {
+        composable("debloat") {
+            DebloatScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable("terminal") {
+            TerminalScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
     }
 }
