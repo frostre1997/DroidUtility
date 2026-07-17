@@ -2,7 +2,7 @@ package com.frostre1997.droidutility.bloat
 
 import com.frostre1997.droidutility.BloatApp
 import com.frostre1997.droidutility.BloatCategory
-import com.frostre1997.droidutility.BloatRisk
+import com.frostre1997.droidutility.RiskLevel
 
 object HuaweiBloat {
     val BLOATWARE = listOf(
