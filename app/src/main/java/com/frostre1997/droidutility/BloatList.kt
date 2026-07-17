@@ -11,5 +11,6 @@ object BloatList {
         addAll(RealmeBloat.BLOATWARE)
         addAll(MotorolaBloat.BLOATWARE)
         addAll(GoogleBloat.BLOATWARE)
+        addAll(LenovoBloat.BLOATWARE)
     }
 }
