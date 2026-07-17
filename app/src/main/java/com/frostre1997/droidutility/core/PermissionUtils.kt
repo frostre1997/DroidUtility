@@ -31,10 +31,20 @@ object PermissionUtils {
                 Log.w(TAG, "Shizuku version too old")
                 return
             }
-            Shizuku.requestPermission(activity, requestCode)
+            // Correct API: only requestCode, no Activity parameter
+            Shizuku.requestPermission(requestCode)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to request permission", e)
         }
+    }
+
+    // Optional: helper to listen for permission result (call this in your Activity/Fragment)
+    fun addPermissionResultListener(listener: Shizuku.OnRequestPermissionResultListener) {
+        Shizuku.addRequestPermissionResultListener(listener)
+    }
+
+    fun removePermissionResultListener(listener: Shizuku.OnRequestPermissionResultListener) {
+        Shizuku.removeRequestPermissionResultListener(listener)
     }
 
     fun isShizukuInstalled(context: Context): Boolean {
