@@ -1,5 +1,7 @@
 package com.frostre1997.droidutility.ui.screens
 
+import com.frostre1997.droidutility.model.BloatApp
+import com.frostre1997.droidutility.model.BloatCategory
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.clickable
