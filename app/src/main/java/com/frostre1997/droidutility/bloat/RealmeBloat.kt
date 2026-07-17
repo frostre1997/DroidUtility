@@ -11,7 +11,7 @@ object RealmeBloat {
             name = "Realme Browser",
             description = "Built-in web browser (shared with OPPO)",
             category = BloatCategory.REDUNDANT_APPS,
-            risklevel = BloatRisk.SAFE,
+            riskLevel = RiskLevel.SAFE,
             alternatives = listOf("Chrome", "Firefox")
         ),
         BloatApp(
@@ -19,7 +19,7 @@ object RealmeBloat {
             name = "HeyTap Cloud",
             description = "Cloud backup service (shared with OPPO)",
             category = BloatCategory.CLOUD_SERVICES,
-            risklevel = BloatRisk.SAFE,
+            riskLevel = RiskLevel.SAFE,
             alternatives = listOf("Google Drive")
         ),
         BloatApp(
@@ -27,14 +27,14 @@ object RealmeBloat {
             name = "Game Space",
             description = "Gaming performance optimizer (shared with OPPO)",
             category = BloatCategory.GAMES,
-            risklevel = BloatRisk.SAFE
+            riskLevel = RiskLevel.SAFE
         ),
         BloatApp(
             packageName = "com.heytap.market",
             name = "GetApps",
             description = "Realme app store (shared with OPPO)",
             category = BloatCategory.REDUNDANT_APPS,
-            risklevel = BloatRisk.SAFE,
+            riskLevel = RiskLevel.SAFE,
             alternatives = listOf("Google Play Store")
         ),
         BloatApp(
@@ -42,21 +42,21 @@ object RealmeBloat {
             name = "Screen Recorder",
             description = "Built-in screen recording tool",
             category = BloatCategory.OEM_BLOATWARE,
-            risklevel = BloatRisk.SAFE
+            riskLevel = RiskLevel.SAFE
         ),
         BloatApp(
             packageName = "com.realme.phonemanager",
             name = "Phone Manager",
             description = "System cleanup and optimization tool",
             category = BloatCategory.OEM_BLOATWARE,
-            risklevel = BloatRisk.SAFE
+            riskLevel = RiskLevel.SAFE
         ),
         BloatApp(
             packageName = "com.realme.oshare",
             name = "Realme Share",
             description = "File sharing between Realme devices",
             category = BloatCategory.OEM_BLOATWARE,
-            risklevel = BloatRisk.SAFE
+            riskLevel = RiskLevel.SAFE
         )
     )
 }
