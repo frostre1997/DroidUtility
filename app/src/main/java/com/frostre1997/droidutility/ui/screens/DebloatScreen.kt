@@ -32,7 +32,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,7 +44,6 @@ import com.frostre1997.droidutility.ui.components.BloatAppCard
 import com.frostre1997.droidutility.ui.components.BloatDetailCard
 import com.frostre1997.droidutility.ui.components.BloatList
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
@@ -70,19 +68,16 @@ private data class UiState(
 
 @Composable
 private fun DebloatPhoneScreen(onBack: () -> Unit) {
-    val scope = rememberCoroutineScope()
     var uiState by remember { mutableStateOf(UiState()) }
 
     LaunchedEffect(Unit) {
-        scope.launch {
-            uiState = uiState.copy(loading = true)
-            val apps = withContext(Dispatchers.Default) { BloatList.ALL }
-            uiState = uiState.copy(
-                allApps = apps,
-                selected = uiState.selected ?: apps.firstOrNull(),
-                loading = false
-            )
-        }
+        uiState = uiState.copy(loading = true)
+        val apps = withContext(Dispatchers.Default) { BloatList.ALL }
+        uiState = uiState.copy(
+            allApps = apps,
+            selected = apps.firstOrNull(),
+            loading = false
+        )
     }
 
     val filtered = remember(uiState.allApps, uiState.query, uiState.category) {
@@ -146,18 +141,16 @@ private fun DebloatPhoneScreen(onBack: () -> Unit) {
 
 @Composable
 private fun DebloatTabletScreen(onBack: () -> Unit) {
-    val scope = rememberCoroutineScope()
     var uiState by remember { mutableStateOf(UiState()) }
 
     LaunchedEffect(Unit) {
         uiState = uiState.copy(loading = true)
         val apps = withContext(Dispatchers.Default) { BloatList.ALL }
         uiState = uiState.copy(
-                allApps = apps,
-                selected = apps.firstOrNull(),
-                loading = false
-            )
-        }
+            allApps = apps,
+            selected = apps.firstOrNull(),
+            loading = false
+        )
     }
 
     val filtered = remember(uiState.allApps, uiState.query, uiState.category) {
