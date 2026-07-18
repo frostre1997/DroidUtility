@@ -113,10 +113,12 @@ fun ShizukuShellManager.ShellResult.displayText(): String = buildString {
 
 ")
     if (output.isNotBlank()) append("--- STDOUT ---
-$output
 ")
+    if (output.isNotBlank()) append(output).append('
+')
     if (error.isNotBlank()) append("--- STDERR ---
-$error
 ")
+    if (error.isNotBlank()) append(error).append('
+')
     if (output.isBlank() && error.isBlank()) append("(no output)")
 }
