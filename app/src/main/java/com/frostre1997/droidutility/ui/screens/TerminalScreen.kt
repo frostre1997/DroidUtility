@@ -126,8 +126,7 @@ fun TerminalScreen(onBack: () -> Unit) {
                     IconButton(onClick = {
                         val copiedText = buildString {
                             outputLines.forEachIndexed { index, line ->
-                                if (index > 0) append('
-                    ')
+                                if (index > 0) appendLine()
                                 append(line)
                             }
                         }
