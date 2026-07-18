@@ -3,23 +3,12 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
-// ─── Version numbers (you change these manually for each release) ───
 val versionMajor = 1
 val versionMinor = 0
-val versionPatch = 5   // bump this for patch releases
+val versionPatch = 5
 
 val appVersionName = "$versionMajor.$versionMinor.$versionPatch"
-
-// ─── Auto‑calculate version code from git tags ────────────────────────
-val tagInfo = providers.exec {
-    commandLine("git", "describe", "--tags", "--long")
-}.standardOutput.asText.get().trim()
-
-// Example: "v1.0.0-0-g123abc" (exactly on tag) or "v1.0.0-3-g123abc"
-val parts = tagInfo.split('-')
-val commitsSinceTag = parts[1].toInt()
-// Version code = 1 if exactly on the tag, else commitsSinceTag + 1
-val versionCodeInt = if (commitsSinceTag == 0) 1 else commitsSinceTag + 1
+val versionCodeInt = versionMajor * 10000 + versionMinor * 100 + versionPatch
 
 android {
     namespace = "com.frostre1997.droidutility"
@@ -35,7 +24,7 @@ android {
 
     buildFeatures {
         compose = true
-        buildConfig = true   // if you still want BuildConfig
+        buildConfig = true
     }
 
     composeOptions {
@@ -66,11 +55,9 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
 
     implementation("androidx.navigation:navigation-compose:2.7.7")
-
     implementation("androidx.activity:activity-compose:1.8.2")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
-
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.google.code.gson:gson:2.10.1")
