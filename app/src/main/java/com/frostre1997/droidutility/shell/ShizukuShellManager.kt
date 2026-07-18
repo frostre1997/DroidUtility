@@ -109,16 +109,15 @@ object ShizukuShellManager {
 }
 
 fun ShizukuShellManager.ShellResult.displayText(): String = buildString {
-    append("Exit code: $exitCode
-
-")
-    if (output.isNotBlank()) append("--- STDOUT ---
-")
-    if (output.isNotBlank()) append(output).append('
-')
-    if (error.isNotBlank()) append("--- STDERR ---
-")
-    if (error.isNotBlank()) append(error).append('
-')
+    appendLine("Exit code: $exitCode")
+    appendLine()
+    if (output.isNotBlank()) {
+        appendLine("--- STDOUT ---")
+        appendLine(output)
+    }
+    if (error.isNotBlank()) {
+        appendLine("--- STDERR ---")
+        appendLine(error)
+    }
     if (output.isBlank() && error.isBlank()) append("(no output)")
 }
