@@ -32,6 +32,8 @@ import com.frostre1997.droidutility.ui.components.BloatDetailCard
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.frostre1997.droidutility.data.BloatApp
+import com.frostre1997.droidutility.data.BloatCategory
 
 @Composable
 fun DebloatScreen(onBack: () -> Unit) {
