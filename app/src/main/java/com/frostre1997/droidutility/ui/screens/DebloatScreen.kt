@@ -150,12 +150,11 @@ private fun DebloatTabletScreen(onBack: () -> Unit) {
     var uiState by remember { mutableStateOf(UiState()) }
 
     LaunchedEffect(Unit) {
-        scope.launch {
-            uiState = uiState.copy(loading = true)
-            val apps = withContext(Dispatchers.Default) { BloatList.ALL }
-            uiState = uiState.copy(
+        uiState = uiState.copy(loading = true)
+        val apps = withContext(Dispatchers.Default) { BloatList.ALL }
+        uiState = uiState.copy(
                 allApps = apps,
-                selected = uiState.selected ?: apps.firstOrNull(),
+                selected = apps.firstOrNull(),
                 loading = false
             )
         }
