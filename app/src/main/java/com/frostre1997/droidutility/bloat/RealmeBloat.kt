@@ -27,7 +27,7 @@ object RealmeBloat {
             name = "Game Space",
             description = "Gaming performance optimizer (shared with OPPO)",
             category = BloatCategory.GAMES,
-            riskLevel = RiskLevel.SAFE
+            risklevel = RiskLevel.SAFE
         ),
         BloatApp(
             packageName = "com.heytap.market",
