@@ -1,41 +1,68 @@
 package com.frostre1997.droidutility.ui.components
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Android
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.frostre1997.droidutility.data.BloatApp
-import com.frostre1997.droidutility.data.BloatCategory
 
 @Composable
 fun BloatAppCard(
     app: BloatApp,
-    selected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit = {}
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
-        )
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors()
     ) {
-        Column(Modifier.padding(14.dp)) {
-            Text(app.name, fontWeight = FontWeight.SemiBold)
-            Spacer(Modifier.height(2.dp))
-            Text(app.packageName, style = MaterialTheme.typography.bodySmall)
-            Spacer(Modifier.height(4.dp))
-            Text(app.description, style = MaterialTheme.typography.bodySmall)
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                AssistChip(onClick = {}, label = { Text(app.category.name) })
-                AssistChip(onClick = {}, label = { Text(app.risk.name) })
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row {
+                Icon(
+                    imageVector = Icons.Default.Android,
+                    contentDescription = null
+                )
+                Spacer(modifier = Modifier.height(0.dp))
+                Column(modifier = Modifier.padding(start = 12.dp)) {
+                    Text(
+                        text = app.name,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = app.packageName,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+
+            if (app.description.isNotBlank()) {
+                Text(
+                    text = app.description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(top = 12.dp)
+                )
+            }
+
+            if (app.isSystem) {
+                FilterChip(
+                    selected = true,
+                    onClick = {},
+                    label = { Text("System app") },
+                    modifier = Modifier.padding(top = 12.dp)
+                )
             }
         }
     }
