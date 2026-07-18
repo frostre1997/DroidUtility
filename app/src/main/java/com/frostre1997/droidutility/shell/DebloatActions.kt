@@ -28,8 +28,7 @@ object DeblateActions {
 
     fun requestPermission() {
         if (!isShizukuRunning()) {
-            Log.w(TAG, "Shizuku not running, cannot request 
-    permission")
+            Log.w(TAG, "Shizuku not running, cannot request permission")
             return
         }
         try {
