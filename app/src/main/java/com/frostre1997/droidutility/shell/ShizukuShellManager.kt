@@ -31,7 +31,7 @@ object ShizukuShellManager {
     private val permissionResultListener = Shizuku.OnRequestPermissionResultListener { requestCode, grantResult ->
         if (requestCode == REQUEST_CODE) {
             isPermissionGranted = grantResult == PackageManager.PERMISSION_GRANTED
-            Log.i(TAG, "Permission result: ${if (isPermissionGranted) "granted" else "denied"}")
+            Log.i(TAG, "Permission result: " + if (isPermissionGranted) "granted" else "denied")
         }
     }
 
