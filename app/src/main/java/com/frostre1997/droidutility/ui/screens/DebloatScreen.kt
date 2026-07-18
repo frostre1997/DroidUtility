@@ -1,6 +1,5 @@
 package com.frostre1997.droidutility.ui.screens
 
-import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,7 +20,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,8 +42,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.frostre1997.droidutility.data.BloatApp
-import com.frostre1997.droidutility.data.BloatCategory
+import com.frostre1997.droidutility.BloatApp
+import com.frostre1997.droidutility.BloatCategory
 import com.frostre1997.droidutility.ui.components.BloatAppCard
 import com.frostre1997.droidutility.ui.components.BloatDetailCard
 import com.frostre1997.droidutility.ui.components.BloatList
@@ -281,14 +279,26 @@ private fun SearchAndFilters(
 
         val chips = listOf(
             null to "All",
-            BloatCategory.OEM to "OEM",
-            BloatCategory.CARRIER to "Carrier",
-            BloatCategory.SOCIAL to "Social",
-            BloatCategory.GAME to "Games",
-            BloatCategory.PRIVACY_CONCERNING to "Privacy",
-            BloatCategory.SYSTEM to "System",
             BloatCategory.GOOGLE to "Google",
-            BloatCategory.OTHER to "Other"
+            BloatCategory.HUAWEI to "Huawei",
+            BloatCategory.LENOVO to "Lenovo",
+            BloatCategory.MOTOROLA to "Motorola",
+            BloatCategory.ONEPLUS to "OnePlus",
+            BloatCategory.OPPO to "Oppo",
+            BloatCategory.REALME to "Realme",
+            BloatCategory.SAMSUNG to "Samsung",
+            BloatCategory.XIAOMI to "Xiaomi",
+            BloatCategory.OEM_BLOATWARE to "OEM",
+            BloatCategory.CARRIER_APPS to "Carrier",
+            BloatCategory.SOCIAL_MEDIA to "Social",
+            BloatCategory.GAMES to "Games",
+            BloatCategory.PRODUCTIVITY_BLOAT to "Productivity",
+            BloatCategory.TRACKING_SPYWARE to "Tracking",
+            BloatCategory.ADVERTISING to "Ads",
+            BloatCategory.CLOUD_SERVICES to "Cloud",
+            BloatCategory.REDUNDANT_APPS to "Duplicate",
+            BloatCategory.PRIVACY_CONCERNING to "Privacy",
+            BloatCategory.GENERAL to "General"
         )
 
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
