@@ -1,6 +1,5 @@
 package com.frostre1997.droidutility.ui.screens
 
-import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,9 +26,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
-import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
-import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -39,7 +35,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.frostre1997.droidutility.BloatApp
@@ -51,19 +47,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-@OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
 fun DebloatScreen(onBack: () -> Unit) {
-    val context = LocalContext.current
-    val activity = context as? ComponentActivity
-
-    if (activity == null) {
-        DebloatPhoneScreen(onBack = onBack)
-        return
-    }
-
-    val windowSizeClass = calculateWindowSizeClass(activity)
-    val isCompact = windowSizeClass.widthSizeClass == WindowWidthSizeClass.Compact
+    val screenWidthDp = LocalConfiguration.current.screenWidthDp
+    val isCompact = screenWidthDp < 600
 
     if (isCompact) {
         DebloatPhoneScreen(onBack = onBack)
