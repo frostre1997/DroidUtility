@@ -11,49 +11,49 @@ object MotorolaBloat {
             name = "Actions",
             description = "Motorola gesture and shortcut actions",
             category = BloatCategory.OEM_BLOATWARE,
-            riskLevel = RiskLevel.SAFE
+            risklevel = RiskLevel.SAFE
         ),
         BloatApp(
             packageName = "com.motorola.gamemode",
             name = "Game Time",
             description = "Gaming performance mode manager",
             category = BloatCategory.GAMES,
-            riskLevel = RiskLevel.SAFE
+            risklevel = RiskLevel.SAFE
         ),
         BloatApp(
             packageName = "com.motorola.display",
             name = "Moto Display",
             description = "Ambient display and notification features",
             category = BloatCategory.OEM_BLOATWARE,
-            riskLevel = RiskLevel.SAFE
+            risklevel = RiskLevel.SAFE
         ),
         BloatApp(
             packageName = "com.motorola.attentivescreen",
             name = "Attentive Display",
             description = "Keeps screen on while user is looking at it",
             category = BloatCategory.OEM_BLOATWARE,
-            riskLevel = RiskLevel.SAFE
+            risklevel = RiskLevel.SAFE
         ),
         BloatApp(
             packageName = "com.motorola.moto",
             name = "Moto App",
             description = "Motorola tips, support, and device info hub",
             category = BloatCategory.OEM_BLOATWARE,
-            riskLevel = RiskLevel.SAFE
+            risklevel = RiskLevel.SAFE
         ),
         BloatApp(
             packageName = "com.motorola.fmplayer",
             name = "FM Radio",
             description = "Built-in FM radio player",
             category = BloatCategory.REDUNDANT_APPS,
-            riskLevel = RiskLevel.SAFE
+            risklevel = RiskLevel.SAFE
         ),
         BloatApp(
             packageName = "com.motorola.bugreportsender",
             name = "Bug Report Sender",
             description = "Sends diagnostic reports to Motorola",
             category = BloatCategory.TRACKING_SPYWARE,
-            riskLevel = RiskLevel.CAUTION
+            risklevel = RiskLevel.CAUTION
         )
     )
 }
