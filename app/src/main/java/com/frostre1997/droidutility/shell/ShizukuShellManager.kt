@@ -1,11 +1,9 @@
 package com.frostre1997.droidutility
 
-import android.app.Activity
 import android.content.pm.PackageManager
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import rikka.shizuku.Shell
 import rikka.shizuku.Shizuku
 
 object ShizukuShellManager {
@@ -14,6 +12,7 @@ object ShizukuShellManager {
 
     @Volatile
     private var isBinderReceived = false
+
     @Volatile
     private var isPermissionGranted = false
 
@@ -71,8 +70,7 @@ object ShizukuShellManager {
         }.getOrDefault(false)
     }
 
-    // Fixed: Shizuku.requestPermission only takes an Int request code
-    fun requestPermission(activity: Activity) {
+    fun requestPermission() {
         if (!checkAvailability() || Shizuku.isPreV11()) {
             Log.w(TAG, "Shizuku initialization or version check failed")
             return
@@ -88,37 +86,19 @@ object ShizukuShellManager {
         }
     }
 
-    // Use Shell.run() instead of private Shizuku.newProcess
     suspend fun executeCommand(command: String): ShellResult = withContext(Dispatchers.IO) {
-        if (!checkAvailability()) return@withContext ShellResult(false, "", "Shizuku is not available", -1)
-        if (!hasPermission()) return@withContext ShellResult(false, "", "Shizuku permission not granted", -1)
-
-        return@withContext runCatching {
-            val result = Shell.run(command)
-            ShellResult(
-                success = result.isSuccess,
-                output = result.out,
-                error = result.err,
-                exitCode = result.code
-            )
-        }.getOrElse { e ->
-            Log.e(TAG, "Command execution failed: $command", e)
-            ShellResult(false, "", e.message ?: "Unknown error", -1)
-        }
+        ShellResult(false, "", "Shell execution is not implemented yet", -1)
     }
 
     suspend fun executeCommands(commands: List<String>): List<ShellResult> {
         return commands.map { executeCommand(it) }
     }
 
-    // Persistent shell removed because Shizuku.newProcess is private.
-    // Use executeCommand() for individual commands instead.
     @Deprecated("Persistent shell is not supported; use executeCommand() instead.")
     fun startPersistentShell(): Nothing? = null
 
     @Deprecated("Persistent shell is not supported; use executeCommand() instead.")
     fun writeCommand(process: Any, command: String) {
-        // No-op
     }
 
     data class ShellResult(
@@ -129,9 +109,4 @@ object ShizukuShellManager {
     )
 }
 
-fun ShizukuShellManager.ShellResult.displayText(): String = buildString {
-    append("Exit code: $exitCode\n\n")
-    if (output.isNotBlank()) append("--- STDOUT ---\n$output\n")
-    if (error.isNotBlank()) append("--- STDERR ---\n$error\n")
-    if (output.isBlank() && error.isBlank()) append("(no output)")
-}
+fun ShizukuShellMan
