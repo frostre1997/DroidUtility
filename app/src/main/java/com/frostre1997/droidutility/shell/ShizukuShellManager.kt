@@ -87,7 +87,7 @@ object ShizukuShellManager {
     }
 
     suspend fun executeCommand(command: String): ShellResult = withContext(Dispatchers.IO) {
-        ShellResult(false, "", "Shell execution is not implemented yet", -1)
+        ShellResult(false, "", "Shell execution not implemented yet", -1)
     }
 
     suspend fun executeCommands(commands: List<String>): List<ShellResult> {
@@ -98,8 +98,7 @@ object ShizukuShellManager {
     fun startPersistentShell(): Nothing? = null
 
     @Deprecated("Persistent shell is not supported; use executeCommand() instead.")
-    fun writeCommand(process: Any, command: String) {
-    }
+    fun writeCommand(process: Any, command: String) {}
 
     data class ShellResult(
         val success: Boolean,
@@ -109,4 +108,15 @@ object ShizukuShellManager {
     )
 }
 
-fun ShizukuShellMan
+fun ShizukuShellManager.ShellResult.displayText(): String = buildString {
+    append("Exit code: $exitCode
+
+")
+    if (output.isNotBlank()) append("--- STDOUT ---
+$output
+")
+    if (error.isNotBlank()) append("--- STDERR ---
+$error
+")
+    if (output.isBlank() && error.isBlank()) append("(no output)")
+                                   }
