@@ -20,6 +20,7 @@ enum class RiskLevel {
 data class BloatApp(
     val packageName: String,
     val name: String,
+    val description: String,
     val category: BloatCategory,
     val risklevel: RiskLevel,
     val alternatives: List<String>? = null
