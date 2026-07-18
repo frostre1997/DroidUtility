@@ -3,12 +3,57 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
-val versionMajor = 1
-val versionMinor = 0
-val versionPatch = 5
+data class SemVer(
+    val major: Int,
+    val minor: Int,
+    val patch: Int,
+    val preReleaseType: Int,
+    val preReleaseNumber: Int
+)
 
-val appVersionName = "$versionMajor.$versionMinor.$versionPatch"
-val versionCodeInt = versionMajor * 10000 + versionMinor * 100 + versionPatch
+fun parseSemVer(tag: String): SemVer {
+    val clean = tag.removePrefix("v")
+    val main = clean.substringBefore('-')
+    val pre = clean.substringAfter('-', "")
+
+    val parts = main.split(".")
+    val major = parts.getOrNull(0)?.toIntOrNull() ?: 0
+    val minor = parts.getOrNull(1)?.toIntOrNull() ?: 0
+    val patch = parts.getOrNull(2)?.toIntOrNull() ?: 0
+
+    val (preType, preNumber) = if (pre.isBlank()) {
+        9 to 0
+    } else {
+        val type = pre.substringBefore('.').lowercase()
+        val number = pre.substringAfter('.', "0").toIntOrNull() ?: 0
+        val rank = when (type) {
+            "alpha" -> 1
+            "beta" -> 2
+            "rc" -> 3
+            else -> 0
+        }
+        rank to number
+    }
+
+    return SemVer(major, minor, patch, preType, preNumber)
+}
+
+fun semVerToCode(v: SemVer): Int {
+    val base = v.major * 1_000_000 + v.minor * 10_000 + v.patch * 100
+    return if (v.preReleaseType == 9) {
+        base + 99
+    } else {
+        base + v.preReleaseType * 10 + (v.preReleaseNumber.coerceAtMost(9))
+    }
+}
+
+val gitTag = providers.exec {
+    commandLine("git", "describe", "--tags", "--abbrev=0")
+}.standardOutput.asText.get().trim()
+
+val appVersionName = if (gitTag.isBlank()) "v1.0.5-beta.10" else gitTag
+val parsed = parseSemVer(appVersionName)
+val appVersionCode = semVerToCode(parsed)
 
 android {
     namespace = "com.frostre1997.droidutility"
@@ -18,8 +63,9 @@ android {
         applicationId = "com.frostre1997.droidutility"
         minSdk = 24
         targetSdk = 34
-        versionCode = versionCodeInt
-        versionName = appVersionName
+        versionCode = 10005 // or "1.0.5"
+        versionName = "1.0.5-beta.6"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildFeatures {
@@ -39,10 +85,17 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+    }
 }
 
 dependencies {
     implementation(platform("androidx.compose:compose-bom:2024.02.00"))
+    androidTestImplementation(platform("androidx.compose:compose-bom:2024.02.00"))
 
     implementation("dev.rikka.shizuku:api:13.1.5")
     implementation("dev.rikka.shizuku:provider:13.1.5")
@@ -68,6 +121,5 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
-    androidTestImplementation(platform("androidx.compose:compose-bom:2024.02.00"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
 }
