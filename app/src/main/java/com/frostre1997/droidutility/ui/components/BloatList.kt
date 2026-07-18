@@ -11,6 +11,7 @@ import com.frostre1997.droidutility.bloat.SamsungBloat
 import com.frostre1997.droidutility.bloat.VivoBloat
 import com.frostre1997.droidutility.bloat.XiaomiBloat
 import com.frostre1997.droidutility.data.BloatApp
+import com.frostre1997.droidutility.data.BloatCategory
 
 object BloatList {
     val ALL: List<BloatApp> = buildList {
