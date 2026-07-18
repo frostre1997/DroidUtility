@@ -119,4 +119,4 @@ $output
 $error
 ")
     if (output.isBlank() && error.isBlank()) append("(no output)")
-                                   }
+}
