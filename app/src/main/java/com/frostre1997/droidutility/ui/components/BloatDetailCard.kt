@@ -1,76 +1,88 @@
 package com.frostre1997.droidutility.ui.components
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Android
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.frostre1997.droidutility.data.BloatApp
+import com.frostre1997.droidutility.BloatApp
+import com.frostre1997.droidutility.RiskLevel
 
 @Composable
 fun BloatDetailCard(
     app: BloatApp?,
-    onClick: () -> Unit = {}
+    onAction: () -> Unit = {},
+    modifier: Modifier = Modifier
 ) {
-    if (app == null) return
+    val current = app ?: return
 
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors()
+    OutlinedCard(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.outlinedCardColors()
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Icon(
                     imageVector = Icons.Default.Android,
-                    contentDescription = null
+                    contentDescription = null,
+                    modifier = Modifier.size(32.dp)
                 )
-                Spacer(modifier = Modifier.padding(start = 12.dp))
-                Column {
+
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = app.name,
+                        text = current.name,
                         style = MaterialTheme.typography.titleLarge
                     )
                     Text(
-                        text = app.packageName,
+                        text = current.packageName,
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
             }
 
-            Divider(modifier = Modifier.padding(vertical = 12.dp))
-
             Text(
-                text = "Category: ${app.category}",
+                text = current.description,
                 style = MaterialTheme.typography.bodyMedium
             )
 
-            if (app.description.isNotBlank()) {
-                Text(
-                    text = app.description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-            }
-
-            if (app.isSystem) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilterChip(
                     selected = true,
                     onClick = {},
-                    label = { Text("System app") },
-                    modifier = Modifier.padding(top = 12.dp)
+                    label = { Text(current.category.name.replace('_', ' ')) }
+                )
+                AssistChip(
+                    onClick = onAction,
+                    label = { Text(current.risklevel.name.replace('_', ' ')) }
+                )
+            }
+
+            if (!current.alternatives.isNullOrEmpty()) {
+                Text(
+                    text = "Alternatives",
+                    style = MaterialTheme.typography.titleSmall
+                )
+                Text(
+                    text = current.alternatives.joinToString(separator = ", "),
+                    style = MaterialTheme.typography.bodyMedium
                 )
             }
         }
