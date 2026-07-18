@@ -1,14 +1,7 @@
 package com.frostre1997.droidutility.ui.screens
 
-import com.frostre1997.droidutility.ui.screens.DebloatTabletScreen
-import com.frostre1997.droidutility.ui.components.BloatList
-import com.frostre1997.droidutility.ui.components.TopBar
-import com.frostre1997.droidutility.ui.components.SearchAndFilters
-import com.frostre1997.droidutility.model.BloatApp
-import com.frostre1997.droidutility.model.BloatCategory
 import android.content.Context
 import androidx.activity.ComponentActivity
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -16,24 +9,24 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
-import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
+import com.frostre1997.droidutility.data.BloatApp
+import com.frostre1997.droidutility.data.BloatCategory
 import com.frostre1997.droidutility.ui.components.BloatAppCard
 import com.frostre1997.droidutility.ui.components.BloatDetailCard
+import com.frostre1997.droidutility.ui.components.BloatList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import com.frostre1997.droidutility.data.BloatApp
-import com.frostre1997.droidutility.data.BloatCategory
 
 @Composable
 fun DebloatScreen(onBack: () -> Unit) {
