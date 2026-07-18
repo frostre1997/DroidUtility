@@ -1,58 +1,77 @@
 package com.frostre1997.droidutility.ui.components
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DeleteSweep
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.Android
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.frostre1997.droidutility.data.BloatApp
-import com.frostre1997.droidutility.data.BloatCategory
 
 @Composable
 fun BloatDetailCard(
-    modifier: Modifier = Modifier,
     app: BloatApp?,
-    onAction: () -> Unit
+    onClick: () -> Unit = {}
 ) {
+    if (app == null) return
+
     Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(24.dp)
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors()
     ) {
-        Column(Modifier.fillMaxSize().padding(16.dp)) {
-            Text("App Details", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(12.dp))
-
-            if (app == null) {
-                Text("Select an app")
-                return
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row {
+                Icon(
+                    imageVector = Icons.Default.Android,
+                    contentDescription = null
+                )
+                Spacer(modifier = Modifier.padding(start = 12.dp))
+                Column {
+                    Text(
+                        text = app.name,
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                    Text(
+                        text = app.packageName,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
             }
 
-            Text(app.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(4.dp))
-            Text(app.packageName)
-            Spacer(Modifier.height(4.dp))
-            Text(app.description)
-            Spacer(Modifier.height(12.dp))
-            Text("Category: ${app.category.name}")
-            Text("Risk: ${app.risk.name}")
-            if (app.alternatives.isNotBlank()) {
-                Spacer(Modifier.height(4.dp))
-                Text("Alternatives: ${app.alternatives}")
+            Divider(modifier = Modifier.padding(vertical = 12.dp))
+
+            Text(
+                text = "Category: ${app.category}",
+                style = MaterialTheme.typography.bodyMedium
+            )
+
+            if (app.description.isNotBlank()) {
+                Text(
+                    text = app.description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
             }
 
-            Spacer(Modifier.height(20.dp))
-
-            Button(
-                onClick = onAction,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(Icons.Default.DeleteSweep, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("Disable / Uninstall")
+            if (app.isSystem) {
+                FilterChip(
+                    selected = true,
+                    onClick = {},
+                    label = { Text("System app") },
+                    modifier = Modifier.padding(top = 12.dp)
+                )
             }
         }
     }
