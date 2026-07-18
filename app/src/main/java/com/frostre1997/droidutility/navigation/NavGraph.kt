@@ -11,8 +11,15 @@ import com.frostre1997.droidutility.ui.screens.TerminalScreen
 @Composable
 fun NavGraph(navController: NavHostController = rememberNavController()) {
     NavHost(navController = navController, startDestination = "debloat") {
-        composable("debloat") { DebloatScreen() }
-        composable("terminal") { TerminalScreen() }
-        // add other routes
+        composable("debloat") {
+            DebloatScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable("terminal") {
+            TerminalScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
     }
 }
