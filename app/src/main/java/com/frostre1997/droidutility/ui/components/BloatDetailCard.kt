@@ -9,6 +9,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.frostre1997.droidutility.data.BloatApp
+import com.frostre1997.droidutility.data.BloatCategory
 
 @Composable
 fun BloatDetailCard(
