@@ -1,6 +1,5 @@
 package com.frostre1997.droidutility
 
-import android.app.Activity
 import android.content.pm.PackageManager
 import android.util.Log
 import rikka.shizuku.Shizuku
@@ -27,13 +26,13 @@ object DeblateActions {
         }
     }
 
-    fun requestPermission(activity: Activity, requestCode: Int = 1001) {
+    fun requestPermission() {
         if (!isShizukuRunning()) {
             Log.w(TAG, "Shizuku not running, cannot request permission")
             return
         }
         try {
-            Shizuku.requestPermission(activity, requestCode)
+            Shizuku.requestPermission()
         } catch (e: Exception) {
             Log.e(TAG, "Failed to request Shizuku permission", e)
         }
