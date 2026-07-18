@@ -2,7 +2,6 @@ package com.frostre1997.droidutility.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -60,6 +59,7 @@ fun TerminalScreen(onBack: () -> Unit) {
 
     var command by remember { mutableStateOf("") }
     var isRunning by remember { mutableStateOf(false) }
+
     val outputLines = remember {
         mutableStateListOf(
             "DroidUtility Terminal",
@@ -124,8 +124,14 @@ fun TerminalScreen(onBack: () -> Unit) {
                     Spacer(modifier = Modifier.weight(1f))
 
                     IconButton(onClick = {
-                        clipboard.setText(AnnotatedString(outputLines.joinToString("
-")))
+                        val copiedText = buildString {
+                            outputLines.forEachIndexed { index, line ->
+                                if (index > 0) append('
+                    ')
+                                append(line)
+                            }
+                        }
+                        clipboard.setText(AnnotatedString(copiedText))
                     }) {
                         Icon(
                             Icons.Default.ContentCopy,
@@ -230,4 +236,4 @@ fun TerminalScreen(onBack: () -> Unit) {
             }
         }
     }
-                                                          }
+}
