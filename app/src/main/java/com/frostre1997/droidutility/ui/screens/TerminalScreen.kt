@@ -2,15 +2,18 @@ package com.frostre1997.droidutility.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.verticalScroll
-import androidx.compose.foundation.layout.rememberScrollState
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
@@ -31,6 +34,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -55,16 +59,18 @@ fun TerminalScreen(onBack: () -> Unit) {
     val clipboard = LocalClipboardManager.current
 
     var command by remember { mutableStateOf("") }
-    var output by remember {
-        mutableStateOf(
-            """
-            DroidUtility Terminal
-            ---------------------
-            Ready.
-            """.trimIndent()
+    var isRunning by remember { mutableStateOf(false) }
+    val outputLines = remember {
+        mutableStateListOf(
+            "DroidUtility Terminal",
+            "---------------------",
+            "Ready."
         )
     }
-    var isRunning by remember { mutableStateOf(false) }
+
+    fun addLine(line: String) {
+        outputLines.add(line)
+    }
 
     Column(
         modifier = Modifier
@@ -78,18 +84,20 @@ fun TerminalScreen(onBack: () -> Unit) {
             IconButton(onClick = onBack) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
             }
+
             Text(
                 text = "Terminal",
                 style = MaterialTheme.typography.headlineSmall
             )
+
             Spacer(modifier = Modifier.weight(1f))
-            IconButton(onClick = { output += "
-[New tab placeholder]" }) {
+
+            IconButton(onClick = { addLine("[New tab placeholder]") }) {
                 Icon(Icons.Default.Add, contentDescription = "New tab")
             }
         }
 
-        Spacer(modifier = Modifier.padding(top = 12.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         Card(
             modifier = Modifier.fillMaxSize(),
@@ -112,9 +120,12 @@ fun TerminalScreen(onBack: () -> Unit) {
                         color = Color(0xFFDDDDDD),
                         fontSize = 13.sp
                     )
+
                     Spacer(modifier = Modifier.weight(1f))
+
                     IconButton(onClick = {
-                        clipboard.setText(AnnotatedString(output))
+                        clipboard.setText(AnnotatedString(outputLines.joinToString("
+")))
                     }) {
                         Icon(
                             Icons.Default.ContentCopy,
@@ -122,7 +133,10 @@ fun TerminalScreen(onBack: () -> Unit) {
                             tint = Color(0xFFDDDDDD)
                         )
                     }
-                    IconButton(onClick = { output = "" }) {
+
+                    IconButton(onClick = {
+                        outputLines.clear()
+                    }) {
                         Icon(
                             Icons.Default.Clear,
                             contentDescription = "Clear output",
@@ -131,20 +145,23 @@ fun TerminalScreen(onBack: () -> Unit) {
                     }
                 }
 
-                Column(
+                LazyColumn(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
-                        .verticalScroll(rememberScrollState())
-                        .padding(16.dp)
+                        .padding(16.dp),
+                    contentPadding = PaddingValues(bottom = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    SelectionContainer {
-                        Text(
-                            text = output,
-                            fontFamily = FontFamily.Monospace,
-                            fontSize = 13.sp,
-                            color = Color(0xFFD7D7D7)
-                        )
+                    items(outputLines) { line ->
+                        SelectionContainer {
+                            Text(
+                                text = line,
+                                fontFamily = FontFamily.Monospace,
+                                fontSize = 13.sp,
+                                color = Color(0xFFD7D7D7)
+                            )
+                        }
                     }
                 }
 
@@ -164,6 +181,7 @@ fun TerminalScreen(onBack: () -> Unit) {
                             color = Color(0xFF7CFC98),
                             fontSize = 14.sp
                         )
+
                         Spacer(modifier = Modifier.width(8.dp))
 
                         OutlinedTextField(
@@ -195,9 +213,10 @@ fun TerminalScreen(onBack: () -> Unit) {
                                     val result = withContext(Dispatchers.IO) {
                                         ShizukuShellManager.executeCommand(command)
                                     }
-                                    output += "
-❯ $command
-${result.displayText()}"
+
+                                    outputLines.add("❯ $command")
+                                    outputLines.addAll(result.displayText().lines())
+                                    command = ""
                                     isRunning = false
                                 }
                             },
@@ -211,4 +230,4 @@ ${result.displayText()}"
             }
         }
     }
-                       }
+                                                          }
