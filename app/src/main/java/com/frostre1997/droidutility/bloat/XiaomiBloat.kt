@@ -11,56 +11,56 @@ object XiaomiBloat {
             name = "Clean Master",
             description = "MIUI junk file cleaner and optimizer",
             category = BloatCategory.OEM_BLOATWARE,
-            riskLevel = RiskLevel.SAFE
+            risklevel = RiskLevel.SAFE
         ),
         BloatApp(
             packageName = "com.miui.msa.global",
             name = "MSA (MIUI System Ads)",
             description = "System-level advertising service",
             category = BloatCategory.ADVERTISING,
-            riskLevel = RiskLevel.PRIVACY_CONCERNING
+            risklevel = RiskLevel.PRIVACY_CONCERNING
         ),
         BloatApp(
             packageName = "com.miui.daemon",
             name = "MIUI Daemon",
             description = "Background telemetry and diagnostic service",
             category = BloatCategory.TRACKING_SPYWARE,
-            riskLevel = RiskLevel.PRIVACY_CONCERNING
+            risklevel = RiskLevel.PRIVACY_CONCERNING
         ),
         BloatApp(
             packageName = "com.miui.analytics",
             name = "MIUI Analytics",
             description = "Usage analytics collection service",
             category = BloatCategory.TRACKING_SPYWARE,
-            riskLevel = RiskLevel.PRIVACY_CONCERNING
+            risklevel = RiskLevel.PRIVACY_CONCERNING
         ),
         BloatApp(
             packageName = "com.miui.securityadd",
             name = "Security Add-on",
             description = "Additional security module for MIUI Security",
             category = BloatCategory.OEM_BLOATWARE,
-            riskLevel = RiskLevel.CAUTION
+            risklevel = RiskLevel.CAUTION
         ),
         BloatApp(
             packageName = "com.miui.hybrid",
             name = "MIUI Quick Apps",
             description = "Instant apps framework for MIUI",
             category = BloatCategory.OEM_BLOATWARE,
-            riskLevel = RiskLevel.SAFE
+            risklevel = RiskLevel.SAFE
         ),
         BloatApp(
             packageName = "com.miui.contentcatcher",
             name = "Content Catcher",
             description = "Captures and organizes content from apps",
             category = BloatCategory.OEM_BLOATWARE,
-            riskLevel = RiskLevel.SAFE
+            risklevel = RiskLevel.SAFE
         ),
         BloatApp(
             packageName = "com.miui.weather2",
             name = "MIUI Weather",
             description = "Built-in weather app with ads",
             category = BloatCategory.REDUNDANT_APPS,
-            riskLevel = RiskLevel.SAFE,
+            risklevel = RiskLevel.SAFE,
             alternatives = listOf("Google Weather", "Weather.com")
         ),
         BloatApp(
@@ -68,14 +68,14 @@ object XiaomiBloat {
             name = "MIUI Compass",
             description = "Built-in compass application",
             category = BloatCategory.REDUNDANT_APPS,
-            riskLevel = RiskLevel.SAFE
+            risklevel = RiskLevel.SAFE
         ),
         BloatApp(
             packageName = "com.miui.player",
             name = "MIUI Music",
             description = "Built-in music player with online streaming",
             category = BloatCategory.REDUNDANT_APPS,
-            riskLevel = RiskLevel.SAFE,
+            risklevel = RiskLevel.SAFE,
             alternatives = listOf("Poweramp", "Musicolet")
         ),
         BloatApp(
@@ -83,7 +83,7 @@ object XiaomiBloat {
             name = "MIUI Gallery",
             description = "Default gallery app with cloud sync ads",
             category = BloatCategory.REDUNDANT_APPS,
-            riskLevel = RiskLevel.SAFE,
+            risklevel = RiskLevel.SAFE,
             alternatives = listOf("Google Photos", "Simple Gallery")
         ),
         BloatApp(
@@ -91,7 +91,7 @@ object XiaomiBloat {
             name = "MIUI Bug Report",
             description = "Sends bug reports and diagnostics to Xiaomi",
             category = BloatCategory.TRACKING_SPYWARE,
-            riskLevel = RiskLevel.CAUTION
+            risklevel = RiskLevel.CAUTION
         )
     )
 }
