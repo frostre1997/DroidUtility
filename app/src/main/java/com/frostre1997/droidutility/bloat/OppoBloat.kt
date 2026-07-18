@@ -11,14 +11,14 @@ object OppoBloat {
             name = "Smart Sidebar",
             description = "Quick access sidebar overlay",
             category = BloatCategory.OEM_BLOATWARE,
-            riskLevel = RiskLevel.SAFE
+            risklevel = RiskLevel.SAFE
         ),
         BloatApp(
             packageName = "com.coloros.weather2",
             name = "Weather",
             description = "Default weather app with ads",
             category = BloatCategory.REDUNDANT_APPS,
-            riskLevel = RiskLevel.SAFE,
+            risklevel = RiskLevel.SAFE,
             alternatives = listOf("Google Weather")
         ),
         BloatApp(
@@ -26,7 +26,7 @@ object OppoBloat {
             name = "OPPO Browser",
             description = "Built-in web browser",
             category = BloatCategory.REDUNDANT_APPS,
-            riskLevel = RiskLevel.SAFE,
+            risklevel = RiskLevel.SAFE,
             alternatives = listOf("Chrome", "Firefox")
         ),
         BloatApp(
@@ -34,7 +34,7 @@ object OppoBloat {
             name = "HeyTap Cloud",
             description = "OPPO cloud backup and sync",
             category = BloatCategory.CLOUD_SERVICES,
-            riskLevel = RiskLevel.SAFE,
+            risklevel = RiskLevel.SAFE,
             alternatives = listOf("Google Drive")
         ),
         BloatApp(
@@ -42,7 +42,7 @@ object OppoBloat {
             name = "GetApps",
             description = "OPPO's app store",
             category = BloatCategory.REDUNDANT_APPS,
-            riskLevel = RiskLevel.SAFE,
+            risklevel = RiskLevel.SAFE,
             alternatives = listOf("Google Play Store")
         ),
         BloatApp(
@@ -50,21 +50,21 @@ object OppoBloat {
             name = "Game Space",
             description = "Gaming performance optimizer",
             category = BloatCategory.GAMES,
-            riskLevel = RiskLevel.SAFE
+            risklevel = RiskLevel.SAFE
         ),
         BloatApp(
             packageName = "com.coloros.oshare",
             name = "OPPO Share",
             description = "File sharing between OPPO devices",
             category = BloatCategory.OEM_BLOATWARE,
-            riskLevel = RiskLevel.SAFE
+            risklevel = RiskLevel.SAFE
         ),
         BloatApp(
             packageName = "com.heytap.themestore",
             name = "Theme Store",
             description = "OPPO theme and wallpaper store",
             category = BloatCategory.OEM_BLOATWARE,
-            riskLevel = RiskLevel.SAFE
+            risklevel = RiskLevel.SAFE
         )
     )
 }
