@@ -1,13 +1,15 @@
 package com.frostre1997.droidutility.ui.components
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Android
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
@@ -17,26 +19,35 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.frostre1997.droidutility.data.BloatApp
+import com.frostre1997.droidutility.BloatApp
+import com.frostre1997.droidutility.RiskLevel
 
 @Composable
 fun BloatAppCard(
     app: BloatApp,
+    selected: Boolean = false,
     onClick: () -> Unit = {}
 ) {
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors()
+        colors = CardDefaults.cardColors(
+            containerColor = if (selected) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surface
+            }
+        )
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Icon(
                     imageVector = Icons.Default.Android,
-                    contentDescription = null
+                    contentDescription = null,
+                    modifier = Modifier.size(28.dp)
                 )
-                Spacer(modifier = Modifier.height(0.dp))
-                Column(modifier = Modifier.padding(start = 12.dp)) {
+
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = app.name,
                         style = MaterialTheme.typography.titleMedium
@@ -51,17 +62,27 @@ fun BloatAppCard(
             if (app.description.isNotBlank()) {
                 Text(
                     text = app.description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(top = 12.dp)
+                    style = MaterialTheme.typography.bodyMedium
                 )
             }
 
-            if (app.isSystem) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilterChip(
                     selected = true,
                     onClick = {},
-                    label = { Text("System app") },
-                    modifier = Modifier.padding(top = 12.dp)
+                    label = { Text(app.category.name.replace('_', ' ')) }
+                )
+
+                AssistChip(
+                    onClick = {},
+                    label = { Text(app.risklevel.name.replace('_', ' ')) }
+                )
+            }
+
+            app.alternatives?.takeIf { it.isNotEmpty() }?.let { alternatives ->
+                Text(
+                    text = "Alternatives: ${alternatives.joinToString(separator = ", ")}",
+                    style = MaterialTheme.typography.bodySmall
                 )
             }
         }
