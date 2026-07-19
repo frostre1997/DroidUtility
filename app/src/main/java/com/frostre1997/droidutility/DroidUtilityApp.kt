@@ -35,17 +35,12 @@ class DroidUtilityApp : ComponentActivity() {
 fun AppNavigation() {
     val navController = rememberNavController()
 
-    NavHost(navController = navController, startDestination = 
-"debloat") {
+    NavHost(navController = navController, startDestination = "debloat") {
         composable("debloat") {
-            DebloatScreen(
-                onBack = { navController.popBackStack() }
-            )
+            DebloatScreen(onBack = { navController.popBackStack() })
         }
         composable("terminal") {
-            TerminalScreen(
-                onBack = { navController.popBackStack() }
-            )
+            TerminalScreen(onBack = { navController.popBackStack() })
         }
     }
 }
