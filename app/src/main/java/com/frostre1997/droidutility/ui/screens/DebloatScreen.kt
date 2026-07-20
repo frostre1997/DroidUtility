@@ -24,6 +24,6 @@ fun DebloatScreen() {
             style = MaterialTheme.typography.headlineLarge,
             color = Color.White
         )
-        // rest of your debloat content – remove any references to `onBack`
+        // Your debloat UI here
     }
 }
