@@ -63,7 +63,8 @@ enum class ThemeMode {
 
 @Composable
 fun DroidUtilityTheme(
-    themeMode: ThemeMode = ThemeMode.AMOLED,
+    themeMode: ThemeMode = ThemeMode.SYSTEM,
+    useDynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when (themeMode) {
