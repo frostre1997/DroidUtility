@@ -24,6 +24,6 @@ fun SettingsScreen() {
             style = MaterialTheme.typography.headlineLarge,
             color = Color.White
         )
-        // Add theme toggle here later
+        // Add settings UI here (theme toggle, etc.)
     }
 }
