@@ -3,6 +3,7 @@ package com.frostre1997.droidutility.ui.screens
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -24,6 +26,7 @@ import com.frostre1997.droidutility.data.SettingsManager
 import com.frostre1997.droidutility.ui.theme.ThemeMode
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SettingsScreen() {
     val context = LocalContext.current
@@ -71,7 +74,9 @@ fun SettingsScreen() {
 
         // Appearance
         add(SettingsItem.Group("Appearance"))
-        add(SettingsItem.ThemeRadioGroup(themeMode))
+        add(SettingsItem.ThemeRadioGroup(themeMode, onThemeSelected = { selected ->
+            coroutineScope.launch { settingsManager.setThemeMode(selected) }
+        }))
         add(SettingsItem.Switch("Dynamic Color", dynamicColor) {
             coroutineScope.launch { settingsManager.setDynamicColor(it) }
         })
@@ -81,13 +86,13 @@ fun SettingsScreen() {
         add(SettingsItem.Switch("Liquid Glass navigation bar", liquidGlassNav) {
             coroutineScope.launch { settingsManager.setLiquidGlassNav(it) }
         })
-        add(SettingsItem.Slider("Scale", uiScale, 0.5f, 1.5f) { newScale ->
+        add(SettingsItem.Slider("Scale", uiScale, 0.5f..1.5f) { newScale ->
             coroutineScope.launch { settingsManager.setUIScale(newScale) }
         })
 
         // Terminal
         add(SettingsItem.Group("Terminal"))
-        add(SettingsItem.Slider("Font Size", terminalFontSize, 10f, 30f) { newSize ->
+        add(SettingsItem.Slider("Font Size", terminalFontSize, 10f..30f) { newSize ->
             coroutineScope.launch { settingsManager.setTerminalFontSize(newSize) }
         })
         add(SettingsItem.Dropdown("Font Family", terminalFontFamily, listOf("monospace", "sans-serif", "serif", "sans-serif-condensed")) { family ->
@@ -103,7 +108,7 @@ fun SettingsScreen() {
             add(SettingsItem.Label("Current: $customFontPath"))
         }
 
-        // Experimental – renamed and with meaningful descriptions
+        // Experimental
         add(SettingsItem.Group("Experimental"))
         add(SettingsItem.SwitchWithDesc(
             label = "Shizuku ADB Fallback",
@@ -132,9 +137,9 @@ fun SettingsScreen() {
 
         // General Settings
         add(SettingsItem.Group("General Settings"))
-        add(SettingsItem.Action("Module Config") { /* navigate to module config */ })
-        add(SettingsItem.Action("Global Variables") { /* navigate to global vars */ })
-        add(SettingsItem.Action("Model Config") { /* navigate to model config */ })
+        add(SettingsItem.Action("Module Config") { /* navigate */ })
+        add(SettingsItem.Action("Global Variables") { /* navigate */ })
+        add(SettingsItem.Action("Model Config") { /* navigate */ })
 
         // About
         add(SettingsItem.Group("About"))
@@ -175,17 +180,17 @@ fun SettingsScreen() {
             onValueChange = { searchQuery = it },
             placeholder = { Text("Search settings", color = Color.Gray) },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray) },
+            textStyle = TextStyle(color = Color.White),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Color(0xFF4FC3F7),
                 unfocusedBorderColor = Color.Gray,
                 cursorColor = Color.White,
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
                 containerColor = Color(0xFF1A1A1A)
             ),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
+                .background(Color(0xFF1A1A1A), shape = RoundedCornerShape(8.dp))
         )
 
         LazyColumn(
@@ -230,11 +235,12 @@ fun SettingsScreen() {
                         item { SettingAction(label = item.label, onClick = item.onClick) }
                     }
                     is SettingsItem.ThemeRadioGroup -> {
-                        item { ThemeRadioGroup(themeMode = item.currentTheme, onThemeSelected = { selected ->
-                            coroutineScope.launch {
-                                settingsManager.setThemeMode(selected)
-                            }
-                        }) }
+                        item {
+                            ThemeRadioGroup(
+                                themeMode = item.currentTheme,
+                                onThemeSelected = item.onThemeSelected
+                            )
+                        }
                     }
                 }
             }
