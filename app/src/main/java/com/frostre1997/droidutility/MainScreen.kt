@@ -1,57 +1,46 @@
 package com.frostre1997.droidutility
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
-import com.frostre1997.droidutility.navigation.FloatingBottomBar
-import com.frostre1997.droidutility.ui.screens.*
+import com.frostre1997.droidutility.data.SettingsManager
+import com.frostre1997.droidutility.ui.theme.DroidUtilityTheme
+import com.frostre1997.droidutility.ui.theme.ThemeMode
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 
-@Composable
-fun MainScreen() {
-    val navController = rememberNavController()
-    val currentBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = currentBackStackEntry?.destination?.route ?: Screen.Home.route
+class MainActivity : ComponentActivity() {
+    private lateinit var settingsManager: SettingsManager
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        NavHost(
-            navController = navController,
-            startDestination = Screen.Home.route,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(bottom = 80.dp)
-        ) {
-            composable(Screen.Home.route) { HomeScreen() }
-            composable(Screen.Terminal.route) { TerminalScreen() }
-            composable(Screen.Debloat.route) { DebloatScreen() }
-            composable(Screen.Shell.route) { ShellScreen() }
-            composable(Screen.Settings.route) { SettingsScreen() }
-        }
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        settingsManager = SettingsManager(this)
 
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 16.dp)
-        ) {
-            FloatingBottomBar(
-                currentRoute = currentRoute,
-                onItemClick = { route ->
-                    navController.navigate(route) {
-                        popUpTo(navController.graph.startDestinationId) {
-                            saveState = true
-                        }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
+        setContent {
+            val themeModeFlow = settingsManager.getThemeModeFlow().collectAsState(initial = "AMOLED")
+            val dynamicColorFlow = settingsManager.getDynamicColorFlow().collectAsState(initial = false)
+            val themeMode by themeModeFlow
+            val useDynamicColor by dynamicColorFlow
+
+            val mode = try {
+                ThemeMode.valueOf(themeMode)
+            } catch (_: IllegalArgumentException) {
+                ThemeMode.AMOLED
+            }
+
+            DroidUtilityTheme(
+                themeMode = mode,
+                useDynamicColor = useDynamicColor
+            ) {
+                Surface(modifier = Modifier.fillMaxSize()) {
+                    MainScreen()
                 }
-            )
+            }
         }
     }
 }
