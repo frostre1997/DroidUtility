@@ -5,6 +5,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -174,22 +175,19 @@ fun SettingsScreen() {
             .fillMaxSize()
             .background(Color.Black)
     ) {
-        // Search bar – fixed colors
+        // Search bar – fixed to avoid named parameter errors
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
             placeholder = { Text("Search settings", color = Color.Gray) },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray) },
             textStyle = TextStyle(color = Color.White),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color(0xFF4FC3F7),
-                unfocusedBorderColor = Color.Gray,
-                cursorColor = Color.White,
-                containerColor = Color(0xFF1A1A1A)
-            ),
+            colors = OutlinedTextFieldDefaults.colors(),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
+                .background(Color(0xFF1A1A1A), shape = RoundedCornerShape(8.dp))
+                .border(1.dp, Color.Gray, RoundedCornerShape(8.dp))
         )
 
         LazyColumn(
