@@ -44,13 +44,13 @@ fun FloatingBottomBar(
         Row(
             modifier = Modifier.fillMaxSize(),
             horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically // center items vertically
+            verticalAlignment = Alignment.CenterVertically
         ) {
             screens.forEach { screen ->
                 val selected = currentRoute == screen.route
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center, // center content inside column
+                    verticalArrangement = Arrangement.Center,
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
@@ -67,7 +67,7 @@ fun FloatingBottomBar(
                         fontSize = 10.sp,
                         color = if (selected) Color.White else Color.Gray,
                         maxLines = 1,
-                        modifier = Modifier.padding(top = 2.dp) // small gap between icon and text
+                        modifier = Modifier.padding(top = 2.dp)
                     )
                 }
             }
