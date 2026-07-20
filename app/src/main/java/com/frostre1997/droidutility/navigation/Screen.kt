@@ -1,9 +1,13 @@
-package com.frostre1997.droidutility.navigation
+package com.frostre1997.droidutility
 
-sealed class Screen(val route: String) {
-    data object Home : Screen("home")
-    data object Terminal : Screen("terminal")
-    data object Debloat : Screen("debloat")
-    data object Console : Screen("console")
-    data object Settings : Screen("settings")
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.ui.graphics.vector.ImageVector
+
+sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
+    object Home : Screen("home", "Home", Icons.Default.Home)
+    object Terminal : Screen("terminal", "Terminal", Icons.Default.Terminal)
+    object Debloat : Screen("debloat", "Debloat", Icons.Default.Build)
+    object Shell : Screen("shell", "Shell", Icons.Default.Code)
+    object Settings : Screen("settings", "Settings", Icons.Default.Settings)
 }
