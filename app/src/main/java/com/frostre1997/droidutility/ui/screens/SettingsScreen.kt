@@ -3,7 +3,6 @@ package com.frostre1997.droidutility.ui.screens
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -28,7 +27,6 @@ import com.frostre1997.droidutility.data.SettingsManager
 import com.frostre1997.droidutility.ui.theme.ThemeMode
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SettingsScreen() {
     val context = LocalContext.current
@@ -63,111 +61,177 @@ fun SettingsScreen() {
         }
     }
 
-    // Build flat list with groups
-    val allItems = buildList {
-        // Language
-        add(SettingsItem.Group("Language"))
-        add(SettingsItem.Dropdown("Language", languageToDisplay(language), listOf("English", "Spanish", "French", "German", "Italian")) { lang ->
-            coroutineScope.launch {
-                settingsManager.setLanguage(displayToCode(lang))
-            }
-        })
-        add(SettingsItem.Label("Choose app display language"))
+    // Build groups (each group is a list of items with a title)
+    val groups = buildList {
+        // Language group
+        add(
+            SettingsGroup(
+                title = "Language",
+                items = listOf(
+                    SettingsItem.Dropdown(
+                        "Language",
+                        languageToDisplay(language),
+                        listOf("English", "Spanish", "French", "German", "Italian")
+                    ) { lang ->
+                        coroutineScope.launch {
+                            settingsManager.setLanguage(displayToCode(lang))
+                        }
+                    },
+                    SettingsItem.Label("Choose app display language")
+                )
+            )
+        )
 
-        // Appearance
-        add(SettingsItem.Group("Appearance"))
-        add(SettingsItem.ThemeRadioGroup(themeMode, onThemeSelected = { selected ->
-            coroutineScope.launch { settingsManager.setThemeMode(selected) }
-        }))
-        add(SettingsItem.Switch("Dynamic Color", dynamicColor) {
-            coroutineScope.launch { settingsManager.setDynamicColor(it) }
-        })
-        add(SettingsItem.Switch("Colorful workflow cards (Beta)", colorfulWorkflowCards) {
-            coroutineScope.launch { settingsManager.setColorfulWorkflowCards(it) }
-        })
-        add(SettingsItem.Switch("Liquid Glass navigation bar", liquidGlassNav) {
-            coroutineScope.launch { settingsManager.setLiquidGlassNav(it) }
-        })
-        add(SettingsItem.Slider("Scale", uiScale, 0.5f..1.5f) { newScale ->
-            coroutineScope.launch { settingsManager.setUIScale(newScale) }
-        })
+        // Appearance group
+        add(
+            SettingsGroup(
+                title = "Appearance",
+                items = listOf(
+                    SettingsItem.ThemeRadioGroup(
+                        themeMode,
+                        onThemeSelected = { selected ->
+                            coroutineScope.launch { settingsManager.setThemeMode(selected) }
+                        }
+                    ),
+                    SettingsItem.Switch("Dynamic Color", dynamicColor) {
+                        coroutineScope.launch { settingsManager.setDynamicColor(it) }
+                    },
+                    SettingsItem.Switch("Colorful workflow cards (Beta)", colorfulWorkflowCards) {
+                        coroutineScope.launch { settingsManager.setColorfulWorkflowCards(it) }
+                    },
+                    SettingsItem.Switch("Liquid Glass navigation bar", liquidGlassNav) {
+                        coroutineScope.launch { settingsManager.setLiquidGlassNav(it) }
+                    },
+                    SettingsItem.Slider("Scale", uiScale, 0.5f..1.5f) { newScale ->
+                        coroutineScope.launch { settingsManager.setUIScale(newScale) }
+                    }
+                )
+            )
+        )
 
-        // Terminal
-        add(SettingsItem.Group("Terminal"))
-        add(SettingsItem.Slider("Font Size", terminalFontSize, 10f..30f) { newSize ->
-            coroutineScope.launch { settingsManager.setTerminalFontSize(newSize) }
-        })
-        add(SettingsItem.Dropdown("Font Family", terminalFontFamily, listOf("monospace", "sans-serif", "serif", "sans-serif-condensed")) { family ->
-            coroutineScope.launch { settingsManager.setTerminalFontFamily(family) }
-        })
+        // Terminal group
+        add(
+            SettingsGroup(
+                title = "Terminal",
+                items = listOf(
+                    SettingsItem.Slider("Font Size", terminalFontSize, 10f..30f) { newSize ->
+                        coroutineScope.launch { settingsManager.setTerminalFontSize(newSize) }
+                    },
+                    SettingsItem.Dropdown(
+                        "Font Family",
+                        terminalFontFamily,
+                        listOf("monospace", "sans-serif", "serif", "sans-serif-condensed")
+                    ) { family ->
+                        coroutineScope.launch { settingsManager.setTerminalFontFamily(family) }
+                    }
+                )
+            )
+        )
 
-        // Font Management
-        add(SettingsItem.Group("Font Management"))
-        add(SettingsItem.Button("Upload Custom Font (.ttf)") {
-            fontPickerLauncher.launch("application/octet-stream")
-        })
-        if (customFontPath.isNotEmpty()) {
-            add(SettingsItem.Label("Current: $customFontPath"))
-        }
+        // Font Management group
+        add(
+            SettingsGroup(
+                title = "Font Management",
+                items = listOf(
+                    SettingsItem.Button("Upload Custom Font (.ttf)") {
+                        fontPickerLauncher.launch("application/octet-stream")
+                    }
+                ).let { list ->
+                    if (customFontPath.isNotEmpty()) {
+                        list + SettingsItem.Label("Current: $customFontPath")
+                    } else list
+                }
+            )
+        )
 
-        // Experimental
-        add(SettingsItem.Group("Experimental"))
-        add(SettingsItem.SwitchWithDesc(
-            label = "Shizuku ADB Fallback",
-            description = "Fall back to ADB over Wi‑Fi if Shizuku is unavailable (debug builds only)",
-            checked = experimentalFeatureX,
-            onCheckedChange = { coroutineScope.launch { settingsManager.setExperimentalFeatureX(it) } }
-        ))
-        add(SettingsItem.SwitchWithDesc(
-            label = "Force Dynamic Color",
-            description = "Apply Material You theming even on Android 10 and below (experimental)",
-            checked = experimentalFeatureY,
-            onCheckedChange = { coroutineScope.launch { settingsManager.setExperimentalFeatureY(it) } }
-        ))
+        // Experimental group
+        add(
+            SettingsGroup(
+                title = "Experimental",
+                items = listOf(
+                    SettingsItem.SwitchWithDesc(
+                        "Shizuku ADB Fallback",
+                        "Fall back to ADB over Wi‑Fi if Shizuku is unavailable (debug builds only)",
+                        experimentalFeatureX
+                    ) {
+                        coroutineScope.launch { settingsManager.setExperimentalFeatureX(it) }
+                    },
+                    SettingsItem.SwitchWithDesc(
+                        "Force Dynamic Color",
+                        "Apply Material You theming even on Android 10 and below (experimental)",
+                        experimentalFeatureY
+                    ) {
+                        coroutineScope.launch { settingsManager.setExperimentalFeatureY(it) }
+                    }
+                )
+            )
+        )
 
-        // Debugging
-        add(SettingsItem.Group("Debugging"))
-        add(SettingsItem.Switch("Record Debug Logs", recordLogs) {
-            coroutineScope.launch { settingsManager.setRecordLogs(it) }
-        })
-        add(SettingsItem.Switch("Enable Telemetry", enableTelemetry) {
-            coroutineScope.launch { settingsManager.setEnableTelemetry(it) }
-        })
-        add(SettingsItem.Switch("Enable Crash Reports", enableCrashReports) {
-            coroutineScope.launch { settingsManager.setEnableCrashReports(it) }
-        })
+        // Debugging group
+        add(
+            SettingsGroup(
+                title = "Debugging",
+                items = listOf(
+                    SettingsItem.Switch("Record Debug Logs", recordLogs) {
+                        coroutineScope.launch { settingsManager.setRecordLogs(it) }
+                    },
+                    SettingsItem.Switch("Enable Telemetry", enableTelemetry) {
+                        coroutineScope.launch { settingsManager.setEnableTelemetry(it) }
+                    },
+                    SettingsItem.Switch("Enable Crash Reports", enableCrashReports) {
+                        coroutineScope.launch { settingsManager.setEnableCrashReports(it) }
+                    }
+                )
+            )
+        )
 
-        // General Settings
-        add(SettingsItem.Group("General Settings"))
-        add(SettingsItem.Action("Module Config") { /* navigate */ })
-        add(SettingsItem.Action("Global Variables") { /* navigate */ })
-        add(SettingsItem.Action("Model Config") { /* navigate */ })
+        // General Settings group
+        add(
+            SettingsGroup(
+                title = "General Settings",
+                items = listOf(
+                    SettingsItem.Action("Module Config") { /* navigate */ },
+                    SettingsItem.Action("Global Variables") { /* navigate */ },
+                    SettingsItem.Action("Model Config") { /* navigate */ }
+                )
+            )
+        )
 
-        // About
-        add(SettingsItem.Group("About"))
-        add(SettingsItem.Label("Version 1.0.5-beta.6"))
-        add(SettingsItem.Label("Built with 🤍 using Jetpack Compose"))
-        add(SettingsItem.Action("View Open Source Licenses") { /* open licenses */ })
-        add(SettingsItem.Action("Developer Info") { /* open developer info */ })
+        // About group
+        add(
+            SettingsGroup(
+                title = "About",
+                items = listOf(
+                    SettingsItem.Label("Version 1.0.5-beta.6"),
+                    SettingsItem.Label("Built with 🤍 using Jetpack Compose"),
+                    SettingsItem.Action("View Open Source Licenses") { /* open licenses */ },
+                    SettingsItem.Action("Developer Info") { /* open developer info */ }
+                )
+            )
+        )
     }
 
-    // Filter items based on search
-    val filteredItems = if (searchQuery.isBlank()) {
-        allItems
+    // Filter groups based on search query
+    val filteredGroups = if (searchQuery.isBlank()) {
+        groups
     } else {
-        allItems.filter { item ->
-            when (item) {
-                is SettingsItem.Group -> false
-                is SettingsItem.Switch -> item.label.contains(searchQuery, ignoreCase = true)
-                is SettingsItem.SwitchWithDesc -> item.label.contains(searchQuery, ignoreCase = true) || item.description.contains(searchQuery, ignoreCase = true)
-                is SettingsItem.Slider -> item.label.contains(searchQuery, ignoreCase = true)
-                is SettingsItem.Dropdown -> item.label.contains(searchQuery, ignoreCase = true) || item.current.contains(searchQuery, ignoreCase = true)
-                is SettingsItem.Button -> item.label.contains(searchQuery, ignoreCase = true)
-                is SettingsItem.Label -> item.text.contains(searchQuery, ignoreCase = true)
-                is SettingsItem.Action -> item.label.contains(searchQuery, ignoreCase = true)
-                is SettingsItem.ThemeRadioGroup -> true
-                else -> false
+        groups.mapNotNull { group ->
+            val filteredItems = group.items.filter { item ->
+                when (item) {
+                    is SettingsItem.Switch -> item.label.contains(searchQuery, ignoreCase = true)
+                    is SettingsItem.SwitchWithDesc -> item.label.contains(searchQuery, ignoreCase = true) || item.description.contains(searchQuery, ignoreCase = true)
+                    is SettingsItem.Slider -> item.label.contains(searchQuery, ignoreCase = true)
+                    is SettingsItem.Dropdown -> item.label.contains(searchQuery, ignoreCase = true) || item.current.contains(searchQuery, ignoreCase = true)
+                    is SettingsItem.Button -> item.label.contains(searchQuery, ignoreCase = true)
+                    is SettingsItem.Label -> item.text.contains(searchQuery, ignoreCase = true)
+                    is SettingsItem.Action -> item.label.contains(searchQuery, ignoreCase = true)
+                    is SettingsItem.ThemeRadioGroup -> true // always show when searching
+                    else -> false
+                }
             }
+            if (filteredItems.isNotEmpty()) {
+                group.copy(items = filteredItems)
+            } else null
         }
     }
 
@@ -191,110 +255,92 @@ fun SettingsScreen() {
                 .border(1.dp, Color.Gray, RoundedCornerShape(8.dp))
         )
 
+        // Settings list with cards
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            // Group items by section – each group is a card
-            val grouped = filteredItems.fold(mutableListOf<MutableList<SettingsItem>>()) { acc, item ->
-                if (item is SettingsItem.Group) {
-                    acc.add(mutableListOf(item))
-                } else if (acc.isNotEmpty()) {
-                    acc.last().add(item)
-                } else {
-                    acc.add(mutableListOf(item))
-                }
-                acc
-            }
+            items(filteredGroups) { group ->
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A)),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column {
+                        // Group title
+                        Text(
+                            text = group.title,
+                            color = Color(0xFF4FC3F7),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 12.dp)
+                        )
 
-            grouped.forEach { groupItems ->
-                val groupTitle = groupItems.firstOrNull() as? SettingsItem.Group
-                val contentItems = groupItems.drop(1)
-
-                item {
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A)),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column {
-                            // Group title as header inside card
-                            groupTitle?.let {
-                                Text(
-                                    text = it.title,
-                                    color = Color(0xFF4FC3F7),
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 14.sp,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp, vertical = 12.dp)
-                                )
-                            }
-
-                            contentItems.forEach { item ->
-                                when (item) {
-                                    is SettingsItem.Switch -> {
-                                        SettingSwitchRow(
-                                            label = item.label,
-                                            checked = item.checked,
-                                            onCheckedChange = item.onCheckedChange
-                                        )
-                                    }
-                                    is SettingsItem.SwitchWithDesc -> {
-                                        SettingSwitchRowWithDesc(
-                                            label = item.label,
-                                            description = item.description,
-                                            checked = item.checked,
-                                            onCheckedChange = item.onCheckedChange
-                                        )
-                                    }
-                                    is SettingsItem.Slider -> {
-                                        SettingSlider(
-                                            label = item.label,
-                                            value = item.value,
-                                            range = item.range,
-                                            onValueChange = item.onValueChange
-                                        )
-                                    }
-                                    is SettingsItem.Dropdown -> {
-                                        SettingDropdown(
-                                            label = item.label,
-                                            current = item.current,
-                                            options = item.options,
-                                            onSelect = item.onSelect
-                                        )
-                                    }
-                                    is SettingsItem.Button -> {
-                                        SettingActionButton(
-                                            label = item.label,
-                                            onClick = item.onClick
-                                        )
-                                    }
-                                    is SettingsItem.Label -> {
-                                        SettingLabel(text = item.text)
-                                    }
-                                    is SettingsItem.Action -> {
-                                        SettingAction(
-                                            label = item.label,
-                                            onClick = item.onClick
-                                        )
-                                    }
-                                    is SettingsItem.ThemeRadioGroup -> {
-                                        ThemeRadioGroup(
-                                            themeMode = item.currentTheme,
-                                            onThemeSelected = item.onThemeSelected
-                                        )
-                                    }
-                                    else -> {}
-                                }
-                                // Add divider between items except after the last one
-                                if (contentItems.indexOf(item) < contentItems.size - 1) {
-                                    Divider(
-                                        color = Color.Gray.copy(alpha = 0.2f),
-                                        modifier = Modifier.padding(horizontal = 16.dp)
+                        // Items
+                        group.items.forEachIndexed { index, item ->
+                            when (item) {
+                                is SettingsItem.Switch -> {
+                                    SettingSwitchRow(
+                                        label = item.label,
+                                        checked = item.checked,
+                                        onCheckedChange = item.onCheckedChange
                                     )
                                 }
+                                is SettingsItem.SwitchWithDesc -> {
+                                    SettingSwitchRowWithDesc(
+                                        label = item.label,
+                                        description = item.description,
+                                        checked = item.checked,
+                                        onCheckedChange = item.onCheckedChange
+                                    )
+                                }
+                                is SettingsItem.Slider -> {
+                                    SettingSlider(
+                                        label = item.label,
+                                        value = item.value,
+                                        range = item.range,
+                                        onValueChange = item.onValueChange
+                                    )
+                                }
+                                is SettingsItem.Dropdown -> {
+                                    SettingDropdown(
+                                        label = item.label,
+                                        current = item.current,
+                                        options = item.options,
+                                        onSelect = item.onSelect
+                                    )
+                                }
+                                is SettingsItem.Button -> {
+                                    SettingActionButton(
+                                        label = item.label,
+                                        onClick = item.onClick
+                                    )
+                                }
+                                is SettingsItem.Label -> {
+                                    SettingLabel(text = item.text)
+                                }
+                                is SettingsItem.Action -> {
+                                    SettingAction(
+                                        label = item.label,
+                                        onClick = item.onClick
+                                    )
+                                }
+                                is SettingsItem.ThemeRadioGroup -> {
+                                    ThemeRadioGroup(
+                                        themeMode = item.currentTheme,
+                                        onThemeSelected = item.onThemeSelected
+                                    )
+                                }
+                            }
+                            // Add divider between items except after the last one
+                            if (index < group.items.size - 1) {
+                                Divider(
+                                    color = Color.Gray.copy(alpha = 0.2f),
+                                    modifier = Modifier.padding(horizontal = 16.dp)
+                                )
                             }
                         }
                     }
@@ -324,8 +370,12 @@ fun displayToCode(display: String): String = when (display) {
 }
 
 // ---------- Data classes ----------
+data class SettingsGroup(
+    val title: String,
+    val items: List<SettingsItem>
+)
+
 sealed class SettingsItem {
-    data class Group(val title: String) : SettingsItem()
     data class Switch(val label: String, val checked: Boolean, val onCheckedChange: (Boolean) -> Unit) : SettingsItem()
     data class SwitchWithDesc(val label: String, val description: String, val checked: Boolean, val onCheckedChange: (Boolean) -> Unit) : SettingsItem()
     data class Slider(val label: String, val value: Float, val range: ClosedFloatingPointRange<Float>, val onValueChange: (Float) -> Unit) : SettingsItem()
@@ -337,7 +387,6 @@ sealed class SettingsItem {
 }
 
 // ---------- Composables with larger touch targets ----------
-
 @Composable
 fun SettingSwitchRow(
     label: String,
@@ -426,28 +475,4 @@ fun SettingSlider(
 }
 
 @Composable
-fun SettingDropdown(
-    label: String,
-    current: String,
-    options: List<String>,
-    onSelect: (String) -> Unit
-) {
-    var expanded by remember { mutableStateOf(false) }
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(IntrinsicSize.Min)
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .clickable { expanded = true }
-    ) {
-        Text(label, color = Color.White, modifier = Modifier.weight(1f))
-        Text(current, color = Color(0xFF4FC3F7))
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            modifier = Modifier.background(Color(0xFF1A1A1A))
-        ) {
-            options.forEach { option ->
-                DropdownMenuItem(
-                    text = { Text(option, color 
+fun 
