@@ -1,8 +1,5 @@
 package com.frostre1997.droidutility.navigation
 
-import android.os.Build
-import android.graphics.RenderEffect
-import android.graphics.Shader
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,8 +9,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.frostre1997.droidutility.Screen
@@ -31,21 +28,12 @@ fun FloatingBottomBar(
         Screen.Settings
     )
 
-    // Blur effect for Android 12+
-    val blurEffect = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        RenderEffect.createBlurEffect(20f, 20f, Shader.TileMode.CLAMP)
-    } else null
-
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .height(68.dp)
             .padding(horizontal = 16.dp)
-            .graphicsLayer {
-                if (blurEffect != null) {
-                    renderEffect = blurEffect
-                }
-            },
+            .blur(8.dp),
         color = Color.Black.copy(alpha = 0.5f),
         shape = RoundedCornerShape(34.dp),
         shadowElevation = 8.dp,
