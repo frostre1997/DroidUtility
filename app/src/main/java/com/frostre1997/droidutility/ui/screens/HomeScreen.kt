@@ -55,7 +55,7 @@ fun HomeScreen() {
             .background(Color.Black)
             .padding(24.dp)
     ) {
-        // Top row
+        // Top row: title + info icon
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -98,7 +98,6 @@ fun HomeScreen() {
                 if (isLoading) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.Gray)
                 } else {
-                    // Status row – removed API version display
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         verticalAlignment = Alignment.CenterVertically
@@ -145,7 +144,7 @@ fun HomeScreen() {
                                 onClick = {
                                     try {
                                         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app/")))
-                                    } catch (e: Exception) { /* fallback */ }
+                                    } catch (_: Exception) { /* fallback */ }
                                 },
                                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4FC3F7)),
@@ -215,7 +214,7 @@ fun HomeScreen() {
             title = { Text("About DroidUtility", color = Color.White) },
             text = {
                 Column {
-                    Text("Version 1.0.0", color = Color.White)
+                    Text("Version 1.0.5-beta.6", color = Color.White)
                     Spacer(Modifier.height(8.dp))
                     Text("A powerful non‑root utility suite for Android.\nBuilt with 🤍 using Jetpack Compose.", color = Color.LightGray)
                 }
