@@ -177,8 +177,8 @@ fun SettingsScreen() {
         // About
         item {
             SettingsSection(title = "About") {
-                Text("Version 1.0.0", color = Color.White)
-                Text("Built with ❤️ using Jetpack Compose", color = Color.Gray)
+                Text("Version 1.0.5-beta.6", color = Color.White)
+                Text("Built with 🤍 using Jetpack Compose", color = Color.Gray)
                 Spacer(modifier = Modifier.height(8.dp))
                 Button(
                     onClick = { /* open licenses */ },
