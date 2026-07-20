@@ -32,28 +32,29 @@ fun FloatingBottomBar(
             .fillMaxWidth()
             .height(68.dp)
             .padding(horizontal = 16.dp),
-        color = Color.Black.copy(alpha = 0.7f),        // semi‑transparent glass
+        color = Color.Black.copy(alpha = 0.7f),
         shape = RoundedCornerShape(34.dp),
         shadowElevation = 8.dp,
         tonalElevation = 0.dp,
         border = androidx.compose.foundation.BorderStroke(
             width = 1.dp,
-            color = Color.White.copy(alpha = 0.15f)    // subtle white outline
+            color = Color.White.copy(alpha = 0.15f)
         )
     ) {
         Row(
             modifier = Modifier.fillMaxSize(),
             horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically // center items vertically
         ) {
             screens.forEach { screen ->
                 val selected = currentRoute == screen.route
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center, // center content inside column
                     modifier = Modifier
                         .weight(1f)
+                        .fillMaxHeight()
                         .clickable { onItemClick(screen.route) }
-                        .padding(vertical = 8.dp)
                 ) {
                     Icon(
                         screen.icon,
@@ -65,7 +66,8 @@ fun FloatingBottomBar(
                         screen.title,
                         fontSize = 10.sp,
                         color = if (selected) Color.White else Color.Gray,
-                        maxLines = 1
+                        maxLines = 1,
+                        modifier = Modifier.padding(top = 2.dp) // small gap between icon and text
                     )
                 }
             }
