@@ -1,6 +1,5 @@
 package com.frostre1997.droidutility.ui.screens
 
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -13,6 +12,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
+// Explicitly import weight extension
+import androidx.compose.foundation.layout.weight
 
 @Composable
 fun HomeScreen() {
@@ -96,7 +98,9 @@ fun StatCard(label: String, value: String) {
     Surface(
         color = Color(0xFF1A1A1A),
         shape = RoundedCornerShape(16.dp),
-        modifier = Modifier.weight(1f)
+        modifier = Modifier
+            .weight(1f)   // uses the imported weight extension
+            .fillMaxWidth()
     ) {
         Column(
             modifier = Modifier
