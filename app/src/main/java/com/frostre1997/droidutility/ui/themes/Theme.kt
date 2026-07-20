@@ -1,4 +1,4 @@
-package com.frostre1997.droidutility.ui.themes
+package com.frostre1997.droidutility.ui.theme
 
 import android.app.Activity
 import android.os.Build
@@ -13,8 +13,12 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-// No private color definitions – use imported ones
+// Define accent colors here (or import from Color.kt if you have it)
+private val AccentBlue = Color(0xFF4FC3F7)
+private val AccentGreen = Color(0xFF66BB6A)
+private val AccentRed = Color(0xFFEF5350)
 
+// Light theme
 private val LightColorScheme = lightColorScheme(
     primary = AccentBlue,
     secondary = AccentGreen,
@@ -28,6 +32,7 @@ private val LightColorScheme = lightColorScheme(
     onSurface = Color.Black
 )
 
+// Standard dark theme (dark grey)
 private val DarkColorScheme = darkColorScheme(
     primary = AccentBlue,
     secondary = AccentGreen,
@@ -41,6 +46,7 @@ private val DarkColorScheme = darkColorScheme(
     onSurface = Color.White
 )
 
+// AMOLED theme (pure black)
 private val AmoledColorScheme = darkColorScheme(
     primary = AccentBlue,
     secondary = AccentGreen,
@@ -84,7 +90,7 @@ fun DroidUtilityTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography, // ensure this is defined or remove
+        typography = MaterialTheme.typography, // use default typography to avoid type mismatch
         content = content
     )
 }
