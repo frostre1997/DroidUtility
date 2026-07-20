@@ -35,7 +35,7 @@ object SettingsDataStore {
     val UI_SCALE = floatPreferencesKey("ui_scale")
 
     // Defaults
-    fun getDefaultThemeMode(): String = "AMOLED"
+    fun getDefaultThemeMode(): String = "SYSTEM"
     fun getDefaultTerminalFontSize(): Float = 16f
     fun getDefaultTerminalFontFamily(): String = "monospace"
     fun getDefaultCustomFontPath(): String = ""
