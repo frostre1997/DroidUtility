@@ -34,14 +34,51 @@ data class SettingsGroup(
 )
 
 sealed class SettingsItem {
-    data class Switch(val label: String, val checked: Boolean, val onCheckedChange: (Boolean) -> Unit) : SettingsItem()
-    data class SwitchWithDesc(val label: String, val description: String, val checked: Boolean, val onCheckedChange: (Boolean) -> Unit) : SettingsItem()
-    data class Slider(val label: String, val value: Float, val range: ClosedFloatingPointRange<Float>, val onValueChange: (Float) -> Unit) : SettingsItem()
-    data class Dropdown(val label: String, val current: String, val options: List<String>, val onSelect: (String) -> Unit) : SettingsItem()
-    data class Button(val label: String, val onClick: () -> Unit) : SettingsItem()
-    data class Label(val text: String) : SettingsItem()
-    data class Action(val label: String, val onClick: () -> Unit) : SettingsItem()
-    data class ThemeRadioGroup(val currentTheme: String, val onThemeSelected: (String) -> Unit) : SettingsItem()
+    data class Switch(
+        val label: String,
+        val checked: Boolean,
+        val onCheckedChange: (Boolean) -> Unit
+    ) : SettingsItem()
+
+    data class SwitchWithDesc(
+        val label: String,
+        val description: String,
+        val checked: Boolean,
+        val onCheckedChange: (Boolean) -> Unit
+    ) : SettingsItem()
+
+    data class Slider(
+        val label: String,
+        val value: Float,
+        val range: ClosedFloatingPointRange<Float>,
+        val onValueChange: (Float) -> Unit
+    ) : SettingsItem()
+
+    data class Dropdown(
+        val label: String,
+        val current: String,
+        val options: List<String>,
+        val onSelect: (String) -> Unit
+    ) : SettingsItem()
+
+    data class Button(
+        val label: String,
+        val onClick: () -> Unit
+    ) : SettingsItem()
+
+    data class Label(
+        val text: String
+    ) : SettingsItem()
+
+    data class Action(
+        val label: String,
+        val onClick: () -> Unit
+    ) : SettingsItem()
+
+    data class ThemeRadioGroup(
+        val currentTheme: String,
+        val onThemeSelected: (String) -> Unit
+    ) : SettingsItem()
 }
 
 // ---------- Helper functions for language ----------
@@ -519,8 +556,71 @@ fun SettingsScreen() {
                         // Items
                         group.items.forEachIndexed { index, item ->
                             when (item) {
-                                is SettingsItem.Switch -> {
+                                is SettingsItem.Switch -> {  
                                     SettingSwitchRow(
                                         label = item.label,
                                         checked = item.checked,
-                                        onCheckedChan
+                                        onCheckedChange = item.onCheckedChange
+                                    )
+                                }
+                                is SettingsItem.SwitchWithDesc -> {
+                                    SettingSwitchRowWithDesc(
+                                        label = item.label,
+                                        description = item.description,
+                                        checked = item.checked,
+                                        onCheckedChange = item.onCheckedChange
+                                    )
+                                }
+                                is SettingsItem.Slider -> {
+                                    SettingSlider(
+                                        label = item.label,
+                                        value = item.value,
+                                        range = item.range,
+                                        onValueChange = item.onValueChange
+                                    )
+                                }
+                                is SettingsItem.Dropdown -> {
+                                    SettingDropdown(
+                                        label = item.label,
+                                        current = item.current,
+                                        options = item.options,
+                                        onSelect = item.onSelect
+                                    )
+                                }
+                                is SettingsItem.Button -> {
+                                    SettingActionButton(
+                                        label = item.label,
+                                        onClick = item.onClick
+                                    )
+                                }
+                                is SettingsItem.Label -> {
+                                    SettingLabel(text = item.text)
+                                }
+                                is SettingsItem.Action -> {
+                                    SettingAction(
+                                        label = item.label,
+                                        onClick = item.onClick
+                                    )
+                                }
+                                is SettingsItem.ThemeRadioGroup -> {
+                                    ThemeRadioGroup(
+                                        themeMode = item.currentTheme,
+                                        onThemeSelected = item.onThemeSelected
+                                    )
+                                }
+                            }
+                            // Divider between items
+                            if (index < group.items.size - 1) {
+                                Divider(
+                                    color = Color.Gray.copy(alpha = 0.2f),
+                                    modifier = Modifier.padding(horizontal = 16.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+                                    
