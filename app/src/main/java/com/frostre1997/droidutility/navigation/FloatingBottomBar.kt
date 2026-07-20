@@ -9,7 +9,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -32,11 +31,10 @@ fun FloatingBottomBar(
         modifier = Modifier
             .fillMaxWidth()
             .height(68.dp)
-            .padding(horizontal = 16.dp)
-            .blur(8.dp),
-        color = Color.Black.copy(alpha = 0.5f),
+            .padding(horizontal = 16.dp),
+        color = Color.Black.copy(alpha = 0.7f), // semi‑transparent black for glass effect
         shape = RoundedCornerShape(34.dp),
-        shadowElevation = 8.dp,
+        shadowElevation = 8.dp, // soft shadow instead of blur
         tonalElevation = 0.dp
     ) {
         Row(
