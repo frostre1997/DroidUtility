@@ -9,6 +9,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowRight
@@ -175,7 +176,7 @@ fun SettingsScreen() {
             .fillMaxSize()
             .background(Color.Black)
     ) {
-        // Search bar – fixed to avoid named parameter errors
+        // Search bar
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
@@ -192,51 +193,109 @@ fun SettingsScreen() {
 
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            filteredItems.forEach { item ->
-                when (item) {
-                    is SettingsItem.Group -> {
-                        stickyHeader {
-                            Text(
-                                text = item.title,
-                                color = Color(0xFF4FC3F7),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp,
-                                modifier = Modifier
-                                    .background(Color.Black)
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                            )
-                        }
-                    }
-                    is SettingsItem.Switch -> {
-                        item { SettingSwitchRow(label = item.label, checked = item.checked, onCheckedChange = item.onCheckedChange) }
-                    }
-                    is SettingsItem.SwitchWithDesc -> {
-                        item { SettingSwitchRowWithDesc(label = item.label, description = item.description, checked = item.checked, onCheckedChange = item.onCheckedChange) }
-                    }
-                    is SettingsItem.Slider -> {
-                        item { SettingSlider(label = item.label, value = item.value, range = item.range, onValueChange = item.onValueChange) }
-                    }
-                    is SettingsItem.Dropdown -> {
-                        item { SettingDropdown(label = item.label, current = item.current, options = item.options, onSelect = item.onSelect) }
-                    }
-                    is SettingsItem.Button -> {
-                        item { SettingActionButton(label = item.label, onClick = item.onClick) }
-                    }
-                    is SettingsItem.Label -> {
-                        item { SettingLabel(text = item.text) }
-                    }
-                    is SettingsItem.Action -> {
-                        item { SettingAction(label = item.label, onClick = item.onClick) }
-                    }
-                    is SettingsItem.ThemeRadioGroup -> {
-                        item {
-                            ThemeRadioGroup(
-                                themeMode = item.currentTheme,
-                                onThemeSelected = item.onThemeSelected
-                            )
+            // Group items by section – each group is a card
+            val grouped = filteredItems.fold(mutableListOf<MutableList<SettingsItem>>()) { acc, item ->
+                if (item is SettingsItem.Group) {
+                    acc.add(mutableListOf(item))
+                } else if (acc.isNotEmpty()) {
+                    acc.last().add(item)
+                } else {
+                    acc.add(mutableListOf(item))
+                }
+                acc
+            }
+
+            grouped.forEach { groupItems ->
+                val groupTitle = groupItems.firstOrNull() as? SettingsItem.Group
+                val contentItems = groupItems.drop(1)
+
+                item {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A)),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column {
+                            // Group title as header inside card
+                            groupTitle?.let {
+                                Text(
+                                    text = it.title,
+                                    color = Color(0xFF4FC3F7),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                                )
+                            }
+
+                            contentItems.forEach { item ->
+                                when (item) {
+                                    is SettingsItem.Switch -> {
+                                        SettingSwitchRow(
+                                            label = item.label,
+                                            checked = item.checked,
+                                            onCheckedChange = item.onCheckedChange
+                                        )
+                                    }
+                                    is SettingsItem.SwitchWithDesc -> {
+                                        SettingSwitchRowWithDesc(
+                                            label = item.label,
+                                            description = item.description,
+                                            checked = item.checked,
+                                            onCheckedChange = item.onCheckedChange
+                                        )
+                                    }
+                                    is SettingsItem.Slider -> {
+                                        SettingSlider(
+                                            label = item.label,
+                                            value = item.value,
+                                            range = item.range,
+                                            onValueChange = item.onValueChange
+                                        )
+                                    }
+                                    is SettingsItem.Dropdown -> {
+                                        SettingDropdown(
+                                            label = item.label,
+                                            current = item.current,
+                                            options = item.options,
+                                            onSelect = item.onSelect
+                                        )
+                                    }
+                                    is SettingsItem.Button -> {
+                                        SettingActionButton(
+                                            label = item.label,
+                                            onClick = item.onClick
+                                        )
+                                    }
+                                    is SettingsItem.Label -> {
+                                        SettingLabel(text = item.text)
+                                    }
+                                    is SettingsItem.Action -> {
+                                        SettingAction(
+                                            label = item.label,
+                                            onClick = item.onClick
+                                        )
+                                    }
+                                    is SettingsItem.ThemeRadioGroup -> {
+                                        ThemeRadioGroup(
+                                            themeMode = item.currentTheme,
+                                            onThemeSelected = item.onThemeSelected
+                                        )
+                                    }
+                                    else -> {}
+                                }
+                                // Add divider between items except after the last one
+                                if (contentItems.indexOf(item) < contentItems.size - 1) {
+                                    Divider(
+                                        color = Color.Gray.copy(alpha = 0.2f),
+                                        modifier = Modifier.padding(horizontal = 16.dp)
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -245,7 +304,7 @@ fun SettingsScreen() {
     }
 }
 
-// ---------- Helpers for language mapping ----------
+// ---------- Helper functions for language ----------
 fun languageToDisplay(code: String): String = when (code) {
     "en" -> "English"
     "es" -> "Spanish"
@@ -277,7 +336,8 @@ sealed class SettingsItem {
     data class ThemeRadioGroup(val currentTheme: String, val onThemeSelected: (String) -> Unit) : SettingsItem()
 }
 
-// ---------- Composables ----------
+// ---------- Composables with larger touch targets ----------
+
 @Composable
 fun SettingSwitchRow(
     label: String,
@@ -288,10 +348,15 @@ fun SettingSwitchRow(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFF1A1A1A))
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .height(IntrinsicSize.Min)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clickable { onCheckedChange(!checked) }
     ) {
-        Text(label, color = Color.White, modifier = Modifier.weight(1f))
+        Text(
+            text = label,
+            color = Color.White,
+            modifier = Modifier.weight(1f)
+        )
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
@@ -314,8 +379,9 @@ fun SettingSwitchRowWithDesc(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFF1A1A1A))
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .height(IntrinsicSize.Min)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clickable { onCheckedChange(!checked) }
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(label, color = Color.White)
@@ -342,7 +408,6 @@ fun SettingSlider(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFF1A1A1A))
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
         Text(label, color = Color.White)
@@ -372,8 +437,8 @@ fun SettingDropdown(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFF1A1A1A))
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .height(IntrinsicSize.Min)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
             .clickable { expanded = true }
     ) {
         Text(label, color = Color.White, modifier = Modifier.weight(1f))
@@ -385,87 +450,4 @@ fun SettingDropdown(
         ) {
             options.forEach { option ->
                 DropdownMenuItem(
-                    text = { Text(option, color = Color.White) },
-                    onClick = {
-                        onSelect(option)
-                        expanded = false
-                    }
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun SettingActionButton(
-    label: String,
-    onClick: () -> Unit
-) {
-    Button(
-        onClick = onClick,
-        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4FC3F7)),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp)
-    ) {
-        Text(label, color = Color.Black)
-    }
-}
-
-@Composable
-fun SettingLabel(text: String) {
-    Text(
-        text = text,
-        color = Color.Gray,
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFF1A1A1A))
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-    )
-}
-
-@Composable
-fun SettingAction(
-    label: String,
-    onClick: () -> Unit
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFF1A1A1A))
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-            .clickable { onClick() }
-    ) {
-        Text(label, color = Color.White, modifier = Modifier.weight(1f))
-        Icon(Icons.Default.KeyboardArrowRight, contentDescription = null, tint = Color.Gray)
-    }
-}
-
-@Composable
-fun ThemeRadioGroup(
-    themeMode: String,
-    onThemeSelected: (String) -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFF1A1A1A))
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-    ) {
-        Text("Theme", color = Color.White, fontWeight = FontWeight.Bold)
-        ThemeMode.values().forEach { mode ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                RadioButton(
-                    selected = themeMode == mode.name,
-                    onClick = { onThemeSelected(mode.name) },
-                    colors = RadioButtonDefaults.colors(selectedColor = Color(0xFF4FC3F7))
-                )
-                Text(mode.name, color = Color.White, modifier = Modifier.padding(start = 8.dp))
-            }
-        }
-    }
-}
+                    text = { Text(option, color 
