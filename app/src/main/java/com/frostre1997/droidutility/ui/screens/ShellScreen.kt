@@ -24,6 +24,6 @@ fun ShellScreen() {
             style = MaterialTheme.typography.headlineLarge,
             color = Color.White
         )
-        // Add your shell UI here
+        // Add shell UI here
     }
 }
