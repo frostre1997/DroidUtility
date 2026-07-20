@@ -53,7 +53,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-fun TerminalScreen(onBack: () -> Unit) {
+fun TerminalScreen() {
     val scope = rememberCoroutineScope()
     val clipboard = LocalClipboardManager.current
 
