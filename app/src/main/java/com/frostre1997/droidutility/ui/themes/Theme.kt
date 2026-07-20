@@ -1,4 +1,4 @@
-package com.frostre1997.droidutility.ui.theme
+package com.frostre1997.droidutility.ui.themes
 
 import android.app.Activity
 import android.os.Build
@@ -13,12 +13,8 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-// Accent colors (your original ones)
-private val AccentBlue = Color(0xFF4FC3F7)
-private val AccentGreen = Color(0xFF66BB6A)
-private val AccentRed = Color(0xFFEF5350)
+// No private color definitions – use imported ones
 
-// Light theme (White)
 private val LightColorScheme = lightColorScheme(
     primary = AccentBlue,
     secondary = AccentGreen,
@@ -32,12 +28,11 @@ private val LightColorScheme = lightColorScheme(
     onSurface = Color.Black
 )
 
-// Dark theme (Black – dark grey background, not pure black)
 private val DarkColorScheme = darkColorScheme(
     primary = AccentBlue,
     secondary = AccentGreen,
     tertiary = AccentRed,
-    background = Color(0xFF121212), // standard Material dark grey
+    background = Color(0xFF121212),
     surface = Color(0xFF1E1E1E),
     onPrimary = Color.Black,
     onSecondary = Color.Black,
@@ -46,7 +41,6 @@ private val DarkColorScheme = darkColorScheme(
     onSurface = Color.White
 )
 
-// AMOLED theme (pure black)
 private val AmoledColorScheme = darkColorScheme(
     primary = AccentBlue,
     secondary = AccentGreen,
@@ -60,16 +54,13 @@ private val AmoledColorScheme = darkColorScheme(
     onSurface = Color.White
 )
 
-// Theme mode enum
 enum class ThemeMode {
-    LIGHT,   // white background
-    DARK,    // dark grey background
-    AMOLED   // pure black background
+    LIGHT, DARK, AMOLED
 }
 
 @Composable
 fun DroidUtilityTheme(
-    themeMode: ThemeMode = ThemeMode.AMOLED, // default can be whatever
+    themeMode: ThemeMode = ThemeMode.AMOLED,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when (themeMode) {
@@ -86,8 +77,6 @@ fun DroidUtilityTheme(
             window.navigationBarColor = colorScheme.background.toArgb()
 
             val controller = WindowCompat.getInsetsController(window, view)
-            // For light theme: dark status icons (black) on white bar
-            // For dark/AMOLED: white icons on black/dark bar
             controller.isAppearanceLightStatusBars = (themeMode == ThemeMode.LIGHT)
             controller.isAppearanceLightNavigationBars = (themeMode == ThemeMode.LIGHT)
         }
@@ -95,7 +84,7 @@ fun DroidUtilityTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = Typography, // ensure this is defined or remove
         content = content
     )
 }
