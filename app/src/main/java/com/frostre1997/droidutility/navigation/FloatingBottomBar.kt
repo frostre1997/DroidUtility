@@ -32,10 +32,14 @@ fun FloatingBottomBar(
             .fillMaxWidth()
             .height(68.dp)
             .padding(horizontal = 16.dp),
-        color = Color.Black.copy(alpha = 0.7f), // semi‑transparent black for glass effect
+        color = Color.Black.copy(alpha = 0.7f),        // semi‑transparent glass
         shape = RoundedCornerShape(34.dp),
-        shadowElevation = 8.dp, // soft shadow instead of blur
-        tonalElevation = 0.dp
+        shadowElevation = 8.dp,
+        tonalElevation = 0.dp,
+        border = androidx.compose.foundation.BorderStroke(
+            width = 1.dp,
+            color = Color.White.copy(alpha = 0.15f)    // subtle white outline
+        )
     ) {
         Row(
             modifier = Modifier.fillMaxSize(),
