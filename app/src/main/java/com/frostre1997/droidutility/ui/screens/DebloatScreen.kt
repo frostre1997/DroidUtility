@@ -47,7 +47,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 @Composable
-fun DebloatScreen(onBack: () -> Unit) {
+fun DebloatScreen() {
     val screenWidthDp = LocalConfiguration.current.screenWidthDp
     val isCompact = screenWidthDp < 600
 
