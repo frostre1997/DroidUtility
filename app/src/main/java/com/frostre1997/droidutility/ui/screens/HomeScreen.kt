@@ -13,9 +13,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// Explicitly import weight extension
-import androidx.compose.foundation.layout.weight
-
 @Composable
 fun HomeScreen() {
     Column(
@@ -39,16 +36,46 @@ fun HomeScreen() {
             modifier = Modifier.padding(bottom = 24.dp)
         )
 
+        // Two stat cards using weight inside Row
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            StatCard(label = "Core", value = "Stopped")
-            StatCard(label = "Total Workflows", value = "2")
+            Surface(
+                modifier = Modifier.weight(1f),
+                color = Color(0xFF1A1A1A),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text("Core", color = Color.Gray, fontSize = 14.sp)
+                    Text("Stopped", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+            Surface(
+                modifier = Modifier.weight(1f),
+                color = Color(0xFF1A1A1A),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text("Total Workflows", color = Color.Gray, fontSize = 14.sp)
+                    Text("2", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Permission health card
         Surface(
             color = Color(0xFF1A1A1A),
             shape = RoundedCornerShape(16.dp),
@@ -70,6 +97,7 @@ fun HomeScreen() {
 
         Spacer(modifier = Modifier.height(20.dp))
 
+        // Recent logs section
         Text(
             text = "Recent Logs",
             color = Color.White,
@@ -89,27 +117,6 @@ fun HomeScreen() {
                     status = if (index == 0) "Failed at step #1" else if (index == 1) "Failed at step #1" else "Execution completed"
                 )
             }
-        }
-    }
-}
-
-@Composable
-fun StatCard(label: String, value: String) {
-    Surface(
-        color = Color(0xFF1A1A1A),
-        shape = RoundedCornerShape(16.dp),
-        modifier = Modifier
-            .weight(1f)   // uses the imported weight extension
-            .fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(label, color = Color.Gray, fontSize = 14.sp)
-            Text(value, color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
