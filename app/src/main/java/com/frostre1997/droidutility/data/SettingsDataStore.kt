@@ -4,10 +4,9 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 
-private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
+// Make this extension public (no private modifier)
+val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
 object SettingsDataStore {
     // Theme keys
@@ -37,5 +36,3 @@ object SettingsDataStore {
     fun getDefaultCustomFontPath(): String = ""
     fun getDefaultBoolean(): Boolean = false
 }
-
-fun Context.settingsDataStoreFlow(): Flow<Preferences> = dataStore.data
