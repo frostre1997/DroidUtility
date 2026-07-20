@@ -1,5 +1,6 @@
 package com.frostre1997.droidutility.ui.screens
 
+import android.os.Bundle
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -11,13 +12,56 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.frostre1997.droidutility.shell.ShizukuShellManager
+import kotlinx.coroutines.delay
+import rikka.shizuku.Shizuku
+import rikka.shizuku.ShizukuProvider
 
 @Composable
 fun HomeScreen() {
+    val context = LocalContext.current
     var showAboutDialog by remember { mutableStateOf(false) }
+
+    // Shizuku state
+    var isShizukuRunning by remember { mutableStateOf(false) }
+    var isPermissionGranted by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(true) }
+
+    // Check status on first composition and when Shizuku broadcasts change
+    LaunchedEffect(Unit) {
+        while (true) {
+            isLoading = true
+            // Check if Shizuku is running
+            isShizukuRunning = Shizuku.pingBinder()
+            if (isShizukuRunning) {
+                // Check permission
+                isPermissionGranted = Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED
+            } else {
+                isPermissionGranted = false
+            }
+            isLoading = false
+            delay(2000) // refresh every 2 seconds (or use a broadcast receiver)
+        }
+    }
+
+    // Request permission
+    fun requestPermission() {
+        if (Shizuku.isPreV11()) {
+            // For older Shizuku versions
+            Shizuku.requestPermission(1000)
+        } else {
+            // For newer versions, use the callback
+            Shizuku.requestPermission(1000, object : Shizuku.RequestPermissionResultCallback {
+                override fun onRequestPermissionResult(requestCode: Int, grantResult: Int) {
+                    // Handle result – will be reflected in next LaunchedEffect loop
+                }
+            })
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -70,32 +114,79 @@ fun HomeScreen() {
                     fontSize = 16.sp
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(12.dp)
-                            .background(Color.Green, shape = RoundedCornerShape(50))
-                    )
-                    Text("Running", color = Color.White, fontSize = 14.sp)
-                    Text("•", color = Color.Gray)
-                    Text("API: 33", color = Color.Gray, fontSize = 14.sp)
+
+                if (isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.Gray)
+                } else {
+                    // Status row
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .background(
+                                    if (isShizukuRunning) Color.Green else Color.Red,
+                                    shape = RoundedCornerShape(50)
+                                )
+                        )
+                        Text(
+                            if (isShizukuRunning) "Running" else "Stopped",
+                            color = Color.White,
+                            fontSize = 14.sp
+                        )
+                        if (isShizukuRunning) {
+                            Text("•", color = Color.Gray)
+                            Text("API: ${Shizuku.getVersionCode()}", color = Color.Gray, fontSize = 14.sp)
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    if (isShizukuRunning) {
+                        Text(
+                            if (isPermissionGranted) "Permission: GRANTED" else "Permission: DENIED",
+                            color = if (isPermissionGranted) Color.LightGray else Color.Red,
+                            fontSize = 13.sp
+                        )
+                    } else {
+                        Text("Start Shizuku first", color = Color.Yellow, fontSize = 13.sp)
+                    }
+
+                    // Action button
+                    if (isShizukuRunning && !isPermissionGranted) {
+                        Button(
+                            onClick = { requestPermission() },
+                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4FC3F7)),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text("Grant Permission", color = Color.Black, fontWeight = FontWeight.Bold)
+                        }
+                    } else if (!isShizukuRunning) {
+                        Button(
+                            onClick = {
+                                // Open Shizuku app or guide user
+                                // You can launch an intent to the Shizuku settings
+                            },
+                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4FC3F7)),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text("Start Shizuku", color = Color.Black, fontWeight = FontWeight.Bold)
+                        }
+                    }
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-                Text("Permission: GRANTED", color = Color.LightGray, fontSize = 13.sp)
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Quick stats row – cards are inlined to avoid weight modifier issues
+        // Quick stats row
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Card 1: Total Apps
             Surface(
                 modifier = Modifier.weight(1f),
                 color = Color(0xFF1A1A1A),
@@ -111,8 +202,6 @@ fun HomeScreen() {
                     Text("42", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
                 }
             }
-
-            // Card 2: Debloated
             Surface(
                 modifier = Modifier.weight(1f),
                 color = Color(0xFF1A1A1A),
@@ -132,7 +221,6 @@ fun HomeScreen() {
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Recent Activity placeholder (no vFlow)
         Text(
             text = "Recent Activity",
             color = Color.White,
