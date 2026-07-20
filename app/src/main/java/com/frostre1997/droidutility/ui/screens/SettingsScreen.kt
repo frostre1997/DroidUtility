@@ -174,7 +174,7 @@ fun SettingsScreen() {
             .fillMaxSize()
             .background(Color.Black)
     ) {
-        // Search bar
+        // Search bar – fixed colors
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
@@ -190,7 +190,6 @@ fun SettingsScreen() {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
-                .background(Color(0xFF1A1A1A), shape = RoundedCornerShape(8.dp))
         )
 
         LazyColumn(
