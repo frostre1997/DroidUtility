@@ -13,12 +13,11 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-// Define accent colors here (or import from Color.kt if you have it)
+// Accent colors – defined here to avoid conflicts
 private val AccentBlue = Color(0xFF4FC3F7)
 private val AccentGreen = Color(0xFF66BB6A)
 private val AccentRed = Color(0xFFEF5350)
 
-// Light theme
 private val LightColorScheme = lightColorScheme(
     primary = AccentBlue,
     secondary = AccentGreen,
@@ -32,7 +31,6 @@ private val LightColorScheme = lightColorScheme(
     onSurface = Color.Black
 )
 
-// Standard dark theme (dark grey)
 private val DarkColorScheme = darkColorScheme(
     primary = AccentBlue,
     secondary = AccentGreen,
@@ -46,7 +44,6 @@ private val DarkColorScheme = darkColorScheme(
     onSurface = Color.White
 )
 
-// AMOLED theme (pure black)
 private val AmoledColorScheme = darkColorScheme(
     primary = AccentBlue,
     secondary = AccentGreen,
@@ -90,7 +87,7 @@ fun DroidUtilityTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = MaterialTheme.typography, // use default typography to avoid type mismatch
+        typography = MaterialTheme.typography,  // default typography
         content = content
     )
 }
