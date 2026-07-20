@@ -525,11 +525,11 @@ fun SettingsScreen() {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
-                .background(Color(0xFF1A1A1A), shape = RoundedCornerShape(8.dp))
-                .border(1.dp, Color.Gray, RoundedCornerShape(8.dp))
+                .background(Color(0xFF1A1A1A), shape = RoundedCornerShape(16.dp))
+                .border(1.dp, Color.Gray, RoundedCornerShape(16.dp))
         )
 
-        // Settings list with cards
+        // Settings list with cards – rounded like vFlow
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -538,7 +538,7 @@ fun SettingsScreen() {
             items(filteredGroups) { group ->
                 Card(
                     colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A)),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(16.dp), // vFlow‑style rounding
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column {
@@ -556,7 +556,7 @@ fun SettingsScreen() {
                         // Items
                         group.items.forEachIndexed { index, item ->
                             when (item) {
-                                is SettingsItem.Switch -> {  
+                                is SettingsItem.Switch -> {
                                     SettingSwitchRow(
                                         label = item.label,
                                         checked = item.checked,
@@ -623,4 +623,3 @@ fun SettingsScreen() {
         }
     }
 }
-                                    
