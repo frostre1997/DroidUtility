@@ -1,125 +1,38 @@
 package com.frostre1997.droidutility.data
 
 import android.content.Context
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.*
+import androidx.datastore.preferences.preferencesDataStore
 
-class SettingsManager(private val context: Context) {
+// Make this extension public (no private modifier)
+val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
-    // Theme
-    fun getThemeModeFlow(): Flow<String> =
-        context.dataStore.data.map { prefs ->
-            prefs[SettingsDataStore.THEME_MODE] ?: SettingsDataStore.getDefaultThemeMode()
-        }
+object SettingsDataStore {
+    // Theme keys
+    val THEME_MODE = stringPreferencesKey("theme_mode")
+    val USE_DYNAMIC_COLOR = booleanPreferencesKey("use_dynamic_color")
 
-    suspend fun setThemeMode(mode: String) {
-        context.dataStore.edit { prefs ->
-            prefs[SettingsDataStore.THEME_MODE] = mode
-        }
-    }
+    // Terminal keys
+    val TERMINAL_FONT_SIZE = floatPreferencesKey("terminal_font_size")
+    val TERMINAL_FONT_FAMILY = stringPreferencesKey("terminal_font_family")
 
-    fun getDynamicColorFlow(): Flow<Boolean> =
-        context.dataStore.data.map { prefs ->
-            prefs[SettingsDataStore.USE_DYNAMIC_COLOR] ?: false
-        }
+    // Font keys (custom fonts)
+    val CUSTOM_FONT_PATH = stringPreferencesKey("custom_font_path")
 
-    suspend fun setDynamicColor(enabled: Boolean) {
-        context.dataStore.edit { prefs ->
-            prefs[SettingsDataStore.USE_DYNAMIC_COLOR] = enabled
-        }
-    }
+    // Experimental toggles
+    val EXPERIMENTAL_FEATURE_X = booleanPreferencesKey("experimental_feature_x")
+    val EXPERIMENTAL_FEATURE_Y = booleanPreferencesKey("experimental_feature_y")
 
-    // Terminal
-    fun getTerminalFontSizeFlow(): Flow<Float> =
-        context.dataStore.data.map { prefs ->
-            prefs[SettingsDataStore.TERMINAL_FONT_SIZE] ?: SettingsDataStore.getDefaultTerminalFontSize()
-        }
+    // Debugging toggles
+    val RECORD_LOGS = booleanPreferencesKey("record_logs")
+    val ENABLE_TELEMETRY = booleanPreferencesKey("enable_telemetry")
+    val ENABLE_CRASH_REPORTS = booleanPreferencesKey("enable_crash_reports")
 
-    suspend fun setTerminalFontSize(size: Float) {
-        context.dataStore.edit { prefs ->
-            prefs[SettingsDataStore.TERMINAL_FONT_SIZE] = size
-        }
-    }
-
-    fun getTerminalFontFamilyFlow(): Flow<String> =
-        context.dataStore.data.map { prefs ->
-            prefs[SettingsDataStore.TERMINAL_FONT_FAMILY] ?: SettingsDataStore.getDefaultTerminalFontFamily()
-        }
-
-    suspend fun setTerminalFontFamily(family: String) {
-        context.dataStore.edit { prefs ->
-            prefs[SettingsDataStore.TERMINAL_FONT_FAMILY] = family
-        }
-    }
-
-    // Custom fonts
-    fun getCustomFontPathFlow(): Flow<String> =
-        context.dataStore.data.map { prefs ->
-            prefs[SettingsDataStore.CUSTOM_FONT_PATH] ?: SettingsDataStore.getDefaultCustomFontPath()
-        }
-
-    suspend fun setCustomFontPath(path: String) {
-        context.dataStore.edit { prefs ->
-            prefs[SettingsDataStore.CUSTOM_FONT_PATH] = path
-        }
-    }
-
-    // Experimental
-    suspend fun setExperimentalFeatureX(enabled: Boolean) {
-        context.dataStore.edit { prefs ->
-            prefs[SettingsDataStore.EXPERIMENTAL_FEATURE_X] = enabled
-        }
-    }
-
-    fun getExperimentalFeatureXFlow(): Flow<Boolean> =
-        context.dataStore.data.map { prefs ->
-            prefs[SettingsDataStore.EXPERIMENTAL_FEATURE_X] ?: SettingsDataStore.getDefaultBoolean()
-        }
-
-    suspend fun setExperimentalFeatureY(enabled: Boolean) {
-        context.dataStore.edit { prefs ->
-            prefs[SettingsDataStore.EXPERIMENTAL_FEATURE_Y] = enabled
-        }
-    }
-
-    fun getExperimentalFeatureYFlow(): Flow<Boolean> =
-        context.dataStore.data.map { prefs ->
-            prefs[SettingsDataStore.EXPERIMENTAL_FEATURE_Y] ?: SettingsDataStore.getDefaultBoolean()
-        }
-
-    // Debugging
-    suspend fun setRecordLogs(enabled: Boolean) {
-        context.dataStore.edit { prefs ->
-            prefs[SettingsDataStore.RECORD_LOGS] = enabled
-        }
-    }
-
-    fun getRecordLogsFlow(): Flow<Boolean> =
-        context.dataStore.data.map { prefs ->
-            prefs[SettingsDataStore.RECORD_LOGS] ?: SettingsDataStore.getDefaultBoolean()
-        }
-
-    suspend fun setEnableTelemetry(enabled: Boolean) {
-        context.dataStore.edit { prefs ->
-            prefs[SettingsDataStore.ENABLE_TELEMETRY] = enabled
-        }
-    }
-
-    fun getEnableTelemetryFlow(): Flow<Boolean> =
-        context.dataStore.data.map { prefs ->
-            prefs[SettingsDataStore.ENABLE_TELEMETRY] ?: SettingsDataStore.getDefaultBoolean()
-        }
-
-    suspend fun setEnableCrashReports(enabled: Boolean) {
-        context.dataStore.edit { prefs ->
-            prefs[SettingsDataStore.ENABLE_CRASH_REPORTS] = enabled
-        }
-    }
-
-    fun getEnableCrashReportsFlow(): Flow<Boolean> =
-        context.dataStore.data.map { prefs ->
-            prefs[SettingsDataStore.ENABLE_CRASH_REPORTS] ?: SettingsDataStore.getDefaultBoolean()
-        }
+    // Default values
+    fun getDefaultThemeMode(): String = "AMOLED"
+    fun getDefaultTerminalFontSize(): Float = 16f
+    fun getDefaultTerminalFontFamily(): String = "monospace"
+    fun getDefaultCustomFontPath(): String = ""
+    fun getDefaultBoolean(): Boolean = false
 }
