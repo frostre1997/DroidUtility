@@ -90,13 +90,44 @@ fun HomeScreen() {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Quick stats row
+        // Quick stats row – cards are inlined to avoid weight modifier issues
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            StatCard(label = "Total Apps", value = "42")
-            StatCard(label = "Debloated", value = "7")
+            // Card 1: Total Apps
+            Surface(
+                modifier = Modifier.weight(1f),
+                color = Color(0xFF1A1A1A),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text("Total Apps", color = Color.Gray, fontSize = 14.sp)
+                    Text("42", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+
+            // Card 2: Debloated
+            Surface(
+                modifier = Modifier.weight(1f),
+                color = Color(0xFF1A1A1A),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text("Debloated", color = Color.Gray, fontSize = 14.sp)
+                    Text("7", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -147,24 +178,5 @@ fun HomeScreen() {
             titleContentColor = Color.White,
             textContentColor = Color.White
         )
-    }
-}
-
-@Composable
-fun StatCard(label: String, value: String) {
-    Surface(
-        color = Color(0xFF1A1A1A),
-        shape = RoundedCornerShape(16.dp),
-        modifier = Modifier.weight(1f)
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(label, color = Color.Gray, fontSize = 14.sp)
-            Text(value, color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
-        }
     }
 }
