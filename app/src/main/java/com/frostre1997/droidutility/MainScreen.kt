@@ -21,13 +21,12 @@ fun MainScreen() {
     val currentRoute = currentBackStackEntry?.destination?.route ?: Screen.Home.route
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Main content – each screen handles its own background
         NavHost(
             navController = navController,
             startDestination = Screen.Home.route,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = 80.dp) // space for floating bar
+                .padding(bottom = 80.dp)
         ) {
             composable(Screen.Home.route) { HomeScreen() }
             composable(Screen.Terminal.route) { TerminalScreen() }
@@ -36,7 +35,6 @@ fun MainScreen() {
             composable(Screen.Settings.route) { SettingsScreen() }
         }
 
-        // Floating bottom bar
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
