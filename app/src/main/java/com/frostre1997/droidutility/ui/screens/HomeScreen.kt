@@ -98,6 +98,7 @@ fun HomeScreen() {
                 if (isLoading) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.Gray)
                 } else {
+                    // Status row – removed API version display
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         verticalAlignment = Alignment.CenterVertically
@@ -115,10 +116,6 @@ fun HomeScreen() {
                             color = Color.White,
                             fontSize = 14.sp
                         )
-                        if (isShizukuRunning) {
-                            Text("•", color = Color.Gray)
-                            Text("API: ${rikka.shizuku.Shizuku.getVersionCode()}", color = Color.Gray, fontSize = 14.sp)
-                        }
                     }
                     Spacer(modifier = Modifier.height(8.dp))
 
