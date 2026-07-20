@@ -13,10 +13,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             DroidUtilityTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = DroidUtilityTheme.colors.background
-                ) {
+                Surface(modifier = Modifier.fillMaxSize()) {
                     MainScreen()
                 }
             }
