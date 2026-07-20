@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
-
-    <style name="Theme.DroidUtility" parent="@android:style/Theme.Material.Light">
-        <item name="android:windowBackground">@android:color/transparent</item>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    
+    <style name="Theme.DroidUtility" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:statusBarColor">@android:color/black</item>
+        <item name="android:navigationBarColor">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowTranslucentNavigation">false</item>
+    
     </style>
-
 </resources>
