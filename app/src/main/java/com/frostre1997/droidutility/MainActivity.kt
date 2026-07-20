@@ -12,7 +12,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            DroidUtilityTheme { // no extra parameters for now (default AMOLED)
+            DroidUtilityTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     MainScreen()
                 }
