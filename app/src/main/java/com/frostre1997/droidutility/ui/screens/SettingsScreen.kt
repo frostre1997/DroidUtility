@@ -18,11 +18,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.frostre1997.droidutility.data.SettingsManager
 import com.frostre1997.droidutility.ui.theme.ThemeMode
+import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen() {
     val context = LocalContext.current
     val settingsManager = remember { SettingsManager(context) }
+    val coroutineScope = rememberCoroutineScope() // Required for suspend calls
 
     // Collect settings states
     val themeMode by settingsManager.getThemeModeFlow().collectAsState(initial = "AMOLED")
@@ -41,8 +43,9 @@ fun SettingsScreen() {
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let {
-            // Save the URI as string
-            settingsManager.setCustomFontPath(it.toString())
+            coroutineScope.launch {
+                settingsManager.setCustomFontPath(it.toString())
+            }
         }
     }
 
@@ -56,7 +59,6 @@ fun SettingsScreen() {
         // Appearance
         item {
             SettingsSection(title = "Appearance") {
-                // Theme radio group
                 Text("Theme", color = Color.White, fontSize = 14.sp)
                 ThemeMode.values().forEach { mode ->
                     Row(
@@ -66,7 +68,9 @@ fun SettingsScreen() {
                         RadioButton(
                             selected = themeMode == mode.name,
                             onClick = {
-                                settingsManager.setThemeMode(mode.name)
+                                coroutineScope.launch {
+                                    settingsManager.setThemeMode(mode.name)
+                                }
                             },
                             colors = RadioButtonDefaults.colors(
                                 selectedColor = Color(0xFF4FC3F7)
@@ -76,7 +80,6 @@ fun SettingsScreen() {
                     }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                // Dynamic Color toggle (Android 12+)
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
@@ -84,7 +87,11 @@ fun SettingsScreen() {
                     Text("Dynamic Color", color = Color.White, modifier = Modifier.weight(1f))
                     Switch(
                         checked = dynamicColor,
-                        onCheckedChange = { settingsManager.setDynamicColor(it) },
+                        onCheckedChange = {
+                            coroutineScope.launch {
+                                settingsManager.setDynamicColor(it)
+                            }
+                        },
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = Color(0xFF4FC3F7),
                             checkedTrackColor = Color(0xFF4FC3F7).copy(alpha = 0.5f)
@@ -100,7 +107,11 @@ fun SettingsScreen() {
                 Text("Font Size", color = Color.White)
                 Slider(
                     value = terminalFontSize,
-                    onValueChange = { settingsManager.setTerminalFontSize(it) },
+                    onValueChange = { newSize ->
+                        coroutineScope.launch {
+                            settingsManager.setTerminalFontSize(newSize)
+                        }
+                    },
                     valueRange = 10f..30f,
                     steps = 20,
                     colors = SliderDefaults.colors(
@@ -110,18 +121,21 @@ fun SettingsScreen() {
                 )
                 Text("Current: ${terminalFontSize.toInt()}sp", color = Color.Gray)
                 Spacer(modifier = Modifier.height(8.dp))
-                // Font family dropdown – using a simple list of available families
                 Text("Font Family", color = Color.White)
                 val fontFamilies = listOf("monospace", "sans-serif", "serif", "sans-serif-condensed")
                 DropdownMenuExample(
                     current = terminalFontFamily,
                     options = fontFamilies,
-                    onSelect = { settingsManager.setTerminalFontFamily(it) }
+                    onSelect = { family ->
+                        coroutineScope.launch {
+                            settingsManager.setTerminalFontFamily(family)
+                        }
+                    }
                 )
             }
         }
 
-        // Font Management (custom fonts)
+        // Font Management
         item {
             SettingsSection(title = "Font Management") {
                 Text("Custom Font", color = Color.White)
@@ -143,12 +157,20 @@ fun SettingsScreen() {
                 SettingSwitch(
                     label = "Experimental Feature X",
                     checked = experimentalFeatureX,
-                    onCheckedChange = { settingsManager.setExperimentalFeatureX(it) }
+                    onCheckedChange = { enabled ->
+                        coroutineScope.launch {
+                            settingsManager.setExperimentalFeatureX(enabled)
+                        }
+                    }
                 )
                 SettingSwitch(
                     label = "Experimental Feature Y",
                     checked = experimentalFeatureY,
-                    onCheckedChange = { settingsManager.setExperimentalFeatureY(it) }
+                    onCheckedChange = { enabled ->
+                        coroutineScope.launch {
+                            settingsManager.setExperimentalFeatureY(enabled)
+                        }
+                    }
                 )
             }
         }
@@ -159,17 +181,29 @@ fun SettingsScreen() {
                 SettingSwitch(
                     label = "Record Debug Logs",
                     checked = recordLogs,
-                    onCheckedChange = { settingsManager.setRecordLogs(it) }
+                    onCheckedChange = { enabled ->
+                        coroutineScope.launch {
+                            settingsManager.setRecordLogs(enabled)
+                        }
+                    }
                 )
                 SettingSwitch(
                     label = "Enable Telemetry",
                     checked = enableTelemetry,
-                    onCheckedChange = { settingsManager.setEnableTelemetry(it) }
+                    onCheckedChange = { enabled ->
+                        coroutineScope.launch {
+                            settingsManager.setEnableTelemetry(enabled)
+                        }
+                    }
                 )
                 SettingSwitch(
                     label = "Enable Crash Reports",
                     checked = enableCrashReports,
-                    onCheckedChange = { settingsManager.setEnableCrashReports(it) }
+                    onCheckedChange = { enabled ->
+                        coroutineScope.launch {
+                            settingsManager.setEnableCrashReports(enabled)
+                        }
+                    }
                 )
             }
         }
@@ -197,7 +231,7 @@ fun SettingsScreen() {
     }
 }
 
-// Helper composable for a settings section
+// Helper composables (unchanged)
 @Composable
 fun SettingsSection(
     title: String,
@@ -221,7 +255,6 @@ fun SettingsSection(
     }
 }
 
-// Helper for a switch row
 @Composable
 fun SettingSwitch(
     label: String,
@@ -244,7 +277,6 @@ fun SettingSwitch(
     }
 }
 
-// Helper dropdown (simple implementation)
 @Composable
 fun DropdownMenuExample(
     current: String,
