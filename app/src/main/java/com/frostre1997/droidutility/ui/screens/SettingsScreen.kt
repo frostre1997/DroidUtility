@@ -27,327 +27,21 @@ import com.frostre1997.droidutility.data.SettingsManager
 import com.frostre1997.droidutility.ui.theme.ThemeMode
 import kotlinx.coroutines.launch
 
-@Composable
-fun SettingsScreen() {
-    val context = LocalContext.current
-    val settingsManager = remember { SettingsManager(context) }
-    val coroutineScope = rememberCoroutineScope()
-    var searchQuery by remember { mutableStateOf("") }
+// ---------- Data classes ----------
+data class SettingsGroup(
+    val title: String,
+    val items: List<SettingsItem>
+)
 
-    // Collect all states
-    val themeMode by settingsManager.getThemeModeFlow().collectAsState(initial = "AMOLED")
-    val dynamicColor by settingsManager.getDynamicColorFlow().collectAsState(initial = false)
-    val terminalFontSize by settingsManager.getTerminalFontSizeFlow().collectAsState(initial = 16f)
-    val terminalFontFamily by settingsManager.getTerminalFontFamilyFlow().collectAsState(initial = "monospace")
-    val customFontPath by settingsManager.getCustomFontPathFlow().collectAsState(initial = "")
-    val experimentalFeatureX by settingsManager.getExperimentalFeatureXFlow().collectAsState(initial = false)
-    val experimentalFeatureY by settingsManager.getExperimentalFeatureYFlow().collectAsState(initial = false)
-    val recordLogs by settingsManager.getRecordLogsFlow().collectAsState(initial = false)
-    val enableTelemetry by settingsManager.getEnableTelemetryFlow().collectAsState(initial = false)
-    val enableCrashReports by settingsManager.getEnableCrashReportsFlow().collectAsState(initial = false)
-    val language by settingsManager.getLanguageFlow().collectAsState(initial = "en")
-    val colorfulWorkflowCards by settingsManager.getColorfulWorkflowCardsFlow().collectAsState(initial = false)
-    val liquidGlassNav by settingsManager.getLiquidGlassNavFlow().collectAsState(initial = false)
-    val uiScale by settingsManager.getUIScaleFlow().collectAsState(initial = 1.0f)
-
-    // File picker for custom font
-    val fontPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let {
-            coroutineScope.launch {
-                settingsManager.setCustomFontPath(it.toString())
-            }
-        }
-    }
-
-    // Build groups (each group is a list of items with a title)
-    val groups = buildList {
-        // Language group
-        add(
-            SettingsGroup(
-                title = "Language",
-                items = listOf(
-                    SettingsItem.Dropdown(
-                        "Language",
-                        languageToDisplay(language),
-                        listOf("English", "Spanish", "French", "German", "Italian")
-                    ) { lang ->
-                        coroutineScope.launch {
-                            settingsManager.setLanguage(displayToCode(lang))
-                        }
-                    },
-                    SettingsItem.Label("Choose app display language")
-                )
-            )
-        )
-
-        // Appearance group
-        add(
-            SettingsGroup(
-                title = "Appearance",
-                items = listOf(
-                    SettingsItem.ThemeRadioGroup(
-                        themeMode,
-                        onThemeSelected = { selected ->
-                            coroutineScope.launch { settingsManager.setThemeMode(selected) }
-                        }
-                    ),
-                    SettingsItem.Switch("Dynamic Color", dynamicColor) {
-                        coroutineScope.launch { settingsManager.setDynamicColor(it) }
-                    },
-                    SettingsItem.Switch("Colorful workflow cards (Beta)", colorfulWorkflowCards) {
-                        coroutineScope.launch { settingsManager.setColorfulWorkflowCards(it) }
-                    },
-                    SettingsItem.Switch("Liquid Glass navigation bar", liquidGlassNav) {
-                        coroutineScope.launch { settingsManager.setLiquidGlassNav(it) }
-                    },
-                    SettingsItem.Slider("Scale", uiScale, 0.5f..1.5f) { newScale ->
-                        coroutineScope.launch { settingsManager.setUIScale(newScale) }
-                    }
-                )
-            )
-        )
-
-        // Terminal group
-        add(
-            SettingsGroup(
-                title = "Terminal",
-                items = listOf(
-                    SettingsItem.Slider("Font Size", terminalFontSize, 10f..30f) { newSize ->
-                        coroutineScope.launch { settingsManager.setTerminalFontSize(newSize) }
-                    },
-                    SettingsItem.Dropdown(
-                        "Font Family",
-                        terminalFontFamily,
-                        listOf("monospace", "sans-serif", "serif", "sans-serif-condensed")
-                    ) { family ->
-                        coroutineScope.launch { settingsManager.setTerminalFontFamily(family) }
-                    }
-                )
-            )
-        )
-
-        // Font Management group
-        add(
-            SettingsGroup(
-                title = "Font Management",
-                items = listOf(
-                    SettingsItem.Button("Upload Custom Font (.ttf)") {
-                        fontPickerLauncher.launch("application/octet-stream")
-                    }
-                ).let { list ->
-                    if (customFontPath.isNotEmpty()) {
-                        list + SettingsItem.Label("Current: $customFontPath")
-                    } else list
-                }
-            )
-        )
-
-        // Experimental group
-        add(
-            SettingsGroup(
-                title = "Experimental",
-                items = listOf(
-                    SettingsItem.SwitchWithDesc(
-                        "Shizuku ADB Fallback",
-                        "Fall back to ADB over Wi‑Fi if Shizuku is unavailable (debug builds only)",
-                        experimentalFeatureX
-                    ) {
-                        coroutineScope.launch { settingsManager.setExperimentalFeatureX(it) }
-                    },
-                    SettingsItem.SwitchWithDesc(
-                        "Force Dynamic Color",
-                        "Apply Material You theming even on Android 10 and below (experimental)",
-                        experimentalFeatureY
-                    ) {
-                        coroutineScope.launch { settingsManager.setExperimentalFeatureY(it) }
-                    }
-                )
-            )
-        )
-
-        // Debugging group
-        add(
-            SettingsGroup(
-                title = "Debugging",
-                items = listOf(
-                    SettingsItem.Switch("Record Debug Logs", recordLogs) {
-                        coroutineScope.launch { settingsManager.setRecordLogs(it) }
-                    },
-                    SettingsItem.Switch("Enable Telemetry", enableTelemetry) {
-                        coroutineScope.launch { settingsManager.setEnableTelemetry(it) }
-                    },
-                    SettingsItem.Switch("Enable Crash Reports", enableCrashReports) {
-                        coroutineScope.launch { settingsManager.setEnableCrashReports(it) }
-                    }
-                )
-            )
-        )
-
-        // General Settings group
-        add(
-            SettingsGroup(
-                title = "General Settings",
-                items = listOf(
-                    SettingsItem.Action("Module Config") { /* navigate */ },
-                    SettingsItem.Action("Global Variables") { /* navigate */ },
-                    SettingsItem.Action("Model Config") { /* navigate */ }
-                )
-            )
-        )
-
-        // About group
-        add(
-            SettingsGroup(
-                title = "About",
-                items = listOf(
-                    SettingsItem.Label("Version 1.0.5-beta.6"),
-                    SettingsItem.Label("Built with 🤍 using Jetpack Compose"),
-                    SettingsItem.Action("View Open Source Licenses") { /* open licenses */ },
-                    SettingsItem.Action("Developer Info") { /* open developer info */ }
-                )
-            )
-        )
-    }
-
-    // Filter groups based on search query
-    val filteredGroups = if (searchQuery.isBlank()) {
-        groups
-    } else {
-        groups.mapNotNull { group ->
-            val filteredItems = group.items.filter { item ->
-                when (item) {
-                    is SettingsItem.Switch -> item.label.contains(searchQuery, ignoreCase = true)
-                    is SettingsItem.SwitchWithDesc -> item.label.contains(searchQuery, ignoreCase = true) || item.description.contains(searchQuery, ignoreCase = true)
-                    is SettingsItem.Slider -> item.label.contains(searchQuery, ignoreCase = true)
-                    is SettingsItem.Dropdown -> item.label.contains(searchQuery, ignoreCase = true) || item.current.contains(searchQuery, ignoreCase = true)
-                    is SettingsItem.Button -> item.label.contains(searchQuery, ignoreCase = true)
-                    is SettingsItem.Label -> item.text.contains(searchQuery, ignoreCase = true)
-                    is SettingsItem.Action -> item.label.contains(searchQuery, ignoreCase = true)
-                    is SettingsItem.ThemeRadioGroup -> true // always show when searching
-                    else -> false
-                }
-            }
-            if (filteredItems.isNotEmpty()) {
-                group.copy(items = filteredItems)
-            } else null
-        }
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black)
-    ) {
-        // Search bar
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = { searchQuery = it },
-            placeholder = { Text("Search settings", color = Color.Gray) },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray) },
-            textStyle = TextStyle(color = Color.White),
-            colors = OutlinedTextFieldDefaults.colors(),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-                .background(Color(0xFF1A1A1A), shape = RoundedCornerShape(8.dp))
-                .border(1.dp, Color.Gray, RoundedCornerShape(8.dp))
-        )
-
-        // Settings list with cards
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-        ) {
-            items(filteredGroups) { group ->
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A)),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column {
-                        // Group title
-                        Text(
-                            text = group.title,
-                            color = Color(0xFF4FC3F7),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 12.dp)
-                        )
-
-                        // Items
-                        group.items.forEachIndexed { index, item ->
-                            when (item) {
-                                is SettingsItem.Switch -> {
-                                    SettingSwitchRow(
-                                        label = item.label,
-                                        checked = item.checked,
-                                        onCheckedChange = item.onCheckedChange
-                                    )
-                                }
-                                is SettingsItem.SwitchWithDesc -> {
-                                    SettingSwitchRowWithDesc(
-                                        label = item.label,
-                                        description = item.description,
-                                        checked = item.checked,
-                                        onCheckedChange = item.onCheckedChange
-                                    )
-                                }
-                                is SettingsItem.Slider -> {
-                                    SettingSlider(
-                                        label = item.label,
-                                        value = item.value,
-                                        range = item.range,
-                                        onValueChange = item.onValueChange
-                                    )
-                                }
-                                is SettingsItem.Dropdown -> {
-                                    SettingDropdown(
-                                        label = item.label,
-                                        current = item.current,
-                                        options = item.options,
-                                        onSelect = item.onSelect
-                                    )
-                                }
-                                is SettingsItem.Button -> {
-                                    SettingActionButton(
-                                        label = item.label,
-                                        onClick = item.onClick
-                                    )
-                                }
-                                is SettingsItem.Label -> {
-                                    SettingLabel(text = item.text)
-                                }
-                                is SettingsItem.Action -> {
-                                    SettingAction(
-                                        label = item.label,
-                                        onClick = item.onClick
-                                    )
-                                }
-                                is SettingsItem.ThemeRadioGroup -> {
-                                    ThemeRadioGroup(
-                                        themeMode = item.currentTheme,
-                                        onThemeSelected = item.onThemeSelected
-                                    )
-                                }
-                            }
-                            // Add divider between items except after the last one
-                            if (index < group.items.size - 1) {
-                                Divider(
-                                    color = Color.Gray.copy(alpha = 0.2f),
-                                    modifier = Modifier.padding(horizontal = 16.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
+sealed class SettingsItem {
+    data class Switch(val label: String, val checked: Boolean, val onCheckedChange: (Boolean) -> Unit) : SettingsItem()
+    data class SwitchWithDesc(val label: String, val description: String, val checked: Boolean, val onCheckedChange: (Boolean) -> Unit) : SettingsItem()
+    data class Slider(val label: String, val value: Float, val range: ClosedFloatingPointRange<Float>, val onValueChange: (Float) -> Unit) : SettingsItem()
+    data class Dropdown(val label: String, val current: String, val options: List<String>, val onSelect: (String) -> Unit) : SettingsItem()
+    data class Button(val label: String, val onClick: () -> Unit) : SettingsItem()
+    data class Label(val text: String) : SettingsItem()
+    data class Action(val label: String, val onClick: () -> Unit) : SettingsItem()
+    data class ThemeRadioGroup(val currentTheme: String, val onThemeSelected: (String) -> Unit) : SettingsItem()
 }
 
 // ---------- Helper functions for language ----------
@@ -367,23 +61,6 @@ fun displayToCode(display: String): String = when (display) {
     "German" -> "de"
     "Italian" -> "it"
     else -> "en"
-}
-
-// ---------- Data classes ----------
-data class SettingsGroup(
-    val title: String,
-    val items: List<SettingsItem>
-)
-
-sealed class SettingsItem {
-    data class Switch(val label: String, val checked: Boolean, val onCheckedChange: (Boolean) -> Unit) : SettingsItem()
-    data class SwitchWithDesc(val label: String, val description: String, val checked: Boolean, val onCheckedChange: (Boolean) -> Unit) : SettingsItem()
-    data class Slider(val label: String, val value: Float, val range: ClosedFloatingPointRange<Float>, val onValueChange: (Float) -> Unit) : SettingsItem()
-    data class Dropdown(val label: String, val current: String, val options: List<String>, val onSelect: (String) -> Unit) : SettingsItem()
-    data class Button(val label: String, val onClick: () -> Unit) : SettingsItem()
-    data class Label(val text: String) : SettingsItem()
-    data class Action(val label: String, val onClick: () -> Unit) : SettingsItem()
-    data class ThemeRadioGroup(val currentTheme: String, val onThemeSelected: (String) -> Unit) : SettingsItem()
 }
 
 // ---------- Composables with larger touch targets ----------
@@ -475,4 +152,375 @@ fun SettingSlider(
 }
 
 @Composable
-fun 
+fun SettingDropdown(
+    label: String,
+    current: String,
+    options: List<String>,
+    onSelect: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clickable { expanded = true }
+    ) {
+        Text(label, color = Color.White, modifier = Modifier.weight(1f))
+        Text(current, color = Color(0xFF4FC3F7))
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.background(Color(0xFF1A1A1A))
+        ) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(option, color = Color.White) },
+                    onClick = {
+                        onSelect(option)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun SettingActionButton(
+    label: String,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4FC3F7)),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        Text(label, color = Color.Black)
+    }
+}
+
+@Composable
+fun SettingLabel(text: String) {
+    Text(
+        text = text,
+        color = Color.Gray,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    )
+}
+
+@Composable
+fun SettingAction(
+    label: String,
+    onClick: () -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clickable { onClick() }
+    ) {
+        Text(label, color = Color.White, modifier = Modifier.weight(1f))
+        Icon(Icons.Default.KeyboardArrowRight, contentDescription = null, tint = Color.Gray)
+    }
+}
+
+@Composable
+fun ThemeRadioGroup(
+    themeMode: String,
+    onThemeSelected: (String) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+    ) {
+        ThemeMode.values().forEach { mode ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Min)
+                    .padding(vertical = 4.dp)
+                    .clickable { onThemeSelected(mode.name) }
+            ) {
+                RadioButton(
+                    selected = themeMode == mode.name,
+                    onClick = { onThemeSelected(mode.name) },
+                    colors = RadioButtonDefaults.colors(selectedColor = Color(0xFF4FC3F7))
+                )
+                Text(mode.name, color = Color.White, modifier = Modifier.padding(start = 8.dp))
+            }
+        }
+    }
+}
+
+// ---------- Main Settings Screen ----------
+@Composable
+fun SettingsScreen() {
+    val context = LocalContext.current
+    val settingsManager = remember { SettingsManager(context) }
+    val coroutineScope = rememberCoroutineScope()
+    var searchQuery by remember { mutableStateOf("") }
+
+    // Collect all states
+    val themeMode by settingsManager.getThemeModeFlow().collectAsState(initial = "AMOLED")
+    val dynamicColor by settingsManager.getDynamicColorFlow().collectAsState(initial = false)
+    val terminalFontSize by settingsManager.getTerminalFontSizeFlow().collectAsState(initial = 16f)
+    val terminalFontFamily by settingsManager.getTerminalFontFamilyFlow().collectAsState(initial = "monospace")
+    val customFontPath by settingsManager.getCustomFontPathFlow().collectAsState(initial = "")
+    val experimentalFeatureX by settingsManager.getExperimentalFeatureXFlow().collectAsState(initial = false)
+    val experimentalFeatureY by settingsManager.getExperimentalFeatureYFlow().collectAsState(initial = false)
+    val recordLogs by settingsManager.getRecordLogsFlow().collectAsState(initial = false)
+    val enableTelemetry by settingsManager.getEnableTelemetryFlow().collectAsState(initial = false)
+    val enableCrashReports by settingsManager.getEnableCrashReportsFlow().collectAsState(initial = false)
+    val language by settingsManager.getLanguageFlow().collectAsState(initial = "en")
+    val colorfulWorkflowCards by settingsManager.getColorfulWorkflowCardsFlow().collectAsState(initial = false)
+    val liquidGlassNav by settingsManager.getLiquidGlassNavFlow().collectAsState(initial = false)
+    val uiScale by settingsManager.getUIScaleFlow().collectAsState(initial = 1.0f)
+
+    // File picker for custom font
+    val fontPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            coroutineScope.launch {
+                settingsManager.setCustomFontPath(it.toString())
+            }
+        }
+    }
+
+    // Build groups
+    val groups = buildList {
+        // Language
+        add(
+            SettingsGroup(
+                title = "Language",
+                items = listOf(
+                    SettingsItem.Dropdown(
+                        "Language",
+                        languageToDisplay(language),
+                        listOf("English", "Spanish", "French", "German", "Italian")
+                    ) { lang ->
+                        coroutineScope.launch {
+                            settingsManager.setLanguage(displayToCode(lang))
+                        }
+                    },
+                    SettingsItem.Label("Choose app display language")
+                )
+            )
+        )
+
+        // Appearance
+        add(
+            SettingsGroup(
+                title = "Appearance",
+                items = listOf(
+                    SettingsItem.ThemeRadioGroup(
+                        themeMode,
+                        onThemeSelected = { selected ->
+                            coroutineScope.launch { settingsManager.setThemeMode(selected) }
+                        }
+                    ),
+                    SettingsItem.Switch("Dynamic Color", dynamicColor) {
+                        coroutineScope.launch { settingsManager.setDynamicColor(it) }
+                    },
+                    SettingsItem.Switch("Colorful workflow cards (Beta)", colorfulWorkflowCards) {
+                        coroutineScope.launch { settingsManager.setColorfulWorkflowCards(it) }
+                    },
+                    SettingsItem.Switch("Liquid Glass navigation bar", liquidGlassNav) {
+                        coroutineScope.launch { settingsManager.setLiquidGlassNav(it) }
+                    },
+                    SettingsItem.Slider("Scale", uiScale, 0.5f..1.5f) { newScale ->
+                        coroutineScope.launch { settingsManager.setUIScale(newScale) }
+                    }
+                )
+            )
+        )
+
+        // Terminal
+        add(
+            SettingsGroup(
+                title = "Terminal",
+                items = listOf(
+                    SettingsItem.Slider("Font Size", terminalFontSize, 10f..30f) { newSize ->
+                        coroutineScope.launch { settingsManager.setTerminalFontSize(newSize) }
+                    },
+                    SettingsItem.Dropdown(
+                        "Font Family",
+                        terminalFontFamily,
+                        listOf("monospace", "sans-serif", "serif", "sans-serif-condensed")
+                    ) { family ->
+                        coroutineScope.launch { settingsManager.setTerminalFontFamily(family) }
+                    }
+                )
+            )
+        )
+
+        // Font Management
+        add(
+            SettingsGroup(
+                title = "Font Management",
+                items = buildList {
+                    add(
+                        SettingsItem.Button("Upload Custom Font (.ttf)") {
+                            fontPickerLauncher.launch("application/octet-stream")
+                        }
+                    )
+                    if (customFontPath.isNotEmpty()) {
+                        add(SettingsItem.Label("Current: $customFontPath"))
+                    }
+                }
+            )
+        )
+
+        // Experimental
+        add(
+            SettingsGroup(
+                title = "Experimental",
+                items = listOf(
+                    SettingsItem.SwitchWithDesc(
+                        "Shizuku ADB Fallback",
+                        "Fall back to ADB over Wi‑Fi if Shizuku is unavailable (debug builds only)",
+                        experimentalFeatureX
+                    ) {
+                        coroutineScope.launch { settingsManager.setExperimentalFeatureX(it) }
+                    },
+                    SettingsItem.SwitchWithDesc(
+                        "Force Dynamic Color",
+                        "Apply Material You theming even on Android 10 and below (experimental)",
+                        experimentalFeatureY
+                    ) {
+                        coroutineScope.launch { settingsManager.setExperimentalFeatureY(it) }
+                    }
+                )
+            )
+        )
+
+        // Debugging
+        add(
+            SettingsGroup(
+                title = "Debugging",
+                items = listOf(
+                    SettingsItem.Switch("Record Debug Logs", recordLogs) {
+                        coroutineScope.launch { settingsManager.setRecordLogs(it) }
+                    },
+                    SettingsItem.Switch("Enable Telemetry", enableTelemetry) {
+                        coroutineScope.launch { settingsManager.setEnableTelemetry(it) }
+                    },
+                    SettingsItem.Switch("Enable Crash Reports", enableCrashReports) {
+                        coroutineScope.launch { settingsManager.setEnableCrashReports(it) }
+                    }
+                )
+            )
+        )
+
+        // General Settings
+        add(
+            SettingsGroup(
+                title = "General Settings",
+                items = listOf(
+                    SettingsItem.Action("Module Config") { /* navigate */ },
+                    SettingsItem.Action("Global Variables") { /* navigate */ },
+                    SettingsItem.Action("Model Config") { /* navigate */ }
+                )
+            )
+        )
+
+        // About
+        add(
+            SettingsGroup(
+                title = "About",
+                items = listOf(
+                    SettingsItem.Label("Version 1.0.5-beta.6"),
+                    SettingsItem.Label("Built with 🤍 using Jetpack Compose"),
+                    SettingsItem.Action("View Open Source Licenses") { /* open licenses */ },
+                    SettingsItem.Action("Developer Info") { /* open developer info */ }
+                )
+            )
+        )
+    }
+
+    // Filter groups based on search
+    val filteredGroups = if (searchQuery.isBlank()) {
+        groups
+    } else {
+        groups.mapNotNull { group ->
+            val filteredItems = group.items.filter { item ->
+                when (item) {
+                    is SettingsItem.Switch -> item.label.contains(searchQuery, ignoreCase = true)
+                    is SettingsItem.SwitchWithDesc -> item.label.contains(searchQuery, ignoreCase = true) || item.description.contains(searchQuery, ignoreCase = true)
+                    is SettingsItem.Slider -> item.label.contains(searchQuery, ignoreCase = true)
+                    is SettingsItem.Dropdown -> item.label.contains(searchQuery, ignoreCase = true) || item.current.contains(searchQuery, ignoreCase = true)
+                    is SettingsItem.Button -> item.label.contains(searchQuery, ignoreCase = true)
+                    is SettingsItem.Label -> item.text.contains(searchQuery, ignoreCase = true)
+                    is SettingsItem.Action -> item.label.contains(searchQuery, ignoreCase = true)
+                    is SettingsItem.ThemeRadioGroup -> true
+                    else -> false
+                }
+            }
+            if (filteredItems.isNotEmpty()) {
+                group.copy(items = filteredItems)
+            } else null
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black)
+    ) {
+        // Search bar
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            placeholder = { Text("Search settings", color = Color.Gray) },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray) },
+            textStyle = TextStyle(color = Color.White),
+            colors = OutlinedTextFieldDefaults.colors(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+                .background(Color(0xFF1A1A1A), shape = RoundedCornerShape(8.dp))
+                .border(1.dp, Color.Gray, RoundedCornerShape(8.dp))
+        )
+
+        // Settings list with cards
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+        ) {
+            items(filteredGroups) { group ->
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A)),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column {
+                        // Group title
+                        Text(
+                            text = group.title,
+                            color = Color(0xFF4FC3F7),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 12.dp)
+                        )
+
+                        // Items
+                        group.items.forEachIndexed { index, item ->
+                            when (item) {
+                                is SettingsItem.Switch -> {
+                                    SettingSwitchRow(
+                                        label = item.label,
+                                        checked = item.checked,
+                                        onCheckedChan
