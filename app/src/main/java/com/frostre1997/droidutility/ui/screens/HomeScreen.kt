@@ -1,11 +1,13 @@
 package com.frostre1997.droidutility.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -15,67 +17,46 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun HomeScreen() {
+    var showAboutDialog by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
             .padding(24.dp)
     ) {
-        Text(
-            text = "Home",
-            style = MaterialTheme.typography.headlineLarge,
-            color = Color.White,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
+        // Top row: "Home" title + info icon
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Home",
+                style = MaterialTheme.typography.headlineLarge,
+                color = Color.White,
+                fontWeight = FontWeight.Bold
+            )
+            Icon(
+                imageVector = Icons.Default.Info,
+                contentDescription = "About",
+                tint = Color.White,
+                modifier = Modifier
+                    .size(28.dp)
+                    .clickable { showAboutDialog = true }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "DroidUtility – your non‑root tool suite",
+            text = "DroidUtility – non‑root tool suite",
             color = Color.Gray,
             fontSize = 14.sp,
             modifier = Modifier.padding(bottom = 24.dp)
         )
 
-        // Two stat cards using weight inside Row
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Surface(
-                modifier = Modifier.weight(1f),
-                color = Color(0xFF1A1A1A),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text("Core", color = Color.Gray, fontSize = 14.sp)
-                    Text("Stopped", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
-                }
-            }
-            Surface(
-                modifier = Modifier.weight(1f),
-                color = Color(0xFF1A1A1A),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text("Total Workflows", color = Color.Gray, fontSize = 14.sp)
-                    Text("2", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Permission health card
+        // Shizuku status card
         Surface(
             color = Color(0xFF1A1A1A),
             shape = RoundedCornerShape(16.dp),
@@ -83,63 +64,107 @@ fun HomeScreen() {
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    "Permission Health Check",
+                    "Shizuku Manager",
                     color = Color.White,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
                 )
-                Text(
-                    "Status: 2 missing permissions",
-                    color = Color.LightGray,
-                    fontSize = 14.sp
-                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(12.dp)
+                            .background(Color.Green, shape = RoundedCornerShape(50))
+                    )
+                    Text("Running", color = Color.White, fontSize = 14.sp)
+                    Text("•", color = Color.Gray)
+                    Text("API: 33", color = Color.Gray, fontSize = 14.sp)
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("Permission: GRANTED", color = Color.LightGray, fontSize = 13.sp)
             }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Quick stats row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            StatCard(label = "Total Apps", value = "42")
+            StatCard(label = "Debloated", value = "7")
         }
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Recent logs section
+        // Recent Activity placeholder (no vFlow)
         Text(
-            text = "Recent Logs",
+            text = "Recent Activity",
             color = Color.White,
             fontSize = 18.sp,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(bottom = 12.dp)
         )
 
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxWidth()
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A)),
+            shape = RoundedCornerShape(12.dp)
         ) {
-            items(3) { index ->
-                LogItem(
-                    title = if (index == 0) "宏胖胖签到" else if (index == 1) "宏胖胖签到" else "Hello vFlow",
-                    date = if (index == 0) "Jul 10, 2026" else if (index == 1) "Jun 29, 2026" else "Jun 28, 2026",
-                    status = if (index == 0) "Failed at step #1" else if (index == 1) "Failed at step #1" else "Execution completed"
-                )
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("No recent logs", color = Color.Gray, fontSize = 14.sp)
+                Text("Run a task or open a tool to see activity here.", color = Color.DarkGray, fontSize = 12.sp)
             }
         }
+    }
+
+    // About dialog
+    if (showAboutDialog) {
+        AlertDialog(
+            onDismissRequest = { showAboutDialog = false },
+            title = { Text("About DroidUtility", color = Color.White) },
+            text = {
+                Column {
+                    Text("Version 1.0.0", color = Color.White)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "A powerful non‑root utility suite for Android.\n" +
+                        "Built with 🤍 using Jetpack Compose.",
+                        color = Color.LightGray
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showAboutDialog = false }) {
+                    Text("OK", color = Color.White)
+                }
+            },
+            containerColor = Color(0xFF1A1A1A),
+            titleContentColor = Color.White,
+            textContentColor = Color.White
+        )
     }
 }
 
 @Composable
-fun LogItem(title: String, date: String, status: String) {
+fun StatCard(label: String, value: String) {
     Surface(
         color = Color(0xFF1A1A1A),
-        shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth()
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier.weight(1f)
     ) {
-        Row(
+        Column(
             modifier = Modifier
-                .padding(12.dp)
+                .padding(16.dp)
                 .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column {
-                Text(title, color = Color.White, fontWeight = FontWeight.Medium)
-                Text(status, color = Color.LightGray, fontSize = 12.sp)
-            }
-            Text(date, color = Color.Gray, fontSize = 12.sp)
+            Text(label, color = Color.Gray, fontSize = 14.sp)
+            Text(value, color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
