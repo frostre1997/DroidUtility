@@ -1,6 +1,7 @@
 package com.frostre1997.droidutility.ui.screens
 
-import android.os.Bundle
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -16,10 +17,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.frostre1997.droidutility.shell.ShizukuShellManager
+import com.frostre1997.droidutility.ShizukuShellManager
 import kotlinx.coroutines.delay
-import rikka.shizuku.Shizuku
-import rikka.shizuku.ShizukuProvider
 
 @Composable
 fun HomeScreen() {
@@ -31,36 +30,23 @@ fun HomeScreen() {
     var isPermissionGranted by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(true) }
 
-    // Check status on first composition and when Shizuku broadcasts change
+    // Check status periodically
     LaunchedEffect(Unit) {
         while (true) {
             isLoading = true
-            // Check if Shizuku is running
-            isShizukuRunning = Shizuku.pingBinder()
+            isShizukuRunning = ShizukuShellManager.checkAvailability()
             if (isShizukuRunning) {
-                // Check permission
-                isPermissionGranted = Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED
+                isPermissionGranted = ShizukuShellManager.hasPermission()
             } else {
                 isPermissionGranted = false
             }
             isLoading = false
-            delay(2000) // refresh every 2 seconds (or use a broadcast receiver)
+            delay(1500)
         }
     }
 
-    // Request permission
     fun requestPermission() {
-        if (Shizuku.isPreV11()) {
-            // For older Shizuku versions
-            Shizuku.requestPermission(1000)
-        } else {
-            // For newer versions, use the callback
-            Shizuku.requestPermission(1000, object : Shizuku.RequestPermissionResultCallback {
-                override fun onRequestPermissionResult(requestCode: Int, grantResult: Int) {
-                    // Handle result – will be reflected in next LaunchedEffect loop
-                }
-            })
-        }
+        ShizukuShellManager.requestPermission()
     }
 
     Column(
@@ -69,7 +55,7 @@ fun HomeScreen() {
             .background(Color.Black)
             .padding(24.dp)
     ) {
-        // Top row: "Home" title + info icon
+        // Top row
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -92,7 +78,6 @@ fun HomeScreen() {
         }
 
         Spacer(modifier = Modifier.height(8.dp))
-
         Text(
             text = "DroidUtility – non‑root tool suite",
             color = Color.Gray,
@@ -100,25 +85,19 @@ fun HomeScreen() {
             modifier = Modifier.padding(bottom = 24.dp)
         )
 
-        // Shizuku status card
+        // Shizuku card
         Surface(
             color = Color(0xFF1A1A1A),
             shape = RoundedCornerShape(16.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    "Shizuku Manager",
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
-                )
+                Text("Shizuku Manager", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 Spacer(modifier = Modifier.height(8.dp))
 
                 if (isLoading) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.Gray)
                 } else {
-                    // Status row
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         verticalAlignment = Alignment.CenterVertically
@@ -138,7 +117,7 @@ fun HomeScreen() {
                         )
                         if (isShizukuRunning) {
                             Text("•", color = Color.Gray)
-                            Text("API: ${Shizuku.getVersionCode()}", color = Color.Gray, fontSize = 14.sp)
+                            Text("API: ${rikka.shizuku.Shizuku.getVersionCode()}", color = Color.Gray, fontSize = 14.sp)
                         }
                     }
                     Spacer(modifier = Modifier.height(8.dp))
@@ -153,27 +132,30 @@ fun HomeScreen() {
                         Text("Start Shizuku first", color = Color.Yellow, fontSize = 13.sp)
                     }
 
-                    // Action button
-                    if (isShizukuRunning && !isPermissionGranted) {
-                        Button(
-                            onClick = { requestPermission() },
-                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4FC3F7)),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Text("Grant Permission", color = Color.Black, fontWeight = FontWeight.Bold)
+                    when {
+                        isShizukuRunning && !isPermissionGranted -> {
+                            Button(
+                                onClick = { requestPermission() },
+                                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4FC3F7)),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text("Grant Permission", color = Color.Black, fontWeight = FontWeight.Bold)
+                            }
                         }
-                    } else if (!isShizukuRunning) {
-                        Button(
-                            onClick = {
-                                // Open Shizuku app or guide user
-                                // You can launch an intent to the Shizuku settings
-                            },
-                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4FC3F7)),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Text("Start Shizuku", color = Color.Black, fontWeight = FontWeight.Bold)
+                        !isShizukuRunning -> {
+                            Button(
+                                onClick = {
+                                    try {
+                                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app/")))
+                                    } catch (e: Exception) { /* fallback */ }
+                                },
+                                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4FC3F7)),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text("Start Shizuku", color = Color.Black, fontWeight = FontWeight.Bold)
+                            }
                         }
                     }
                 }
@@ -182,7 +164,7 @@ fun HomeScreen() {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Quick stats row
+        // Stats
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -193,9 +175,7 @@ fun HomeScreen() {
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Column(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .fillMaxWidth(),
+                    modifier = Modifier.padding(16.dp).fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text("Total Apps", color = Color.Gray, fontSize = 14.sp)
@@ -208,9 +188,7 @@ fun HomeScreen() {
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Column(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .fillMaxWidth(),
+                    modifier = Modifier.padding(16.dp).fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text("Debloated", color = Color.Gray, fontSize = 14.sp)
@@ -221,16 +199,9 @@ fun HomeScreen() {
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        Text(
-            text = "Recent Activity",
-            color = Color.White,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-
+        Text("Recent Activity", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
         Card(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
             colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A)),
             shape = RoundedCornerShape(12.dp)
         ) {
@@ -241,7 +212,6 @@ fun HomeScreen() {
         }
     }
 
-    // About dialog
     if (showAboutDialog) {
         AlertDialog(
             onDismissRequest = { showAboutDialog = false },
@@ -249,12 +219,8 @@ fun HomeScreen() {
             text = {
                 Column {
                     Text("Version 1.0.0", color = Color.White)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        "A powerful non‑root utility suite for Android.\n" +
-                        "Built with 🤍 using Jetpack Compose.",
-                        color = Color.LightGray
-                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text("A powerful non‑root utility suite for Android.\nBuilt with 🤍 using Jetpack Compose.", color = Color.LightGray)
                 }
             },
             confirmButton = {
@@ -262,9 +228,7 @@ fun HomeScreen() {
                     Text("OK", color = Color.White)
                 }
             },
-            containerColor = Color(0xFF1A1A1A),
-            titleContentColor = Color.White,
-            textContentColor = Color.White
+            containerColor = Color(0xFF1A1A1A)
         )
     }
 }
