@@ -21,7 +21,7 @@ fun TerminalScreen() {
             .padding(24.dp)
     ) {
         Text(
-            text = "Debloat Manager",
+            text = "Terminal",
             style = MaterialTheme.typography.headlineLarge,
             color = colorScheme.onSurface
         )
