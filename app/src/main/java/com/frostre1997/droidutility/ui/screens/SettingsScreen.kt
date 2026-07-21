@@ -347,7 +347,7 @@ fun SettingsScreen() {
         }
     }
 
-    // Build groups (same as before, no changes needed)
+    // Build groups (same as before)
     val groups = buildList {
         // Language
         add(
@@ -525,21 +525,16 @@ fun SettingsScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(colorScheme.background)   // adaptive background
+            .background(colorScheme.background)
     ) {
-        // Search bar – theme‑aware
+        // Search bar – no named parameters, using default colors + Modifier
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
             placeholder = { Text("Search settings", color = colorScheme.onSurfaceVariant) },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = colorScheme.onSurfaceVariant) },
             textStyle = TextStyle(color = colorScheme.onSurface),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = colorScheme.primary,
-                unfocusedBorderColor = colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                cursorColor = colorScheme.primary,
-                containerColor = colorScheme.surface
-            ),
+            colors = OutlinedTextFieldDefaults.colors(), // defaults adapt to theme
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
@@ -551,6 +546,7 @@ fun SettingsScreen() {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
         ) {
             items(filteredGroups) { group ->
                 Card(
