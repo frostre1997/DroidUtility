@@ -13,17 +13,18 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun TerminalScreen() {
+    val colorScheme = MaterialTheme.colorScheme
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(colorScheme.background)
             .padding(24.dp)
     ) {
         Text(
-            text = "Terminal",
+            text = "Debloat Manager",
             style = MaterialTheme.typography.headlineLarge,
-            color = Color.White
+            color = colorScheme.onSurface
         )
-        // rest of your terminal content – remove any references to `onBack`
+        // rest of UI...
     }
 }
