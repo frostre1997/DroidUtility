@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,6 +20,7 @@ fun FloatingBottomBar(
     currentRoute: String,
     onItemClick: (String) -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     val screens = listOf(
         Screen.Home,
         Screen.Terminal,
@@ -32,13 +34,13 @@ fun FloatingBottomBar(
             .fillMaxWidth()
             .height(68.dp)
             .padding(horizontal = 16.dp),
-        color = Color.Black.copy(alpha = 0.7f), // glass‑like
-        shape = RoundedCornerShape(34.dp),       // pill
+        color = colorScheme.surface.copy(alpha = 0.8f), // adaptive glass effect
+        shape = RoundedCornerShape(34.dp),
         shadowElevation = 8.dp,
         tonalElevation = 0.dp,
         border = androidx.compose.foundation.BorderStroke(
             width = 1.dp,
-            color = Color.White.copy(alpha = 0.15f) // subtle border
+            color = colorScheme.onSurface.copy(alpha = 0.15f) // subtle border
         )
     ) {
         Row(
@@ -59,13 +61,13 @@ fun FloatingBottomBar(
                     Icon(
                         screen.icon,
                         contentDescription = screen.title,
-                        tint = if (selected) Color.White else Color.Gray,
+                        tint = if (selected) colorScheme.primary else colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(24.dp)
                     )
                     Text(
                         screen.title,
                         fontSize = 10.sp,
-                        color = if (selected) Color.White else Color.Gray,
+                        color = if (selected) colorScheme.primary else colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         modifier = Modifier.padding(top = 2.dp)
                     )
