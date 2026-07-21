@@ -16,13 +16,13 @@ fun DebloatScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(ColorScheme.background)
             .padding(24.dp)
     ) {
         Text(
             text = "Debloat Manager",
             style = MaterialTheme.typography.headlineLarge,
-            color = Color.White
+            color = ColorScheme.onSurface
         )
         // Your debloat UI here
     }
