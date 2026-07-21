@@ -78,7 +78,6 @@ fun DroidUtilityTheme(
     val isDark = isSystemInDarkTheme()
 
     val colorScheme = when {
-        // Dynamic Color (Android 12+)
         useDynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             if (themeMode == ThemeMode.LIGHT || (themeMode == ThemeMode.SYSTEM && !isDark)) {
                 dynamicLightColorScheme(context)
