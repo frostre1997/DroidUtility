@@ -13,17 +13,18 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun ShellScreen() {
+    val colorScheme = MaterialTheme.colorScheme
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(colorScheme.background)
             .padding(24.dp)
     ) {
         Text(
             text = "Shell",
             style = MaterialTheme.typography.headlineLarge,
-            color = Color.White
+            color = colorScheme.onSurface
         )
-        // Add shell UI here
+        // rest of UI...
     }
 }
