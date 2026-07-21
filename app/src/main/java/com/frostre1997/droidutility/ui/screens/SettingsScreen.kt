@@ -100,13 +100,14 @@ fun displayToCode(display: String): String = when (display) {
     else -> "en"
 }
 
-// ---------- Composables with larger touch targets ----------
+// ---------- Composables with theme‑aware colors ----------
 @Composable
 fun SettingSwitchRow(
     label: String,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
@@ -117,15 +118,15 @@ fun SettingSwitchRow(
     ) {
         Text(
             text = label,
-            color = Color.White,
+            color = colorScheme.onSurface,
             modifier = Modifier.weight(1f)
         )
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
-                checkedThumbColor = Color(0xFF4FC3F7),
-                checkedTrackColor = Color(0xFF4FC3F7).copy(alpha = 0.5f)
+                checkedThumbColor = colorScheme.primary,
+                checkedTrackColor = colorScheme.primary.copy(alpha = 0.5f)
             )
         )
     }
@@ -138,6 +139,7 @@ fun SettingSwitchRowWithDesc(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
@@ -147,15 +149,15 @@ fun SettingSwitchRowWithDesc(
             .clickable { onCheckedChange(!checked) }
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(label, color = Color.White)
-            Text(description, color = Color.Gray, fontSize = 12.sp)
+            Text(label, color = colorScheme.onSurface)
+            Text(description, color = colorScheme.onSurfaceVariant, fontSize = 12.sp)
         }
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
-                checkedThumbColor = Color(0xFF4FC3F7),
-                checkedTrackColor = Color(0xFF4FC3F7).copy(alpha = 0.5f)
+                checkedThumbColor = colorScheme.primary,
+                checkedTrackColor = colorScheme.primary.copy(alpha = 0.5f)
             )
         )
     }
@@ -168,23 +170,24 @@ fun SettingSlider(
     range: ClosedFloatingPointRange<Float>,
     onValueChange: (Float) -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
-        Text(label, color = Color.White)
+        Text(label, color = colorScheme.onSurface)
         Slider(
             value = value,
             onValueChange = onValueChange,
             valueRange = range,
             steps = (range.endInclusive - range.start).toInt() * 2,
             colors = SliderDefaults.colors(
-                thumbColor = Color(0xFF4FC3F7),
-                activeTrackColor = Color(0xFF4FC3F7)
+                thumbColor = colorScheme.primary,
+                activeTrackColor = colorScheme.primary
             )
         )
-        Text("Current: ${(value * 100).toInt()}%", color = Color.Gray)
+        Text("Current: ${(value * 100).toInt()}%", color = colorScheme.onSurfaceVariant)
     }
 }
 
@@ -195,6 +198,7 @@ fun SettingDropdown(
     options: List<String>,
     onSelect: (String) -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     var expanded by remember { mutableStateOf(false) }
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -204,16 +208,16 @@ fun SettingDropdown(
             .padding(horizontal = 16.dp, vertical = 8.dp)
             .clickable { expanded = true }
     ) {
-        Text(label, color = Color.White, modifier = Modifier.weight(1f))
-        Text(current, color = Color(0xFF4FC3F7))
+        Text(label, color = colorScheme.onSurface, modifier = Modifier.weight(1f))
+        Text(current, color = colorScheme.primary)
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
-            modifier = Modifier.background(Color(0xFF1A1A1A))
+            modifier = Modifier.background(colorScheme.surface)
         ) {
             options.forEach { option ->
                 DropdownMenuItem(
-                    text = { Text(option, color = Color.White) },
+                    text = { Text(option, color = colorScheme.onSurface) },
                     onClick = {
                         onSelect(option)
                         expanded = false
@@ -229,22 +233,24 @@ fun SettingActionButton(
     label: String,
     onClick: () -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     Button(
         onClick = onClick,
-        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4FC3F7)),
+        colors = ButtonDefaults.buttonColors(containerColor = colorScheme.primary),
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
-        Text(label, color = Color.Black)
+        Text(label, color = colorScheme.onPrimary)
     }
 }
 
 @Composable
 fun SettingLabel(text: String) {
+    val colorScheme = MaterialTheme.colorScheme
     Text(
         text = text,
-        color = Color.Gray,
+        color = colorScheme.onSurfaceVariant,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
@@ -256,6 +262,7 @@ fun SettingAction(
     label: String,
     onClick: () -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
@@ -264,8 +271,12 @@ fun SettingAction(
             .padding(horizontal = 16.dp, vertical = 8.dp)
             .clickable { onClick() }
     ) {
-        Text(label, color = Color.White, modifier = Modifier.weight(1f))
-        Icon(Icons.Default.KeyboardArrowRight, contentDescription = null, tint = Color.Gray)
+        Text(label, color = colorScheme.onSurface, modifier = Modifier.weight(1f))
+        Icon(
+            Icons.Default.KeyboardArrowRight,
+            contentDescription = null,
+            tint = colorScheme.onSurfaceVariant
+        )
     }
 }
 
@@ -274,6 +285,7 @@ fun ThemeRadioGroup(
     themeMode: String,
     onThemeSelected: (String) -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -291,9 +303,9 @@ fun ThemeRadioGroup(
                 RadioButton(
                     selected = themeMode == mode.name,
                     onClick = { onThemeSelected(mode.name) },
-                    colors = RadioButtonDefaults.colors(selectedColor = Color(0xFF4FC3F7))
+                    colors = RadioButtonDefaults.colors(selectedColor = colorScheme.primary)
                 )
-                Text(mode.name, color = Color.White, modifier = Modifier.padding(start = 8.dp))
+                Text(mode.name, color = colorScheme.onSurface, modifier = Modifier.padding(start = 8.dp))
             }
         }
     }
@@ -306,9 +318,10 @@ fun SettingsScreen() {
     val settingsManager = remember { SettingsManager(context) }
     val coroutineScope = rememberCoroutineScope()
     var searchQuery by remember { mutableStateOf("") }
+    val colorScheme = MaterialTheme.colorScheme
 
     // Collect all states
-    val themeMode by settingsManager.getThemeModeFlow().collectAsState(initial = "AMOLED")
+    val themeMode by settingsManager.getThemeModeFlow().collectAsState(initial = "SYSTEM")
     val dynamicColor by settingsManager.getDynamicColorFlow().collectAsState(initial = false)
     val terminalFontSize by settingsManager.getTerminalFontSizeFlow().collectAsState(initial = 16f)
     val terminalFontFamily by settingsManager.getTerminalFontFamilyFlow().collectAsState(initial = "monospace")
@@ -334,7 +347,7 @@ fun SettingsScreen() {
         }
     }
 
-    // Build groups
+    // Build groups (same as before, no changes needed)
     val groups = buildList {
         // Language
         add(
@@ -512,40 +525,44 @@ fun SettingsScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(colorScheme.background)   // adaptive background
     ) {
-        // Search bar
+        // Search bar – theme‑aware
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
-            placeholder = { Text("Search settings", color = Color.Gray) },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray) },
-            textStyle = TextStyle(color = Color.White),
-            colors = OutlinedTextFieldDefaults.colors(),
+            placeholder = { Text("Search settings", color = colorScheme.onSurfaceVariant) },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = colorScheme.onSurfaceVariant) },
+            textStyle = TextStyle(color = colorScheme.onSurface),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = colorScheme.primary,
+                unfocusedBorderColor = colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                cursorColor = colorScheme.primary,
+                containerColor = colorScheme.surface
+            ),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
-                .background(Color(0xFF1A1A1A), shape = RoundedCornerShape(16.dp))
-                .border(1.dp, Color.Gray, RoundedCornerShape(16.dp))
+                .background(colorScheme.surface, shape = RoundedCornerShape(16.dp))
+                .border(1.dp, colorScheme.onSurfaceVariant.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
         )
 
-        // Settings list with cards – rounded like vFlow
+        // Settings list with cards
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
         ) {
             items(filteredGroups) { group ->
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A)),
-                    shape = RoundedCornerShape(16.dp), // vFlow‑style rounding
+                    colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
+                    shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column {
                         // Group title
                         Text(
                             text = group.title,
-                            color = Color(0xFF4FC3F7),
+                            color = colorScheme.primary,
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp,
                             modifier = Modifier
@@ -612,7 +629,7 @@ fun SettingsScreen() {
                             // Divider between items
                             if (index < group.items.size - 1) {
                                 Divider(
-                                    color = Color.Gray.copy(alpha = 0.2f),
+                                    color = colorScheme.onSurfaceVariant.copy(alpha = 0.2f),
                                     modifier = Modifier.padding(horizontal = 16.dp)
                                 )
                             }
