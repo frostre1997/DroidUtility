@@ -17,7 +17,7 @@ A powerful, non-root utility suite for Android designed for system optimization,
 - **Theme Support:** Light, Dark, AMOLED (true black), and System themes with persistent storage.
 - **Shizuku Integration:** Uses Shizuku for elevated privileges without root. Permission request is built into the app.
 - **Material 3 UI:** Modern, rounded, responsive design with dark/light mode support.
-- **Xsposed/LSPacth Implantation:** Xsposed Module Implemention for more customizable app's - <ins>not added</ins>
+- **Xsposed/LSPacth Implantation:** Xsposed Module Implemention for more customizable app's - <ins>coming in update v1.1.0-beta</ins>
 
 ---
 
