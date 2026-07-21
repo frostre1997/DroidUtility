@@ -17,7 +17,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -100,7 +99,7 @@ fun displayToCode(display: String): String = when (display) {
     else -> "en"
 }
 
-// ---------- Composables with theme‑aware colors ----------
+// ---------- Composables ----------
 @Composable
 fun SettingSwitchRow(
     label: String,
@@ -347,7 +346,7 @@ fun SettingsScreen() {
         }
     }
 
-    // Build groups (same as before)
+    // Build groups
     val groups = buildList {
         // Language
         add(
@@ -527,14 +526,14 @@ fun SettingsScreen() {
             .fillMaxSize()
             .background(colorScheme.background)
     ) {
-        // Search bar – no named parameters, using default colors + Modifier
+        // Search bar
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
             placeholder = { Text("Search settings", color = colorScheme.onSurfaceVariant) },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = colorScheme.onSurfaceVariant) },
             textStyle = TextStyle(color = colorScheme.onSurface),
-            colors = OutlinedTextFieldDefaults.colors(), // defaults adapt to theme
+            colors = OutlinedTextFieldDefaults.colors(),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
