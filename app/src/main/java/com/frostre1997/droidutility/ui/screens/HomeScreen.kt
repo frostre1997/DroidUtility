@@ -23,6 +23,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun HomeScreen() {
     val context = LocalContext.current
+    val colorScheme = MaterialTheme.colorScheme
     var showAboutDialog by remember { mutableStateOf(false) }
 
     // Shizuku state
@@ -52,10 +53,10 @@ fun HomeScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(colorScheme.background)
             .padding(24.dp)
     ) {
-        // Top row: title + info icon
+        // Top row
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -64,13 +65,13 @@ fun HomeScreen() {
             Text(
                 text = "Home",
                 style = MaterialTheme.typography.headlineLarge,
-                color = Color.White,
+                color = colorScheme.onSurface,
                 fontWeight = FontWeight.Bold
             )
             Icon(
                 imageVector = Icons.Default.Info,
                 contentDescription = "About",
-                tint = Color.White,
+                tint = colorScheme.onSurface,
                 modifier = Modifier
                     .size(28.dp)
                     .clickable { showAboutDialog = true }
@@ -80,23 +81,23 @@ fun HomeScreen() {
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = "DroidUtility – non‑root tool suite",
-            color = Color.Gray,
+            color = colorScheme.onSurfaceVariant,
             fontSize = 14.sp,
             modifier = Modifier.padding(bottom = 24.dp)
         )
 
         // Shizuku card
         Surface(
-            color = Color(0xFF1A1A1A),
+            color = colorScheme.surface,
             shape = RoundedCornerShape(16.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("Shizuku Manager", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text("Shizuku Manager", color = colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 Spacer(modifier = Modifier.height(8.dp))
 
                 if (isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.Gray)
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = colorScheme.onSurfaceVariant)
                 } else {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -112,7 +113,7 @@ fun HomeScreen() {
                         )
                         Text(
                             if (isShizukuRunning) "Running" else "Stopped",
-                            color = Color.White,
+                            color = colorScheme.onSurface,
                             fontSize = 14.sp
                         )
                     }
@@ -121,7 +122,7 @@ fun HomeScreen() {
                     if (isShizukuRunning) {
                         Text(
                             if (isPermissionGranted) "Permission: GRANTED" else "Permission: DENIED",
-                            color = if (isPermissionGranted) Color.LightGray else Color.Red,
+                            color = if (isPermissionGranted) colorScheme.onSurfaceVariant else Color.Red,
                             fontSize = 13.sp
                         )
                     } else {
@@ -133,10 +134,10 @@ fun HomeScreen() {
                             Button(
                                 onClick = { requestPermission() },
                                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4FC3F7)),
+                                colors = ButtonDefaults.buttonColors(containerColor = colorScheme.primary),
                                 shape = RoundedCornerShape(12.dp)
                             ) {
-                                Text("Grant Permission", color = Color.Black, fontWeight = FontWeight.Bold)
+                                Text("Grant Permission", color = colorScheme.onPrimary, fontWeight = FontWeight.Bold)
                             }
                         }
                         !isShizukuRunning -> {
@@ -147,10 +148,10 @@ fun HomeScreen() {
                                     } catch (_: Exception) { /* fallback */ }
                                 },
                                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4FC3F7)),
+                                colors = ButtonDefaults.buttonColors(containerColor = colorScheme.primary),
                                 shape = RoundedCornerShape(12.dp)
                             ) {
-                                Text("Start Shizuku", color = Color.Black, fontWeight = FontWeight.Bold)
+                                Text("Start Shizuku", color = colorScheme.onPrimary, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -167,43 +168,43 @@ fun HomeScreen() {
         ) {
             Surface(
                 modifier = Modifier.weight(1f),
-                color = Color(0xFF1A1A1A),
+                color = colorScheme.surface,
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp).fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("Total Apps", color = Color.Gray, fontSize = 14.sp)
-                    Text("42", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                    Text("Total Apps", color = colorScheme.onSurfaceVariant, fontSize = 14.sp)
+                    Text("42", color = colorScheme.onSurface, fontSize = 24.sp, fontWeight = FontWeight.Bold)
                 }
             }
             Surface(
                 modifier = Modifier.weight(1f),
-                color = Color(0xFF1A1A1A),
+                color = colorScheme.surface,
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp).fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("Debloated", color = Color.Gray, fontSize = 14.sp)
-                    Text("7", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                    Text("Debloated", color = colorScheme.onSurfaceVariant, fontSize = 14.sp)
+                    Text("7", color = colorScheme.onSurface, fontSize = 24.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        Text("Recent Activity", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+        Text("Recent Activity", color = colorScheme.onSurface, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
         Card(
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A)),
+            colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
             shape = RoundedCornerShape(12.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("No recent logs", color = Color.Gray, fontSize = 14.sp)
-                Text("Run a task or open a tool to see activity here.", color = Color.DarkGray, fontSize = 12.sp)
+                Text("No recent logs", color = colorScheme.onSurfaceVariant, fontSize = 14.sp)
+                Text("Run a task or open a tool to see activity here.", color = colorScheme.onSurfaceVariant.copy(alpha = 0.7f), fontSize = 12.sp)
             }
         }
     }
@@ -211,20 +212,20 @@ fun HomeScreen() {
     if (showAboutDialog) {
         AlertDialog(
             onDismissRequest = { showAboutDialog = false },
-            title = { Text("About DroidUtility", color = Color.White) },
+            title = { Text("About DroidUtility", color = colorScheme.onSurface) },
             text = {
                 Column {
-                    Text("Version 1.0.5-beta.6", color = Color.White)
+                    Text("Version 1.0.5-beta.6", color = colorScheme.onSurface)
                     Spacer(Modifier.height(8.dp))
-                    Text("A powerful non‑root utility suite for Android.\nBuilt with 🤍 using Jetpack Compose.", color = Color.LightGray)
+                    Text("A powerful non‑root utility suite for Android.\nBuilt with 🤍 using Jetpack Compose.", color = colorScheme.onSurfaceVariant)
                 }
             },
             confirmButton = {
                 TextButton(onClick = { showAboutDialog = false }) {
-                    Text("OK", color = Color.White)
+                    Text("OK", color = colorScheme.onSurface)
                 }
             },
-            containerColor = Color(0xFF1A1A1A)
+            containerColor = colorScheme.surface
         )
     }
 }
